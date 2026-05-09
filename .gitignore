@@ -1,0 +1,33 @@
+# Claude Code
+.claude/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.log
+logs/
+
+# Node / Vue
+node_modules/
+dist/
+
+# Environment
+.env.local
+.env.*.local
+
+# PDF source (requirements doc is binary, keep if needed)
+# *.pdf
