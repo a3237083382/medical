@@ -57,6 +57,38 @@ export const constantRoutes = [
     component: () => import('@/views/error/401'),
     hidden: true
   },
+  // 保险公司门户路由
+  {
+    path: '/company/login',
+    component: () => import('@/views/company/login'),
+    hidden: true
+  },
+  {
+    path: '/company',
+    component: Layout,
+    hidden: true,
+    redirect: '/company/dashboard',
+    children: [
+      {
+        path: 'dashboard',
+        component: () => import('@/views/company/dashboard'),
+        name: 'CompanyDashboard',
+        meta: { title: '公司首页' }
+      },
+      {
+        path: 'recharge',
+        component: () => import('@/views/company/recharge'),
+        name: 'CompanyRecharge',
+        meta: { title: '提交充值' }
+      },
+      {
+        path: 'recharge-list',
+        component: () => import('@/views/company/rechargeList'),
+        name: 'CompanyRechargeList',
+        meta: { title: '充值记录' }
+      }
+    ]
+  },
   {
     path: '',
     component: Layout,
