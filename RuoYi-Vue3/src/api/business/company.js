@@ -38,14 +38,6 @@ export function delCompany(id) {
   })
 }
 
-export function recharge(id, amount) {
-  return request({
-    url: '/business/company/recharge',
-    method: 'put',
-    params: { id: id, amount: amount }
-  })
-}
-
 export function changeStatus(id, status) {
   return request({
     url: '/business/company/changeStatus',

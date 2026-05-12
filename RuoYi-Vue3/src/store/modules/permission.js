@@ -4,6 +4,7 @@ import { getRouters } from '@/api/menu'
 import Layout from '@/layout/index'
 import ParentView from '@/components/ParentView'
 import InnerLink from '@/layout/components/InnerLink'
+import { isHttp } from '@/utils/validate'
 
 // 匹配views里面所有的.vue文件
 const modules = import.meta.glob('./../../views/**/*.vue')
@@ -33,7 +34,7 @@ const usePermissionStore = defineStore(
         this.sidebarRouters = routes
       },
       generateRoutes(roles) {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
           // 向后端请求路由数据
           getRouters().then(res => {
             const sdata = JSON.parse(JSON.stringify(res.data))
@@ -49,6 +50,8 @@ const usePermissionStore = defineStore(
             this.setDefaultRoutes(sidebarRoutes)
             this.setTopbarRoutes(defaultRoutes)
             resolve(rewriteRoutes)
+          }).catch(error => {
+            reject(error)
           })
         })
       }
@@ -58,6 +61,9 @@ const usePermissionStore = defineStore(
 // 遍历后台传来的路由字符串，转换为组件对象
 function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {
   return asyncRouterMap.filter(route => {
+    if (lastRouter === false && route.path && !isHttp(route.path) && !route.path.startsWith('/')) {
+      route.path = '/' + route.path
+    }
     if (type && route.children) {
       route.children = filterChildren(route.children)
     }

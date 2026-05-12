@@ -26,6 +26,7 @@
 
 <script setup name="CompanyLogin">
 import { companyLogin } from "@/api/business/portal"
+import { setCompanyToken } from "@/utils/companyAuth"
 
 const router = useRouter()
 const { proxy } = getCurrentInstance()
@@ -44,7 +45,8 @@ function handleLogin() {
     companyLogin(form).then(res => {
       localStorage.setItem("companyToken", res.data.token)
       localStorage.setItem("companyInfo", JSON.stringify(res.data))
-      router.push("/company/dashboard")
+      setCompanyToken(res.data.token)
+      router.push(proxy.$route.query.redirect || "/company/dashboard")
     }).catch(() => {
       loading.value = false
     })

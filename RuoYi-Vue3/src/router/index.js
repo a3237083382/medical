@@ -1,6 +1,7 @@
 import { createWebHistory, createRouter } from 'vue-router'
 /* Layout */
 import Layout from '@/layout'
+import CompanyLayout from '@/layout/company'
 
 /**
  * Note: 路由配置项
@@ -65,7 +66,7 @@ export const constantRoutes = [
   },
   {
     path: '/company',
-    component: Layout,
+    component: CompanyLayout,
     hidden: true,
     redirect: '/company/dashboard',
     children: [
@@ -86,6 +87,18 @@ export const constantRoutes = [
         component: () => import('@/views/company/rechargeList'),
         name: 'CompanyRechargeList',
         meta: { title: '充值记录' }
+      },
+      {
+        path: 'query-log',
+        component: () => import('@/views/company/queryLog'),
+        name: 'CompanyQueryLog',
+        meta: { title: '查询记录' }
+      },
+      {
+        path: 'profile',
+        component: () => import('@/views/company/profile'),
+        name: 'CompanyProfile',
+        meta: { title: '个人信息' }
       }
     ]
   },

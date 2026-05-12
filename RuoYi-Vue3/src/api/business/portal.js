@@ -22,3 +22,34 @@ export function listRechargeRecords() {
     method: 'get'
   })
 }
+
+export function getCompanyProfile() {
+  return request({
+    url: '/company/api/profile',
+    method: 'get'
+  })
+}
+
+export function updateCompanyProfile(data) {
+  return request({
+    url: '/company/api/profile',
+    method: 'put',
+    data
+  })
+}
+
+export function updateCompanyPassword(data) {
+  return request({
+    url: '/company/api/profile/password',
+    method: 'put',
+    data
+  })
+}
+
+export function listQueryLogs(query) {
+  return request({
+    url: '/company/api/query-log/list',
+    method: 'get',
+    params: query
+  })
+}

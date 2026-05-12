@@ -58,7 +58,6 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="200">
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['business:company:edit']">修改</el-button>
-          <el-button link type="primary" icon="Money" @click="handleRecharge(scope.row)" v-hasPermi="['business:company:recharge']">充值</el-button>
           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['business:company:remove']">删除</el-button>
         </template>
       </el-table-column>
@@ -73,6 +72,12 @@
         </el-form-item>
         <el-form-item label="公司编码" prop="companyCode">
           <el-input v-model="form.companyCode" placeholder="请输入公司编码" />
+        </el-form-item>
+        <el-form-item label="登录用户名" prop="username" v-if="!form.id">
+          <el-input v-model="form.username" placeholder="请输入登录用户名" />
+        </el-form-item>
+        <el-form-item :label="form.id ? '登录密码(留空不修改)' : '登录密码'" prop="password" :rules="form.id ? [] : rules.password">
+          <el-input v-model="form.password" type="password" placeholder="请输入登录密码" show-password />
         </el-form-item>
         <el-form-item label="结算周期(天)" prop="billingCycleDays">
           <el-input-number v-model="form.billingCycleDays" :min="1" :max="365" />
@@ -93,28 +98,12 @@
       </template>
     </el-dialog>
 
-    <el-dialog title="充值" v-model="rechargeOpen" width="400px" append-to-body>
-      <el-form ref="rechargeFormRef" :model="rechargeForm" :rules="rechargeRules" label-width="100px">
-        <el-form-item label="公司名称">
-          <el-input :model-value="rechargeForm.companyName" disabled />
-        </el-form-item>
-        <el-form-item label="当前余额">
-          <el-input :model-value="formatMoney(rechargeForm.currentBalance) + ' 元'" disabled />
-        </el-form-item>
-        <el-form-item label="充值金额" prop="amount">
-          <el-input-number v-model="rechargeForm.amount" :min="0.01" :precision="2" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button type="primary" @click="submitRecharge">确认充值</el-button>
-        <el-button @click="rechargeOpen = false">取 消</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup name="Company">
-import { listCompany, getCompany, addCompany, updateCompany, delCompany, recharge, changeStatus } from "@/api/business/company"
+import { listCompany, getCompany, addCompany, updateCompany, delCompany, changeStatus } from "@/api/business/company"
+import { addDateRange } from "@/utils/ruoyi"
 
 const router = useRouter()
 const { proxy } = getCurrentInstance()
@@ -128,7 +117,6 @@ const multiple = ref(true)
 const total = ref(0)
 const title = ref("")
 const open = ref(false)
-const rechargeOpen = ref(false)
 const dateRange = ref([])
 
 const queryParams = reactive({
@@ -142,25 +130,18 @@ const form = reactive({
   id: undefined,
   companyName: undefined,
   companyCode: undefined,
+  username: undefined,
+  password: undefined,
   billingCycleDays: 30,
   contactPerson: undefined,
   contactPhone: undefined,
   remark: undefined
 })
 
-const rechargeForm = reactive({
-  id: undefined,
-  companyName: '',
-  currentBalance: 0,
-  amount: 0
-})
-
 const rules = {
-  companyName: [{ required: true, message: "公司名称不能为空", trigger: "blur" }]
-}
-
-const rechargeRules = {
-  amount: [{ required: true, message: "充值金额不能为空", trigger: "blur" }]
+  companyName: [{ required: true, message: "公司名称不能为空", trigger: "blur" }],
+  username: [{ required: true, message: "登录用户名不能为空", trigger: "blur" }],
+  password: [{ required: true, message: "登录密码不能为空", trigger: "blur" }]
 }
 
 function getList() {
@@ -192,6 +173,7 @@ function handleUpdate(row) {
   const id = row.id || ids.value
   getCompany(id).then(response => {
     Object.assign(form, response.data)
+    form.password = undefined
     open.value = true
     title.value = "修改保险公司"
   })
@@ -227,26 +209,6 @@ function handleDelete(row) {
   }).catch(() => {})
 }
 
-function handleRecharge(row) {
-  rechargeForm.id = row.id
-  rechargeForm.companyName = row.companyName
-  rechargeForm.currentBalance = row.balance
-  rechargeForm.amount = 0
-  rechargeOpen.value = true
-}
-
-function submitRecharge() {
-  proxy.$refs["rechargeFormRef"].validate(valid => {
-    if (valid) {
-      recharge(rechargeForm.id, rechargeForm.amount).then(() => {
-        proxy.$modal.msgSuccess("充值成功")
-        rechargeOpen.value = false
-        getList()
-      })
-    }
-  })
-}
-
 function handleStatusChange(row) {
   let text = row.status === "0" ? "启用" : "停用"
   proxy.$modal.confirm('确认要"' + text + '"' + row.companyName + '"吗？').then(() => {
@@ -260,10 +222,17 @@ function handleExport() {
   proxy.download("business/company/export", { ...queryParams }, `company_${new Date().getTime()}.xlsx`)
 }
 
+function cancel() {
+  open.value = false
+  reset()
+}
+
 function reset() {
   form.id = undefined
   form.companyName = undefined
   form.companyCode = undefined
+  form.username = undefined
+  form.password = undefined
   form.billingCycleDays = 30
   form.contactPerson = undefined
   form.contactPhone = undefined

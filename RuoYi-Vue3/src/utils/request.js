@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { ElNotification , ElMessageBox, ElMessage, ElLoading } from 'element-plus'
 import { getToken } from '@/utils/auth'
+import { getCompanyToken, removeCompanyToken } from '@/utils/companyAuth'
 import errorCode from '@/utils/errorCode'
 import { tansParams, blobValidate } from '@/utils/ruoyi'
 import cache from '@/plugins/cache'
@@ -28,7 +29,12 @@ service.interceptors.request.use(config => {
   const isRepeatSubmit = (config.headers || {}).repeatSubmit === false
   // 间隔时间(ms)，小于此时间视为重复提交
   const interval = (config.headers || {}).interval || 1000
-  if (getToken() && !isToken) {
+  if (config.url && config.url.startsWith('/company/api')) {
+    const companyToken = getCompanyToken()
+    if (companyToken && !isToken) {
+      config.headers['Authorization'] = 'Bearer ' + companyToken
+    }
+  } else if (getToken() && !isToken) {
     config.headers['Authorization'] = 'Bearer ' + getToken() // 让每个请求携带自定义token 请根据实际情况自行修改
   }
   // get请求映射params参数
@@ -83,6 +89,11 @@ service.interceptors.response.use(res => {
       return res.data
     }
     if (code === 401) {
+      if (res.config.url && res.config.url.startsWith('/company/api')) {
+        removeCompanyToken()
+        location.href = '/company/login'
+        return Promise.reject('公司账号登录状态已过期，请重新登录。')
+      }
       if (!isRelogin.show) {
         isRelogin.show = true
         ElMessageBox.confirm('登录状态已过期，您可以继续留在该页面，或者重新登录', '系统提示', { confirmButtonText: '重新登录', cancelButtonText: '取消', type: 'warning' }).then(() => {
@@ -110,6 +121,11 @@ service.interceptors.response.use(res => {
   },
   error => {
     console.log('err' + error)
+    if (error.response && error.response.status === 401 && error.config && error.config.url && error.config.url.startsWith('/company/api')) {
+      removeCompanyToken()
+      location.href = '/company/login'
+      return Promise.reject(error)
+    }
     let { message } = error
     if (message == "Network Error") {
       message = "后端接口连接异常"

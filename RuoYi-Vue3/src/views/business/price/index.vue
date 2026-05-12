@@ -1,8 +1,8 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="价目名称" prop="priceName">
-        <el-input v-model="queryParams.priceName" placeholder="请输入价目名称" clearable style="width: 240px" @keyup.enter="handleQuery" />
+      <el-form-item label="价目名称" prop="queryName">
+        <el-input v-model="queryParams.queryName" placeholder="请输入价目名称" clearable style="width: 240px" @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -25,9 +25,9 @@
 
     <el-table v-loading="loading" :data="priceList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="价目名称" align="center" prop="priceName" />
-      <el-table-column label="单价(元)" align="center" prop="price">
-        <template #default="{ row }">{{ formatMoney(row.price) }}</template>
+      <el-table-column label="价目名称" align="center" prop="queryName" />
+      <el-table-column label="单价(元)" align="center" prop="fee">
+        <template #default="{ row }">{{ formatMoney(row.fee) }}</template>
       </el-table-column>
       <el-table-column label="类型" align="center" prop="queryType" />
       <el-table-column label="备注" align="center" prop="remark" />
@@ -43,11 +43,11 @@
 
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="价目名称" prop="priceName">
-          <el-input v-model="form.priceName" placeholder="请输入价目名称" />
+        <el-form-item label="价目名称" prop="queryName">
+          <el-input v-model="form.queryName" placeholder="请输入价目名称" />
         </el-form-item>
-        <el-form-item label="单价" prop="price">
-          <el-input-number v-model="form.price" :min="0" :precision="2" />
+        <el-form-item label="单价" prop="fee">
+          <el-input-number v-model="form.fee" :min="0" :precision="2" />
         </el-form-item>
         <el-form-item label="类型" prop="queryType">
           <el-input v-model="form.queryType" placeholder="如：门诊、住院" />
@@ -82,20 +82,22 @@ const open = ref(false)
 const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
-  priceName: undefined
+  queryName: undefined
 })
 
 const form = reactive({
   id: undefined,
-  priceName: undefined,
-  price: undefined,
+  queryName: undefined,
+  fee: undefined,
   queryType: undefined,
+  status: "0",
   remark: undefined
 })
 
 const rules = {
-  priceName: [{ required: true, message: "价目名称不能为空", trigger: "blur" }],
-  price: [{ required: true, message: "单价不能为空", trigger: "blur" }]
+  queryName: [{ required: true, message: "价目名称不能为空", trigger: "blur" }],
+  queryType: [{ required: true, message: "类型不能为空", trigger: "blur" }],
+  fee: [{ required: true, message: "单价不能为空", trigger: "blur" }]
 }
 
 function getList() {
@@ -167,9 +169,10 @@ function handleExport() {
 
 function reset() {
   form.id = undefined
-  form.priceName = undefined
-  form.price = undefined
+  form.queryName = undefined
+  form.fee = undefined
   form.queryType = undefined
+  form.status = "0"
   form.remark = undefined
   proxy.resetForm("formRef")
 }

@@ -22,6 +22,8 @@
           <div style="padding:20px">
             <el-button type="primary" icon="Money" size="default" @click="goRecharge">提交充值申请</el-button>
             <el-button type="success" icon="Document" size="default" style="margin-left:15px" @click="goRechargeList">充值记录</el-button>
+            <el-button type="warning" icon="Tickets" size="default" style="margin-left:15px" @click="goQueryLog">查询记录</el-button>
+            <el-button icon="User" size="default" style="margin-left:15px" @click="goProfile">个人信息</el-button>
           </div>
         </el-card>
         <el-card shadow="hover" style="margin-top:20px">
@@ -37,6 +39,8 @@
 </template>
 
 <script setup name="CompanyDashboard">
+import { getCompanyProfile } from "@/api/business/portal"
+
 const router = useRouter()
 const company = ref(JSON.parse(localStorage.getItem("companyInfo") || "{}"))
 const nextUpdateTime = ref("-")
@@ -52,6 +56,14 @@ function calcNextUpdate() {
 
 calcNextUpdate()
 
+function loadProfile() {
+  getCompanyProfile().then(res => {
+    company.value = res.data || {}
+    localStorage.setItem("companyInfo", JSON.stringify(company.value))
+    calcNextUpdate()
+  })
+}
+
 function formatMoney(val) {
   if (!val) return "0.00"
   return Number(val).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
@@ -59,4 +71,8 @@ function formatMoney(val) {
 
 function goRecharge() { router.push("/company/recharge") }
 function goRechargeList() { router.push("/company/recharge-list") }
+function goQueryLog() { router.push("/company/query-log") }
+function goProfile() { router.push("/company/profile") }
+
+loadProfile()
 </script>

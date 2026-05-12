@@ -3,6 +3,7 @@ import { ElMessage } from 'element-plus'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import { getToken } from '@/utils/auth'
+import { getCompanyToken } from '@/utils/companyAuth'
 import { isHttp, isPathMatch } from '@/utils/validate'
 import { isRelogin } from '@/utils/request'
 import useUserStore from '@/store/modules/user'
@@ -12,7 +13,8 @@ import usePermissionStore from '@/store/modules/permission'
 
 NProgress.configure({ showSpinner: false })
 
-const whiteList = ['/login', '/register', '/company/login', '/company/dashboard', '/company/recharge', '/company/recharge-list']
+const whiteList = ['/login', '/register', '/company/login']
+const isCompanyRoute = (path) => path.startsWith('/company') && path !== '/company/login'
 
 const isWhiteList = (path) => {
   return whiteList.some(pattern => isPathMatch(pattern, path))
@@ -20,6 +22,17 @@ const isWhiteList = (path) => {
 
 router.beforeEach(async (to, from) => {
   NProgress.start()
+  if (isCompanyRoute(to.path)) {
+    if (getCompanyToken()) {
+      return true
+    }
+    NProgress.done()
+    return { path: '/company/login', query: { redirect: to.fullPath } }
+  }
+  if (to.path === '/company/login' && getCompanyToken()) {
+    NProgress.done()
+    return { path: '/company/dashboard' }
+  }
   if (getToken()) {
     to.meta.title && useSettingsStore().setTitle(to.meta.title)
     const isLock = useLockStore().isLock
@@ -54,9 +67,10 @@ router.beforeEach(async (to, from) => {
         // 重新导航到目标路由，确保动态路由已注册
         return { ...to, replace: true }
       } catch (err) {
-        await useUserStore().logOut()
-        ElMessage.error(err)
-        return { path: '/' }
+        await useUserStore().logOut().catch(() => {})
+        const message = err?.message || err?.msg || err || '登录状态异常，请重新登录'
+        ElMessage.error(message)
+        return { path: '/login', query: { redirect: to.fullPath } }
       }
     }
     return true
