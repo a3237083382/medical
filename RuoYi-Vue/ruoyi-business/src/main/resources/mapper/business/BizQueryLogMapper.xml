@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BizQueryLogMapper">
+
+    <resultMap type="com.ruoyi.business.domain.BizQueryLog" id="BizQueryLogResult">
+        <result property="id" column="id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="queryType" column="query_type"/>
+        <result property="queryParams" column="query_params"/>
+        <result property="fee" column="fee"/>
+        <result property="settlementId" column="settlement_id"/>
+        <result property="status" column="status"/>
+        <result property="requestTime" column="request_time"/>
+        <result property="requestIp" column="request_ip"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectVo">
+        select l.id, l.company_id, c.company_name, l.query_type,
+               cast(l.query_params as char) as query_params, l.fee,
+               l.settlement_id, l.status, l.request_time, l.request_ip, l.remark
+        from biz_query_log l
+        left join biz_insurance_company c on l.company_id = c.id
+    </sql>
+
+    <select id="selectBizQueryLogList" parameterType="com.ruoyi.business.domain.BizQueryLog" resultMap="BizQueryLogResult">
+        <include refid="selectVo"/>
+        <where>
+            <if test="companyId != null">and l.company_id = #{companyId}</if>
+            <if test="companyName != null and companyName != ''">and c.company_name like concat('%', #{companyName}, '%')</if>
+            <if test="queryType != null and queryType != ''">and l.query_type like concat('%', #{queryType}, '%')</if>
+            <if test="status != null and status != ''">and l.status = #{status}</if>
+            <if test="params.beginTime != null and params.beginTime != ''">and l.request_time &gt;= #{params.beginTime}</if>
+            <if test="params.endTime != null and params.endTime != ''">and l.request_time &lt;= #{params.endTime}</if>
+        </where>
+        order by l.request_time desc
+    </select>
+
+    <select id="selectBizQueryLogById" parameterType="Long" resultMap="BizQueryLogResult">
+        <include refid="selectVo"/>
+        where l.id = #{id}
+    </select>
+
+</mapper>

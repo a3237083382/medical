@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BizQueryPriceMapper">
+
+    <resultMap type="com.ruoyi.business.domain.BizQueryPrice" id="BizQueryPriceResult">
+        <result property="id" column="id"/>
+        <result property="queryType" column="query_type"/>
+        <result property="queryName" column="query_name"/>
+        <result property="fee" column="fee"/>
+        <result property="status" column="status"/>
+        <result property="remark" column="remark"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectBizQueryPriceVo">
+        select id, query_type, query_name, fee, status, remark, create_by, create_time, update_by, update_time
+        from biz_query_price
+    </sql>
+
+    <select id="selectBizQueryPriceById" parameterType="Long" resultMap="BizQueryPriceResult">
+        <include refid="selectBizQueryPriceVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectBizQueryPriceByQueryType" parameterType="String" resultMap="BizQueryPriceResult">
+        <include refid="selectBizQueryPriceVo"/>
+        where query_type = #{queryType}
+    </select>
+
+    <select id="selectBizQueryPriceList" parameterType="com.ruoyi.business.domain.BizQueryPrice" resultMap="BizQueryPriceResult">
+        <include refid="selectBizQueryPriceVo"/>
+        <where>
+            <if test="queryType != null and queryType != ''">and query_type like concat('%', #{queryType}, '%')</if>
+            <if test="queryName != null and queryName != ''">and query_name like concat('%', #{queryName}, '%')</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+        </where>
+    </select>
+
+    <insert id="insertBizQueryPrice" parameterType="com.ruoyi.business.domain.BizQueryPrice" useGeneratedKeys="true" keyProperty="id">
+        insert into biz_query_price (query_type, query_name, fee, status, remark, create_by, create_time)
+        values (#{queryType}, #{queryName}, #{fee}, #{status}, #{remark}, #{createBy}, sysdate())
+    </insert>
+
+    <update id="updateBizQueryPrice" parameterType="com.ruoyi.business.domain.BizQueryPrice">
+        update biz_query_price
+        <set>
+            <if test="queryType != null and queryType != ''">query_type = #{queryType},</if>
+            <if test="queryName != null and queryName != ''">query_name = #{queryName},</if>
+            <if test="fee != null">fee = #{fee},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteBizQueryPriceByIds" parameterType="String">
+        delete from biz_query_price where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

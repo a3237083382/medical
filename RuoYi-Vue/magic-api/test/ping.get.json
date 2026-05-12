@@ -1,0 +1,10 @@
+{
+  "id": "test_ping",
+  "name": "ping测试",
+  "path": "/test/ping",
+  "method": "GET",
+  "parameter": [],
+  "option": [],
+  "createDate": "2026-05-10 16:30:00",
+  "updateDate": "2026-05-10 16:30:00"
+}

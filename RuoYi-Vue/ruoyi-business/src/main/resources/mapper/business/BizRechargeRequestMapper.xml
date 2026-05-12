@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BizRechargeRequestMapper">
+
+    <resultMap type="com.ruoyi.business.domain.BizRechargeRequest" id="BizRechargeRequestResult">
+        <result property="id" column="id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="amount" column="amount"/>
+        <result property="status" column="status"/>
+        <result property="submitTime" column="submit_time"/>
+        <result property="submitRemark" column="submit_remark"/>
+        <result property="reviewTime" column="review_time"/>
+        <result property="reviewer" column="reviewer"/>
+        <result property="reviewRemark" column="review_remark"/>
+        <result property="feeFlowId" column="fee_flow_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectVo">
+        select r.id, r.company_id, c.company_name, r.amount, r.status,
+               r.submit_time, r.submit_remark, r.review_time, r.reviewer,
+               r.review_remark, r.fee_flow_id,
+               r.create_by, r.create_time, r.update_by, r.update_time
+        from biz_recharge_request r
+        left join biz_insurance_company c on r.company_id = c.id
+    </sql>
+
+    <select id="selectBizRechargeRequestById" parameterType="Long" resultMap="BizRechargeRequestResult">
+        <include refid="selectVo"/>
+        where r.id = #{id}
+    </select>
+
+    <select id="selectBizRechargeRequestList" parameterType="com.ruoyi.business.domain.BizRechargeRequest" resultMap="BizRechargeRequestResult">
+        <include refid="selectVo"/>
+        <where>
+            <if test="companyId != null">and r.company_id = #{companyId}</if>
+            <if test="status != null and status != ''">and r.status = #{status}</if>
+            <if test="companyName != null and companyName != ''">and c.company_name like concat('%', #{companyName}, '%')</if>
+            <if test="params.beginTime != null and params.beginTime != ''">and r.submit_time &gt;= #{params.beginTime}</if>
+            <if test="params.endTime != null and params.endTime != ''">and r.submit_time &lt;= #{params.endTime}</if>
+        </where>
+        order by r.submit_time desc
+    </select>
+
+    <select id="selectBizRechargeRequestByCompanyId" parameterType="Long" resultMap="BizRechargeRequestResult">
+        <include refid="selectVo"/>
+        where r.company_id = #{companyId}
+        order by r.submit_time desc
+    </select>
+
+    <insert id="insertBizRechargeRequest" parameterType="com.ruoyi.business.domain.BizRechargeRequest" useGeneratedKeys="true" keyProperty="id">
+        insert into biz_recharge_request (
+            company_id, amount, status, submit_time, submit_remark,
+            create_by, create_time
+        ) values (
+            #{companyId}, #{amount}, '0', sysdate(), #{submitRemark},
+            #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateBizRechargeRequest" parameterType="com.ruoyi.business.domain.BizRechargeRequest">
+        update biz_recharge_request
+        <set>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="reviewTime != null">review_time = #{reviewTime},</if>
+            <if test="reviewer != null and reviewer != ''">reviewer = #{reviewer},</if>
+            <if test="reviewRemark != null">review_remark = #{reviewRemark},</if>
+            <if test="feeFlowId != null">fee_flow_id = #{feeFlowId},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+</mapper>

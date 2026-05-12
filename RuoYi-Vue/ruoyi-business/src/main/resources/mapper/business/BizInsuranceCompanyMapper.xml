@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BizInsuranceCompanyMapper">
+
+    <resultMap type="com.ruoyi.business.domain.BizInsuranceCompany" id="BizInsuranceCompanyResult">
+        <result property="id" column="id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="companyCode" column="company_code"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="loginIp" column="login_ip"/>
+        <result property="loginDate" column="login_date"/>
+        <result property="appKey" column="app_key"/>
+        <result property="appSecret" column="app_secret"/>
+        <result property="balance" column="balance"/>
+        <result property="billingCycleDays" column="billing_cycle_days"/>
+        <result property="balanceUpdateTime" column="balance_update_time"/>
+        <result property="status" column="status"/>
+        <result property="contactPerson" column="contact_person"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="remark" column="remark"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectBizInsuranceCompanyVo">
+        select id, company_name, company_code, username, password, login_ip, login_date,
+               app_key, app_secret, balance, billing_cycle_days,
+               balance_update_time, status, contact_person, contact_phone, remark,
+               create_by, create_time, update_by, update_time
+        from biz_insurance_company
+    </sql>
+
+    <select id="selectBizInsuranceCompanyById" parameterType="Long" resultMap="BizInsuranceCompanyResult">
+        <include refid="selectBizInsuranceCompanyVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectBizInsuranceCompanyByAppKey" parameterType="String" resultMap="BizInsuranceCompanyResult">
+        <include refid="selectBizInsuranceCompanyVo"/>
+        where app_key = #{appKey}
+    </select>
+
+    <select id="selectBizInsuranceCompanyByUsername" parameterType="String" resultMap="BizInsuranceCompanyResult">
+        <include refid="selectBizInsuranceCompanyVo"/>
+        where username = #{username}
+    </select>
+
+    <select id="selectBizInsuranceCompanyList" parameterType="com.ruoyi.business.domain.BizInsuranceCompany" resultMap="BizInsuranceCompanyResult">
+        <include refid="selectBizInsuranceCompanyVo"/>
+        <where>
+            <if test="companyName != null and companyName != ''">and company_name like concat('%', #{companyName}, '%')</if>
+            <if test="companyCode != null and companyCode != ''">and company_code like concat('%', #{companyCode}, '%')</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+            <if test="appKey != null and appKey != ''">and app_key = #{appKey}</if>
+        </where>
+    </select>
+
+    <insert id="insertBizInsuranceCompany" parameterType="com.ruoyi.business.domain.BizInsuranceCompany" useGeneratedKeys="true" keyProperty="id">
+        insert into biz_insurance_company (
+            <if test="companyName != null and companyName != ''">company_name,</if>
+            <if test="companyCode != null and companyCode != ''">company_code,</if>
+            <if test="username != null and username != ''">username,</if>
+            <if test="password != null and password != ''">password,</if>
+            <if test="appKey != null and appKey != ''">app_key,</if>
+            <if test="appSecret != null and appSecret != ''">app_secret,</if>
+            <if test="balance != null">balance,</if>
+            <if test="billingCycleDays != null">billing_cycle_days,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="contactPerson != null and contactPerson != ''">contact_person,</if>
+            <if test="contactPhone != null and contactPhone != ''">contact_phone,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null">create_by,</if>
+            create_time
+        ) values (
+            <if test="companyName != null and companyName != ''">#{companyName},</if>
+            <if test="companyCode != null and companyCode != ''">#{companyCode},</if>
+            <if test="username != null and username != ''">#{username},</if>
+            <if test="password != null and password != ''">#{password},</if>
+            <if test="appKey != null and appKey != ''">#{appKey},</if>
+            <if test="appSecret != null and appSecret != ''">#{appSecret},</if>
+            <if test="balance != null">#{balance},</if>
+            <if test="billingCycleDays != null">#{billingCycleDays},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="contactPerson != null and contactPerson != ''">#{contactPerson},</if>
+            <if test="contactPhone != null and contactPhone != ''">#{contactPhone},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null">#{createBy},</if>
+            sysdate()
+        )
+    </insert>
+
+    <update id="addBalance" parameterType="map">
+        update biz_insurance_company
+        set balance = balance + #{amount}, balance_update_time = sysdate()
+        where id = #{companyId}
+    </update>
+
+    <update id="updateBizInsuranceCompanyLoginInfo" parameterType="com.ruoyi.business.domain.BizInsuranceCompany">
+        update biz_insurance_company
+        set login_ip = #{loginIp}, login_date = #{loginDate}
+        where id = #{id}
+    </update>
+
+    <update id="updateBizInsuranceCompany" parameterType="com.ruoyi.business.domain.BizInsuranceCompany">
+        update biz_insurance_company
+        <set>
+            <if test="companyName != null and companyName != ''">company_name = #{companyName},</if>
+            <if test="companyCode != null and companyCode != ''">company_code = #{companyCode},</if>
+            <if test="username != null and username != ''">username = #{username},</if>
+            <if test="password != null and password != ''">password = #{password},</if>
+            <if test="appKey != null and appKey != ''">app_key = #{appKey},</if>
+            <if test="appSecret != null and appSecret != ''">app_secret = #{appSecret},</if>
+            <if test="balance != null">balance = #{balance},</if>
+            <if test="billingCycleDays != null">billing_cycle_days = #{billingCycleDays},</if>
+            <if test="balanceUpdateTime != null">balance_update_time = #{balanceUpdateTime},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="contactPerson != null and contactPerson != ''">contact_person = #{contactPerson},</if>
+            <if test="contactPhone != null and contactPhone != ''">contact_phone = #{contactPhone},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteBizInsuranceCompanyByIds" parameterType="String">
+        delete from biz_insurance_company where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
