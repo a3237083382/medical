@@ -24,4 +24,10 @@ public class BizQueryLogServiceImpl implements IBizQueryLogService
     {
         return queryLogMapper.selectBizQueryLogList(queryLog);
     }
+
+    @Override
+    public int insertBizQueryLog(BizQueryLog queryLog)
+    {
+        return queryLogMapper.insertBizQueryLog(queryLog);
+    }
 }

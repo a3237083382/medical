@@ -17,7 +17,7 @@ public class BizFeeFlow extends BaseEntity
     @Excel(name = "公司名称")
     private String companyName;
 
-    @Excel(name = "操作类型", readConverterExp = "RECHARGE=充值,SETTLEMENT=扣费结算,REFUND=退款")
+    @Excel(name = "操作类型", readConverterExp = "RECHARGE=充值,DEDUCT=扣费,SETTLEMENT=扣费结算,REFUND=退款,ADJUST=冲正")
     private String operationType;
 
     @Excel(name = "金额")

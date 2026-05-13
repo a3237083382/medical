@@ -1,0 +1,10 @@
+{
+  "id": "external_medical_query",
+  "name": "医疗数据查询",
+  "path": "/external/medical/query",
+  "method": "POST",
+  "parameter": [],
+  "option": [],
+  "createDate": "2026-05-13 16:50:00",
+  "updateDate": "2026-05-13 16:50:00"
+}

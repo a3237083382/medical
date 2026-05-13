@@ -8,4 +8,6 @@ public interface IBizFeeFlowService
     public BizFeeFlow selectBizFeeFlowById(Long id);
 
     public List<BizFeeFlow> selectBizFeeFlowList(BizFeeFlow flow);
+
+    public int insertBizFeeFlow(BizFeeFlow flow);
 }

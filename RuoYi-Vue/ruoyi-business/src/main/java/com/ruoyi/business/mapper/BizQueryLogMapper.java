@@ -8,4 +8,6 @@ public interface BizQueryLogMapper
     public BizQueryLog selectBizQueryLogById(Long id);
 
     public List<BizQueryLog> selectBizQueryLogList(BizQueryLog queryLog);
+
+    public int insertBizQueryLog(BizQueryLog queryLog);
 }
