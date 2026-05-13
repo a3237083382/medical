@@ -108,6 +108,8 @@ public class SecurityConfig
                     .requestMatchers("/magic/web/**", "/magic/api/**").permitAll()
                     // 保险公司登录放行
                     .requestMatchers("/company/login", "/company/api/**").permitAll()
+                    // 对外 API 由签名拦截器认证
+                    .requestMatchers("/api/v1/**").permitAll()
                     // 除上面外的所有请求全部需要鉴权认证
                     .anyRequest().authenticated();
             })
