@@ -24,4 +24,10 @@ public class BizFeeFlowServiceImpl implements IBizFeeFlowService
     {
         return feeFlowMapper.selectBizFeeFlowList(flow);
     }
+
+    @Override
+    public int insertBizFeeFlow(BizFeeFlow flow)
+    {
+        return feeFlowMapper.insertBizFeeFlow(flow);
+    }
 }

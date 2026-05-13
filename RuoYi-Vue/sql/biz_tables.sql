@@ -4,6 +4,7 @@ DROP TRIGGER IF EXISTS `trg_query_log_before_delete`;
 DROP TABLE IF EXISTS `biz_settlement`;
 DROP TABLE IF EXISTS `biz_fee_flow`;
 DROP TABLE IF EXISTS `biz_query_log`;
+DROP TABLE IF EXISTS `mock_medical_data`;
 DROP TABLE IF EXISTS `biz_query_price`;
 DROP TABLE IF EXISTS `biz_insurance_company`;
 
@@ -51,7 +52,7 @@ CREATE TABLE `biz_query_price` (
   UNIQUE KEY `uk_query_type` (`query_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='查询价目表';
 
--- 查询日志表（禁止UPDATE/DELETE，记录每次查询但不实时扣费）
+-- 查询日志表（禁止UPDATE/DELETE，记录每次成功查询和实时扣费凭证）
 CREATE TABLE `biz_query_log` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `company_id` bigint NOT NULL COMMENT '保险公司ID',
@@ -69,6 +70,22 @@ CREATE TABLE `biz_query_log` (
   KEY `idx_request_time` (`request_time`),
   KEY `idx_settlement_id` (`settlement_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='查询日志表';
+
+-- 模拟医疗数据表（用于开发和测试，Phase 7 切换真实数据源）
+CREATE TABLE `mock_medical_data` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `query_type` varchar(50) NOT NULL COMMENT '查询类型',
+  `patient_name` varchar(50) NOT NULL COMMENT '姓名',
+  `id_card` varchar(32) NOT NULL COMMENT '身份证号',
+  `diagnosis` varchar(200) DEFAULT NULL COMMENT '诊断',
+  `data_json` json DEFAULT NULL COMMENT '扩展模拟数据',
+  `status` char(1) NOT NULL DEFAULT '0' COMMENT '状态（0启用 1停用）',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_query_type` (`query_type`),
+  KEY `idx_id_card` (`id_card`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='模拟医疗数据表';
 
 -- 结算记录表
 CREATE TABLE `biz_settlement` (
@@ -93,7 +110,7 @@ CREATE TABLE `biz_settlement` (
 CREATE TABLE `biz_fee_flow` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `company_id` bigint NOT NULL COMMENT '保险公司ID',
-  `operation_type` varchar(20) NOT NULL COMMENT '操作类型（RECHARGE充值/SETTLEMENT结算/REFUND退款）',
+  `operation_type` varchar(20) NOT NULL COMMENT '操作类型（RECHARGE充值/DEDUCT扣费/SETTLEMENT结算/REFUND退款/ADJUST冲正）',
   `amount` decimal(12,2) NOT NULL COMMENT '金额',
   `balance_before` decimal(12,2) NOT NULL COMMENT '操作前余额',
   `balance_after` decimal(12,2) NOT NULL COMMENT '操作后余额',
@@ -106,6 +123,17 @@ CREATE TABLE `biz_fee_flow` (
   KEY `idx_operation_type` (`operation_type`),
   KEY `idx_operation_time` (`operation_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='费用流水表';
+
+-- Phase 6 开发测试价目和模拟数据
+INSERT INTO `biz_query_price` (`query_type`, `query_name`, `fee`, `status`, `remark`, `create_by`, `create_time`) VALUES
+('medical_all', '医疗大数据', 50.00, '0', 'Phase 6 默认测试价目', 'system', sysdate()),
+('medical_insurance', '医保信息', 30.00, '0', 'Phase 6 默认测试价目', 'system', sysdate()),
+('medical_record', '电子病历', 40.00, '0', 'Phase 6 默认测试价目', 'system', sysdate());
+
+INSERT INTO `mock_medical_data` (`query_type`, `patient_name`, `id_card`, `diagnosis`, `data_json`, `status`, `remark`, `create_time`) VALUES
+('medical_all', 'Alice', '430102199001011234', 'Hypertension', '{"hospital":"HN Test Hospital","visitDate":"2026-05-01"}', '0', 'Phase 6 mock data', sysdate()),
+('medical_insurance', 'Bob', '430102198802021234', 'Diabetes', '{"insuranceType":"basic","lastClaimAmount":120.50}', '0', 'Phase 6 mock data', sysdate()),
+('medical_record', 'Carol', '430102197703031234', 'Fracture', '{"department":"orthopedics","recordNo":"MOCK-001"}', '0', 'Phase 6 mock data', sysdate());
 
 -- 查询日志表触发器：禁止UPDATE
 DELIMITER //
