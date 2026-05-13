@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>保险公司 iframe 嵌入测试</title>
+  <style>
+    body { margin: 0; font-family: Arial, "Microsoft YaHei", sans-serif; background: #f5f7fb; color: #1f2937; }
+    header { height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 16px; background: #fff; border-bottom: 1px solid #e5e7eb; }
+    input { flex: 1; height: 34px; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 4px; }
+    button { height: 34px; padding: 0 14px; border: 0; border-radius: 4px; background: #2563eb; color: #fff; cursor: pointer; }
+    iframe { width: 100%; height: calc(100vh - 57px); border: 0; background: #fff; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>iframe 测试页</strong>
+    <input id="embedUrl" placeholder="保险公司嵌入地址" />
+    <button onclick="loadEmbed()">加载</button>
+  </header>
+  <iframe id="frame" title="company embed"></iframe>
+  <script>
+    document.getElementById("embedUrl").value = location.origin + "/company/login?embedMode=iframe&target=/company/query";
+
+    function loadEmbed() {
+      var value = document.getElementById("embedUrl").value.trim();
+      if (!value) return;
+      document.getElementById("frame").src = value;
+    }
+  </script>
+</body>
+</html>

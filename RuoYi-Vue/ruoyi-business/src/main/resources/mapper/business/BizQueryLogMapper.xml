@@ -44,4 +44,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where l.id = #{id}
     </select>
 
+    <insert id="insertBizQueryLog" parameterType="com.ruoyi.business.domain.BizQueryLog" useGeneratedKeys="true" keyProperty="id">
+        insert into biz_query_log
+        (company_id, query_type, query_params, fee, settlement_id, status, request_time, request_ip, remark)
+        values
+        (#{companyId}, #{queryType}, #{queryParams}, #{fee}, #{settlementId}, #{status}, #{requestTime}, #{requestIp}, #{remark})
+    </insert>
+
 </mapper>

@@ -19,6 +19,8 @@ public interface BizInsuranceCompanyMapper
 
     public int addBalance(@Param("companyId") Long companyId, @Param("amount") java.math.BigDecimal amount);
 
+    public int deductBalance(@Param("companyId") Long companyId, @Param("amount") java.math.BigDecimal amount);
+
     public List<BizInsuranceCompany> selectBizInsuranceCompanyList(BizInsuranceCompany company);
 
     public int insertBizInsuranceCompany(BizInsuranceCompany company);

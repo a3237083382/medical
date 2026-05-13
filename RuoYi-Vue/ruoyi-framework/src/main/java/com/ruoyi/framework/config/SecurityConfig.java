@@ -107,7 +107,7 @@ public class SecurityConfig
                     // Magic-API 放行
                     .requestMatchers("/magic/web/**", "/magic/api/**").permitAll()
                     // 保险公司登录放行
-                    .requestMatchers("/company/login", "/company/api/**").permitAll()
+                    .requestMatchers("/company/login", "/company/api/**", "/open/api/**").permitAll()
                     // 除上面外的所有请求全部需要鉴权认证
                     .anyRequest().authenticated();
             })
