@@ -105,7 +105,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         set balance = balance - #{amount}, balance_update_time = sysdate()
         where id = #{companyId}
           and status = '0'
-          and balance >= #{amount}
+          and balance &gt;= #{amount}
     </update>
 
     <update id="updateBizInsuranceCompanyLoginInfo" parameterType="com.ruoyi.business.domain.BizInsuranceCompany">

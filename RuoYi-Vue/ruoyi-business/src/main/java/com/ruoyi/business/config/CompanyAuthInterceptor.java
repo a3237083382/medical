@@ -1,6 +1,7 @@
 package com.ruoyi.business.config;
 
 import com.ruoyi.business.domain.BizInsuranceCompany;
+import com.ruoyi.business.config.CompanyTokenService.CompanySession;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,8 @@ public class CompanyAuthInterceptor implements HandlerInterceptor
         }
 
         String jwtToken = authHeader.substring(7);
-        BizInsuranceCompany company = tokenService.getCompanyFromToken(jwtToken);
+        CompanySession session = tokenService.getSessionFromToken(jwtToken);
+        BizInsuranceCompany company = session == null ? null : session.getCompany();
         if (company == null)
         {
             response.setStatus(401);

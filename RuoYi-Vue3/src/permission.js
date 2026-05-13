@@ -3,7 +3,8 @@ import { ElMessage } from 'element-plus'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import { getToken } from '@/utils/auth'
-import { getCompanyToken } from '@/utils/companyAuth'
+import { getCompanyToken, setCompanyEmbedMode } from '@/utils/companyAuth'
+import { resolveCompanyEmbedMode, resolveCompanyLoginTarget } from '@/utils/companyLoginTarget'
 import { isHttp, isPathMatch } from '@/utils/validate'
 import { isRelogin } from '@/utils/request'
 import useUserStore from '@/store/modules/user'
@@ -13,8 +14,8 @@ import usePermissionStore from '@/store/modules/permission'
 
 NProgress.configure({ showSpinner: false })
 
-const whiteList = ['/login', '/register', '/company/login']
-const isCompanyRoute = (path) => path.startsWith('/company') && path !== '/company/login'
+const whiteList = ['/login', '/register', '/company/login', '/company/embed']
+const isCompanyRoute = (path) => path.startsWith('/company') && path !== '/company/login' && path !== '/company/embed'
 
 const isWhiteList = (path) => {
   return whiteList.some(pattern => isPathMatch(pattern, path))
@@ -30,8 +31,9 @@ router.beforeEach(async (to, from) => {
     return { path: '/company/login', query: { redirect: to.fullPath } }
   }
   if (to.path === '/company/login' && getCompanyToken()) {
+    setCompanyEmbedMode(resolveCompanyEmbedMode(to.query))
     NProgress.done()
-    return { path: '/company/dashboard' }
+    return { path: resolveCompanyLoginTarget(to.query) }
   }
   if (getToken()) {
     to.meta.title && useSettingsStore().setTitle(to.meta.title)

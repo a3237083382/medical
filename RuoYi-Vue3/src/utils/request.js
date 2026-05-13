@@ -11,6 +11,7 @@ import useUserStore from '@/store/modules/user'
 let downloadLoadingInstance
 // 是否显示重新登录
 export let isRelogin = { show: false }
+const isCompanyRequest = (url) => url && (url.startsWith('/company/api') || url.startsWith('/company/embed'))
 
 axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
 // 创建axios实例
@@ -29,7 +30,7 @@ service.interceptors.request.use(config => {
   const isRepeatSubmit = (config.headers || {}).repeatSubmit === false
   // 间隔时间(ms)，小于此时间视为重复提交
   const interval = (config.headers || {}).interval || 1000
-  if (config.url && config.url.startsWith('/company/api')) {
+  if (isCompanyRequest(config.url)) {
     const companyToken = getCompanyToken()
     if (companyToken && !isToken) {
       config.headers['Authorization'] = 'Bearer ' + companyToken
@@ -89,9 +90,8 @@ service.interceptors.response.use(res => {
       return res.data
     }
     if (code === 401) {
-      if (res.config.url && res.config.url.startsWith('/company/api')) {
+      if (isCompanyRequest(res.config.url)) {
         removeCompanyToken()
-        location.href = '/company/login'
         return Promise.reject('公司账号登录状态已过期，请重新登录。')
       }
       if (!isRelogin.show) {
@@ -121,9 +121,8 @@ service.interceptors.response.use(res => {
   },
   error => {
     console.log('err' + error)
-    if (error.response && error.response.status === 401 && error.config && error.config.url && error.config.url.startsWith('/company/api')) {
+    if (error.response && error.response.status === 401 && error.config && isCompanyRequest(error.config.url)) {
       removeCompanyToken()
-      location.href = '/company/login'
       return Promise.reject(error)
     }
     let { message } = error

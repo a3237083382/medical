@@ -53,3 +53,18 @@ export function listQueryLogs(query) {
     params: query
   })
 }
+
+export function listMedicalQueryTypes() {
+  return request({
+    url: '/company/api/medical/query-types',
+    method: 'get'
+  })
+}
+
+export function listFeeFlows(query) {
+  return request({
+    url: '/company/api/fee-flow/list',
+    method: 'get',
+    params: query
+  })
+}

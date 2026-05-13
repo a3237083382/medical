@@ -65,6 +65,11 @@ export const constantRoutes = [
     hidden: true
   },
   {
+    path: '/company/embed',
+    component: () => import('@/views/company/embed'),
+    hidden: true
+  },
+  {
     path: '/company',
     component: CompanyLayout,
     hidden: true,
@@ -75,6 +80,12 @@ export const constantRoutes = [
         component: () => import('@/views/company/dashboard'),
         name: 'CompanyDashboard',
         meta: { title: '公司首页' }
+      },
+      {
+        path: 'query',
+        component: () => import('@/views/company/query'),
+        name: 'CompanyQuery',
+        meta: { title: '医疗查询' }
       },
       {
         path: 'recharge',
@@ -93,6 +104,12 @@ export const constantRoutes = [
         component: () => import('@/views/company/queryLog'),
         name: 'CompanyQueryLog',
         meta: { title: '查询记录' }
+      },
+      {
+        path: 'fee-flow',
+        component: () => import('@/views/company/feeFlow'),
+        name: 'CompanyFeeFlow',
+        meta: { title: '费用流水' }
       },
       {
         path: 'profile',

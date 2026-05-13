@@ -44,6 +44,12 @@ public class BizInsuranceCompanyServiceImpl implements IBizInsuranceCompanyServi
     public int updateLoginInfo(BizInsuranceCompany company) { return companyMapper.updateBizInsuranceCompanyLoginInfo(company); }
 
     @Override
+    public int deductBalance(Long companyId, BigDecimal amount)
+    {
+        return companyMapper.deductBalance(companyId, amount);
+    }
+
+    @Override
     public List<BizInsuranceCompany> selectBizInsuranceCompanyList(BizInsuranceCompany company)
     {
         return companyMapper.selectBizInsuranceCompanyList(company);

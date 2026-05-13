@@ -1,5 +1,6 @@
 package com.ruoyi.business.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import com.ruoyi.business.domain.BizInsuranceCompany;
 
@@ -32,6 +33,8 @@ public interface IBizInsuranceCompanyService
      * 更新登录信息（IP和时间）
      */
     public int updateLoginInfo(BizInsuranceCompany company);
+
+    public int deductBalance(Long companyId, BigDecimal amount);
 
     /**
      * 启用/停用
