@@ -47,4 +47,10 @@ public class MockMedicalDataSource implements MedicalDataSource
     {
         return true;
     }
+
+    @Override
+    public String sourceCode()
+    {
+        return "mock";
+    }
 }

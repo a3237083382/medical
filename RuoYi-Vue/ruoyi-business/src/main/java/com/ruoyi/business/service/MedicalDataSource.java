@@ -9,4 +9,9 @@ public interface MedicalDataSource
     Map<String, Object> query(MedicalQueryRequest request);
 
     boolean health();
+
+    default String sourceCode()
+    {
+        return "mock";
+    }
 }

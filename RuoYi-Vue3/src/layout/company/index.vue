@@ -1,11 +1,17 @@
 <template>
   <div class="company-layout" :class="{ 'is-embedded': isEmbedded }">
     <aside v-if="!isEmbedded" class="company-sidebar">
-      <div class="company-logo">保险公司系统</div>
+      <div class="company-logo">
+        <span class="logo-mark">湘</span>
+        <span>
+          <strong>医疗信息接口台</strong>
+          <small>INSURER WORKBENCH</small>
+        </span>
+      </div>
       <el-menu :default-active="activeMenu" router class="company-menu">
         <el-menu-item index="/company/dashboard">
           <el-icon><House /></el-icon>
-          <span>首页</span>
+          <span>账户概览</span>
         </el-menu-item>
         <el-menu-item index="/company/query">
           <el-icon><Search /></el-icon>
@@ -37,9 +43,12 @@
       <header v-if="!isEmbedded" class="company-header">
         <div>
           <div class="company-title">{{ title }}</div>
-          <div class="company-name">{{ companyName }}</div>
+          <div class="company-name">{{ companyName }} · 医疗数据查询服务</div>
         </div>
-        <el-button type="danger" plain @click="logout">退出登录</el-button>
+        <div class="header-actions">
+          <span class="service-pill">签名接口已启用</span>
+          <el-button type="primary" plain @click="logout">退出登录</el-button>
+        </div>
       </header>
       <nav v-else class="embed-nav">
         <el-tabs :model-value="activeMenu" @tab-change="goTab">
@@ -88,39 +97,80 @@ function logout() {
 .company-layout {
   min-height: 100vh;
   display: flex;
-  background: #f4f7fb;
+  background:
+    linear-gradient(135deg, rgba(34, 184, 167, 0.09) 0%, transparent 32%),
+    linear-gradient(160deg, #edf3f7 0%, #f7f9fb 48%, #eef5f3 100%);
+  color: #10202f;
 }
 
 .company-sidebar {
-  width: 220px;
+  width: 248px;
   flex-shrink: 0;
-  background: #101828;
-  color: #fff;
+  background: #0c2430;
+  color: #e8f1f3;
+  box-shadow: 10px 0 30px rgba(12, 36, 48, 0.12);
 }
 
 .company-logo {
-  height: 56px;
+  min-height: 78px;
   display: flex;
+  gap: 12px;
   align-items: center;
-  padding: 0 20px;
-  font-size: 17px;
-  font-weight: 600;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo-mark {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #22b8a7;
+  color: #052027;
+  font-weight: 800;
+}
+
+.company-logo strong {
+  display: block;
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+.company-logo small {
+  display: block;
+  margin-top: 4px;
+  color: #89a9b0;
+  font-size: 10px;
+  letter-spacing: 0;
 }
 
 .company-menu {
   border-right: 0;
   background: transparent;
+  padding: 14px 12px;
 }
 
 .company-menu :deep(.el-menu-item) {
-  color: #cbd5e1;
+  height: 44px;
+  margin: 4px 0;
+  border-radius: 8px;
+  color: #c5d7db;
+}
+
+.company-menu :deep(.el-icon) {
+  color: #7fb7bd;
 }
 
 .company-menu :deep(.el-menu-item:hover),
 .company-menu :deep(.el-menu-item.is-active) {
-  color: #fff;
-  background: #1d4ed8;
+  color: #ffffff;
+  background: #174656;
+}
+
+.company-menu :deep(.el-menu-item.is-active .el-icon) {
+  color: #22d3c5;
 }
 
 .company-main {
@@ -129,36 +179,56 @@ function logout() {
 }
 
 .company-header {
-  height: 56px;
-  padding: 0 24px;
+  height: 72px;
+  padding: 0 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.82);
+  border-bottom: 1px solid rgba(147, 163, 171, 0.24);
+  backdrop-filter: blur(14px);
 }
 
 .company-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #111827;
+  font-size: 20px;
+  font-weight: 700;
+  color: #10202f;
 }
 
 .company-name {
-  margin-top: 3px;
+  margin-top: 5px;
   font-size: 12px;
-  color: #667085;
+  color: #62717a;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.service-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid rgba(34, 184, 167, 0.28);
+  border-radius: 999px;
+  background: rgba(34, 184, 167, 0.1);
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .company-content {
-  min-height: calc(100vh - 56px);
-  padding: 20px;
+  min-height: calc(100vh - 72px);
+  padding: 24px;
 }
 
 .is-embedded {
   min-height: 100vh;
   display: block;
-  background: #f6f8fb;
+  background: #f5f8fa;
 }
 
 .is-embedded .company-main {
@@ -166,10 +236,10 @@ function logout() {
 }
 
 .embed-nav {
-  height: 48px;
-  padding: 0 16px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  min-height: 52px;
+  padding: 0 18px;
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid rgba(147, 163, 171, 0.24);
 }
 
 .embed-nav :deep(.el-tabs__header) {
@@ -183,5 +253,37 @@ function logout() {
 .is-embedded .company-content {
   min-height: calc(100vh - 48px);
   padding: 16px;
+}
+
+@media (max-width: 960px) {
+  .company-layout {
+    display: block;
+  }
+
+  .company-sidebar {
+    width: 100%;
+  }
+
+  .company-menu {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .company-menu :deep(.el-menu-item) {
+    flex-shrink: 0;
+  }
+
+  .company-header {
+    height: auto;
+    min-height: 72px;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 18px;
+    flex-direction: column;
+  }
+
+  .company-content {
+    padding: 16px;
+  }
 }
 </style>

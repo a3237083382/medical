@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BusinessDashboardMapper">
+
+    <resultMap type="com.ruoyi.business.domain.dashboard.BusinessTrendItem" id="BusinessTrendItemResult">
+        <result property="name" column="name"/>
+        <result property="value" column="value"/>
+        <result property="amount" column="amount"/>
+    </resultMap>
+
+    <resultMap type="com.ruoyi.business.domain.dashboard.BusinessStatItem" id="BusinessStatItemResult">
+        <result property="name" column="name"/>
+        <result property="value" column="value"/>
+        <result property="amount" column="amount"/>
+    </resultMap>
+
+    <select id="selectTotalQueryCount" resultType="Long">
+        select count(1) from biz_query_log
+    </select>
+
+    <select id="selectQueryCountByStatus" parameterType="String" resultType="Long">
+        select count(1) from biz_query_log where status = #{status}
+    </select>
+
+    <select id="selectTotalFee" resultType="java.math.BigDecimal">
+        select coalesce(sum(fee), 0) from biz_query_log where status = '0'
+    </select>
+
+    <select id="selectCompanyCount" resultType="Long">
+        select count(1) from biz_insurance_company
+    </select>
+
+    <select id="selectCompanyCountByStatus" parameterType="String" resultType="Long">
+        select count(1) from biz_insurance_company where status = #{status}
+    </select>
+
+    <select id="selectTodayQueryCount" resultType="Long">
+        select count(1) from biz_query_log
+        where request_time &gt;= curdate()
+          and request_time &lt; date_add(curdate(), interval 1 day)
+    </select>
+
+    <select id="selectMonthlyTrend" resultMap="BusinessTrendItemResult">
+        select date_format(request_time, '%Y-%m') as name,
+               count(1) as value,
+               coalesce(sum(case when status = '0' then fee else 0 end), 0) as amount
+        from biz_query_log
+        where request_time &gt;= date_sub(curdate(), interval 11 month)
+        group by date_format(request_time, '%Y-%m')
+        order by name
+    </select>
+
+    <select id="selectQueryTypeStats" resultMap="BusinessStatItemResult">
+        select query_type as name,
+               count(1) as value,
+               coalesce(sum(case when status = '0' then fee else 0 end), 0) as amount
+        from biz_query_log
+        group by query_type
+        order by value desc
+    </select>
+
+    <select id="selectCompanyRank" resultMap="BusinessStatItemResult">
+        select c.company_name as name,
+               count(l.id) as value,
+               coalesce(sum(case when l.status = '0' then l.fee else 0 end), 0) as amount
+        from biz_query_log l
+        left join biz_insurance_company c on l.company_id = c.id
+        group by c.company_name
+        order by value desc
+        limit 10
+    </select>
+</mapper>

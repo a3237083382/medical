@@ -139,6 +139,7 @@ class SignAuthInterceptorTest
         @Override public int deleteBizInsuranceCompanyByIds(Long[] ids) { return 0; }
         @Override public BizInsuranceCompany selectBizInsuranceCompanyByUsername(String username) { return null; }
         @Override public int updateLoginInfo(BizInsuranceCompany company) { return 0; }
+        @Override public int deductBalance(Long companyId, BigDecimal amount) { return 0; }
         @Override public int changeStatus(Long id, String status) { return 0; }
         @Override public int updatePassword(Long id, String password) { return 0; }
     }

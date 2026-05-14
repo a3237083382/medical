@@ -1,7 +1,11 @@
 <template>
   <div class="login-body">
     <div class="login-panel">
-      <h2 class="login-title">保险公司门户</h2>
+      <div class="panel-heading">
+        <div class="system-name">医疗信息查询平台</div>
+        <span>保险公司登录</span>
+        <small>请使用保险公司账号登录</small>
+      </div>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="0">
         <el-form-item prop="username">
           <el-input v-model="form.username" placeholder="用户名" size="large">
@@ -14,11 +18,8 @@
           </el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="loading" style="width:100%" size="large" @click="handleLogin">登 录</el-button>
+          <el-button class="login-submit" type="primary" :loading="loading" size="large" @click="handleLogin">登 录</el-button>
         </el-form-item>
-        <div style="text-align:center;font-size:12px;color:#999">
-          <router-link to="/login" style="color:#409EFF">管理员登录</router-link>
-        </div>
       </el-form>
     </div>
   </div>
@@ -62,19 +63,61 @@ function handleLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 24px;
+  background: #f4f7f9;
 }
+
 .login-panel {
   width: 400px;
-  padding: 40px;
+  padding: 32px;
   background: #fff;
+  border: 1px solid #e3e8ee;
   border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.15);
+  box-shadow: 0 12px 32px rgba(16, 32, 47, 0.08);
 }
-.login-title {
+
+.panel-heading {
+  margin-bottom: 24px;
   text-align: center;
-  margin-bottom: 30px;
-  color: #333;
+}
+
+.system-name {
+  margin-bottom: 14px;
+  color: #0f766e;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.panel-heading span {
+  display: block;
+  color: #10202f;
   font-size: 22px;
+  font-weight: 800;
+}
+
+.panel-heading small {
+  display: block;
+  margin-top: 8px;
+  color: #6b7b84;
+}
+
+.login-submit {
+  width: 100%;
+  background: #0f766e;
+  border-color: #0f766e;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .login-body {
+    min-height: 100vh;
+    height: auto;
+    align-items: center;
+  }
+
+  .login-panel {
+    width: 100%;
+    max-width: 400px;
+  }
 }
 </style>

@@ -1,5 +1,6 @@
 package com.ruoyi.web.controller.business;
 
+import java.util.ArrayList;
 import java.util.List;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.business.domain.BizInsuranceCompany;
+import com.ruoyi.business.domain.CompanyCredentialExport;
 import com.ruoyi.business.service.IBizInsuranceCompanyService;
 
 /**
@@ -60,6 +62,29 @@ public class BizInsuranceCompanyController extends BaseController
     /**
      * 获取保险公司详细信息
      */
+    @Log(title = "保险公司密钥导出", businessType = BusinessType.EXPORT)
+    @PreAuthorize("@ss.hasPermi('business:company:export')")
+    @PostMapping("/credentials/export")
+    public void exportCredentials(HttpServletResponse response, @RequestParam Long[] ids)
+    {
+        List<CompanyCredentialExport> list = new ArrayList<>();
+        for (Long id : ids)
+        {
+            BizInsuranceCompany company = companyService.selectBizInsuranceCompanyById(id);
+            if (company != null)
+            {
+                CompanyCredentialExport row = new CompanyCredentialExport();
+                row.setCompanyName(company.getCompanyName());
+                row.setCompanyCode(company.getCompanyCode());
+                row.setAppKey(company.getAppKey());
+                row.setAppSecret(company.getAppSecret());
+                list.add(row);
+            }
+        }
+        ExcelUtil<CompanyCredentialExport> util = new ExcelUtil<CompanyCredentialExport>(CompanyCredentialExport.class);
+        util.exportExcel(response, list, "保险公司接口密钥");
+    }
+
     @PreAuthorize("@ss.hasPermi('business:company:query')")
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable Long id)

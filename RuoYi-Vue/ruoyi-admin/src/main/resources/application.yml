@@ -159,3 +159,14 @@ magic-api:
     enabled: true
   # 打印banner
   banner: true
+
+# Medical data source routing. Real source credentials are filled after external systems open.
+medical:
+  datasource:
+    default-source: mock
+    fallback-enabled: true
+    routes: {}
+    digital-industry:
+      enabled: false
+      query-url:
+      timeout-millis: 5000
