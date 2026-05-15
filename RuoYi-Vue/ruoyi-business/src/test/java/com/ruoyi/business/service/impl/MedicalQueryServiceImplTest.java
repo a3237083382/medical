@@ -28,7 +28,7 @@ import com.ruoyi.business.service.MedicalQueryException;
 public class MedicalQueryServiceImplTest
 {
     @Test
-    public void queryDeductsBalanceAndWritesLogAndFlowWhenBalanceEnough()
+    public void queryWritesLogWithoutDeductingBalanceBeforeSettlement()
     {
         FakeCompanyMapper companyMapper = new FakeCompanyMapper(company(1L, "100.00"));
         FakePriceMapper priceMapper = new FakePriceMapper(price("medical_all", "50.00"));
@@ -36,7 +36,7 @@ public class MedicalQueryServiceImplTest
         FakeFeeFlowMapper feeFlowMapper = new FakeFeeFlowMapper();
         FakeMedicalDataSource dataSource = new FakeMedicalDataSource();
         MedicalQueryServiceImpl service = new MedicalQueryServiceImpl(
-                companyMapper, priceMapper, queryLogMapper, feeFlowMapper, dataSource);
+                companyMapper, priceMapper, queryLogMapper, dataSource);
 
         MedicalQueryRequest request = new MedicalQueryRequest();
         request.setCompanyId(1L);
@@ -47,11 +47,11 @@ public class MedicalQueryServiceImplTest
         MedicalQueryResult result = service.query(request);
 
         assertEquals(new BigDecimal("50.00"), result.getFee());
-        assertEquals(new BigDecimal("50.00"), result.getBalanceAfter());
+        assertEquals(new BigDecimal("100.00"), result.getBalanceAfter());
         assertEquals("A***e", result.getData().get("patientName"));
         assertEquals("430***********1234", result.getData().get("idCard"));
         assertEquals("Hy***", result.getData().get("diagnosis"));
-        assertEquals(new BigDecimal("50.00"), companyMapper.company.getBalance());
+        assertEquals(new BigDecimal("100.00"), companyMapper.company.getBalance());
 
         assertEquals(1, queryLogMapper.logs.size());
         BizQueryLog log = queryLogMapper.logs.get(0);
@@ -62,18 +62,12 @@ public class MedicalQueryServiceImplTest
         assertEquals("0", log.getStatus());
         assertTrue(log.getQueryParams().contains("430102199001011234"));
 
-        assertEquals(1, feeFlowMapper.flows.size());
-        BizFeeFlow flow = feeFlowMapper.flows.get(0);
-        assertEquals("DEDUCT", flow.getOperationType());
-        assertEquals(new BigDecimal("50.00"), flow.getAmount());
-        assertEquals(new BigDecimal("100.00"), flow.getBalanceBefore());
-        assertEquals(new BigDecimal("50.00"), flow.getBalanceAfter());
-        assertEquals(Long.valueOf(1L), flow.getBizId());
+        assertTrue(feeFlowMapper.flows.isEmpty());
         assertEquals(1, dataSource.queryCount);
     }
 
     @Test
-    public void queryReturns4001AndDoesNotQueryOrWriteRecordsWhenBalanceInsufficient()
+    public void queryAllowsWhenBalanceIsNonNegativeEvenIfFeeIsHigher()
     {
         FakeCompanyMapper companyMapper = new FakeCompanyMapper(company(1L, "20.00"));
         FakePriceMapper priceMapper = new FakePriceMapper(price("medical_all", "50.00"));
@@ -81,7 +75,32 @@ public class MedicalQueryServiceImplTest
         FakeFeeFlowMapper feeFlowMapper = new FakeFeeFlowMapper();
         FakeMedicalDataSource dataSource = new FakeMedicalDataSource();
         MedicalQueryServiceImpl service = new MedicalQueryServiceImpl(
-                companyMapper, priceMapper, queryLogMapper, feeFlowMapper, dataSource);
+                companyMapper, priceMapper, queryLogMapper, dataSource);
+
+        MedicalQueryRequest request = new MedicalQueryRequest();
+        request.setCompanyId(1L);
+        request.setQueryType("medical_all");
+        request.setQueryParams(params("idCard", "430102199001011234"));
+
+        MedicalQueryResult result = service.query(request);
+
+        assertEquals(new BigDecimal("20.00"), companyMapper.company.getBalance());
+        assertEquals(new BigDecimal("20.00"), result.getBalanceAfter());
+        assertEquals(1, queryLogMapper.logs.size());
+        assertTrue(feeFlowMapper.flows.isEmpty());
+        assertEquals(1, dataSource.queryCount);
+    }
+
+    @Test
+    public void queryReturns4001WhenBalanceIsNegativeAfterSettlement()
+    {
+        FakeCompanyMapper companyMapper = new FakeCompanyMapper(company(1L, "-1.00"));
+        FakePriceMapper priceMapper = new FakePriceMapper(price("medical_all", "50.00"));
+        FakeQueryLogMapper queryLogMapper = new FakeQueryLogMapper();
+        FakeFeeFlowMapper feeFlowMapper = new FakeFeeFlowMapper();
+        FakeMedicalDataSource dataSource = new FakeMedicalDataSource();
+        MedicalQueryServiceImpl service = new MedicalQueryServiceImpl(
+                companyMapper, priceMapper, queryLogMapper, dataSource);
 
         MedicalQueryRequest request = new MedicalQueryRequest();
         request.setCompanyId(1L);
@@ -98,7 +117,6 @@ public class MedicalQueryServiceImplTest
             assertEquals("4001", ex.getCode());
         }
 
-        assertEquals(new BigDecimal("20.00"), companyMapper.company.getBalance());
         assertTrue(queryLogMapper.logs.isEmpty());
         assertTrue(feeFlowMapper.flows.isEmpty());
         assertEquals(0, dataSource.queryCount);
@@ -159,6 +177,7 @@ public class MedicalQueryServiceImplTest
         @Override public BizInsuranceCompany selectBizInsuranceCompanyByUsername(String username) { return null; }
         @Override public int updateBizInsuranceCompanyLoginInfo(BizInsuranceCompany company) { return 0; }
         @Override public int addBalance(Long companyId, BigDecimal amount) { return 0; }
+        @Override public int settleBalance(Long companyId, BigDecimal amount, java.util.Date balanceUpdateTime) { return 0; }
         @Override public List<BizInsuranceCompany> selectBizInsuranceCompanyList(BizInsuranceCompany company) { return new ArrayList<>(); }
         @Override public int insertBizInsuranceCompany(BizInsuranceCompany company) { return 0; }
         @Override public int updateBizInsuranceCompany(BizInsuranceCompany company) { return 0; }
@@ -196,6 +215,8 @@ public class MedicalQueryServiceImplTest
 
         @Override public BizQueryLog selectBizQueryLogById(Long id) { return null; }
         @Override public List<BizQueryLog> selectBizQueryLogList(BizQueryLog queryLog) { return logs; }
+        @Override public BigDecimal sumUnsettledSuccessFeeByCompanyId(Long companyId, java.util.Date cutoffTime) { return BigDecimal.ZERO; }
+        @Override public int updateSettlementIdForUnsettledSuccessLogs(Long companyId, Long settlementId, java.util.Date cutoffTime) { return 0; }
     }
 
     private static class FakeFeeFlowMapper implements BizFeeFlowMapper

@@ -10,7 +10,7 @@
 - `/company/query` 保留路径，但页面改为“接口接入”，用于展示 AppKey、开放接口地址、签名请求头、请求/响应示例和 queryType 价目列表。
 - 保险公司不在门户页面手工输入姓名/身份证查询；实际医疗查询由保险公司系统按接口文档调用开放 API。
 - 新增开放接口 `POST /open/api/medical/query`，支持 `X-App-Key`、`X-Timestamp`、`X-Nonce`、`X-Sign` 签名校验。
-- 开放接口根据 `queryType` 读取后台价目配置，成功查询后扣减余额、写入 `biz_query_log` 和 `biz_fee_flow`。
+- 开放接口根据 `queryType` 读取后台价目配置，成功查询后写入 `biz_query_log`；余额扣减和 `biz_fee_flow` 由若依定时任务周期结算统一生成。
 - 当前阶段暂不接真实医院/卫健委数据源，接口返回标准示例脱敏数据，后续只替换真实数据查询实现。
 - `/company/embed` 保留为兼容入口，访问时跳转到公司登录页，不再兑换 ticket。
 - 嵌入模式下使用 `sessionStorage` 保存公司端 token 和必要公司信息，不把 AppKey/AppSecret 或管理员 token 放入 URL。
@@ -44,7 +44,7 @@
 - 后端开放接口契约测试：`node scripts/open-api-contract.test.mjs`。
 - 前端生产构建：`npm run build:prod`。
 - 后端编译：`mvn -pl ruoyi-business,ruoyi-admin -am compile -DskipTests`。
-- 接口验证：无签名请求应返回 `401 INVALID_SIGNATURE`；正确签名且余额充足时返回成功示例数据，并写入查询日志和费用流水。
+- 接口验证：无签名请求应返回 `401 INVALID_SIGNATURE`；正确签名且余额大于等于 `0` 时返回成功示例数据，并写入查询日志；费用流水由周期结算任务统一生成。
 
 ## C/S 兼容验证方案
 

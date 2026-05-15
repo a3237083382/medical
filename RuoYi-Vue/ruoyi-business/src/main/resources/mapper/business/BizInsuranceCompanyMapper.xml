@@ -108,6 +108,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           and balance &gt;= #{amount}
     </update>
 
+    <update id="settleBalance" parameterType="map">
+        update biz_insurance_company
+        set balance = balance - #{amount}, balance_update_time = #{balanceUpdateTime}
+        where id = #{companyId}
+          and status = '0'
+    </update>
+
     <update id="updateBizInsuranceCompanyLoginInfo" parameterType="com.ruoyi.business.domain.BizInsuranceCompany">
         update biz_insurance_company
         set login_ip = #{loginIp}, login_date = #{loginDate}

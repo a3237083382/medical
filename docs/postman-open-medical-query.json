@@ -1,0 +1,101 @@
+{
+  "info": {
+    "name": "医疗信息开放查询接口测试",
+    "_postman_id": "1c3ef5d4-3b8c-4d43-a7e6-2b3f7b3f0f01",
+    "description": "当前演示环境使用的 /open/api/medical/query Postman 测试集合。不要手动填写签名请求头，Pre-request Script 会自动生成。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8088"
+    },
+    {
+      "key": "appKey",
+      "value": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"
+    },
+    {
+      "key": "appSecret",
+      "value": "x1y2z3w4v5u6t7s8r9q0p1o2n3m4l5k6j7i8h7g6f5e4d3c2b1a0"
+    }
+  ],
+  "item": [
+    {
+      "name": "开放医疗查询 - 自动签名",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const appKey = pm.collectionVariables.get('appKey');",
+              "const appSecret = pm.collectionVariables.get('appSecret');",
+              "const timestamp = Date.now().toString();",
+              "const nonce = pm.variables.replaceIn('{{$guid}}').replace(/-/g, '');",
+              "const body = pm.request.body && pm.request.body.raw ? pm.request.body.raw : '';",
+              "const sign = CryptoJS.SHA256(appKey + timestamp + nonce + body + appSecret).toString();",
+              "",
+              "pm.request.headers.upsert({ key: 'Content-Type', value: 'application/json' });",
+              "pm.request.headers.upsert({ key: 'X-App-Key', value: appKey });",
+              "pm.request.headers.upsert({ key: 'X-Timestamp', value: timestamp });",
+              "pm.request.headers.upsert({ key: 'X-Nonce', value: nonce });",
+              "pm.request.headers.upsert({ key: 'X-Sign', value: sign });",
+              "",
+              "console.log('sign body =', body);",
+              "console.log('X-Timestamp =', timestamp);",
+              "console.log('X-Nonce =', nonce);",
+              "console.log('X-Sign =', sign);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('业务成功', function () {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.code).to.eql(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"queryType\":\"SURGERY\",\"name\":\"张三\",\"idCard\":\"430102199001011234\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/open/api/medical/query",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "open",
+            "api",
+            "medical",
+            "query"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

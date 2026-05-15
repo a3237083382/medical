@@ -12,6 +12,7 @@
           <el-select v-model="queryParams.operationType" placeholder="全部" clearable style="width: 140px">
             <el-option label="充值" value="RECHARGE" />
             <el-option label="扣费" value="DEDUCT" />
+            <el-option label="周期扣费" value="SETTLEMENT" />
             <el-option label="退款" value="REFUND" />
             <el-option label="冲正" value="ADJUST" />
           </el-select>
@@ -70,7 +71,7 @@ function operationLabel(type) {
   const labels = {
     RECHARGE: "充值",
     DEDUCT: "扣费",
-    SETTLEMENT: "扣费",
+    SETTLEMENT: "周期扣费",
     REFUND: "退款",
     ADJUST: "冲正"
   }

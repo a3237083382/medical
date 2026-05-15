@@ -44,6 +44,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where l.id = #{id}
     </select>
 
+    <select id="sumUnsettledSuccessFeeByCompanyId" parameterType="map" resultType="java.math.BigDecimal">
+        select coalesce(sum(fee), 0)
+        from biz_query_log
+        where company_id = #{companyId}
+          and status = '0'
+          and settlement_id is null
+          and request_time &lt;= #{cutoffTime}
+    </select>
+
     <insert id="insertBizQueryLog" parameterType="com.ruoyi.business.domain.BizQueryLog" useGeneratedKeys="true" keyProperty="id">
         insert into biz_query_log (
             company_id, query_type, query_params, fee, settlement_id,
@@ -53,5 +62,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{status}, sysdate(), #{requestIp}, #{remark}
         )
     </insert>
+
+    <update id="updateSettlementIdForUnsettledSuccessLogs" parameterType="map">
+        update biz_query_log
+        set settlement_id = #{settlementId}
+        where company_id = #{companyId}
+          and status = '0'
+          and settlement_id is null
+          and request_time &lt;= #{cutoffTime}
+    </update>
 
 </mapper>

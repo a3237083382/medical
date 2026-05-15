@@ -44,9 +44,6 @@
       <el-table-column label="余额(元)" align="center" prop="balance" width="120">
         <template slot-scope="{ row }">{{ formatMoney(row.balance) }}</template>
       </el-table-column>
-      <el-table-column label="结算周期" align="center" prop="billingCycleDays" width="100">
-        <template slot-scope="{ row }">{{ row.billingCycleDays }}天</template>
-      </el-table-column>
       <el-table-column label="联系人" align="center" prop="contactPerson" width="120" />
       <el-table-column label="联系电话" align="center" prop="contactPhone" width="140" />
       <el-table-column label="状态" align="center" prop="status" width="90">
@@ -78,9 +75,6 @@
         </el-form-item>
         <el-form-item :label="form.id ? '登录密码' : '登录密码'" :prop="form.id ? '' : 'password'">
           <el-input v-model="form.password" type="password" placeholder="留空则不修改" show-password />
-        </el-form-item>
-        <el-form-item label="结算周期(天)" prop="billingCycleDays">
-          <el-input-number v-model="form.billingCycleDays" :min="1" :max="365" />
         </el-form-item>
         <el-form-item label="联系人" prop="contactPerson">
           <el-input v-model="form.contactPerson" placeholder="请输入联系人" />
@@ -281,7 +275,6 @@ export default {
         companyCode: undefined,
         username: undefined,
         password: undefined,
-        billingCycleDays: 30,
         contactPerson: undefined,
         contactPhone: undefined,
         remark: undefined

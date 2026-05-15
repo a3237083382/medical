@@ -15,6 +15,7 @@ import com.ruoyi.business.service.IBizInsuranceCompanyService;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.utils.ip.IpUtils;
+import com.ruoyi.web.service.BillingCycleConfigService;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -26,6 +27,9 @@ public class CompanyAuthController extends BaseController
 
     @Autowired
     private CompanyTokenService tokenService;
+
+    @Autowired
+    private BillingCycleConfigService billingCycleConfigService;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -71,7 +75,7 @@ public class CompanyAuthController extends BaseController
         result.put("companyName", company.getCompanyName());
         result.put("balance", company.getBalance());
         result.put("balanceUpdateTime", company.getBalanceUpdateTime());
-        result.put("billingCycleDays", company.getBillingCycleDays());
+        result.put("billingCycleDays", billingCycleConfigService.getBillingCycleDays());
 
         return AjaxResult.success(result);
     }

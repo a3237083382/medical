@@ -43,11 +43,6 @@
           <span>{{ formatMoney(scope.row.balance) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="结算周期" align="center" prop="billingCycleDays">
-        <template #default="scope">
-          <span>{{ scope.row.billingCycleDays }}天</span>
-        </template>
-      </el-table-column>
       <el-table-column label="联系人" align="center" prop="contactPerson" />
       <el-table-column label="联系电话" align="center" prop="contactPhone" />
       <el-table-column label="状态" align="center" prop="status">
@@ -78,9 +73,6 @@
         </el-form-item>
         <el-form-item :label="form.id ? '登录密码(留空不修改)' : '登录密码'" prop="password" :rules="form.id ? [] : rules.password">
           <el-input v-model="form.password" type="password" placeholder="请输入登录密码" show-password />
-        </el-form-item>
-        <el-form-item label="结算周期(天)" prop="billingCycleDays">
-          <el-input-number v-model="form.billingCycleDays" :min="1" :max="365" />
         </el-form-item>
         <el-form-item label="联系人" prop="contactPerson">
           <el-input v-model="form.contactPerson" placeholder="请输入联系人" />
@@ -132,7 +124,6 @@ const form = reactive({
   companyCode: undefined,
   username: undefined,
   password: undefined,
-  billingCycleDays: 30,
   contactPerson: undefined,
   contactPhone: undefined,
   remark: undefined
@@ -233,7 +224,6 @@ function reset() {
   form.companyCode = undefined
   form.username = undefined
   form.password = undefined
-  form.billingCycleDays = 30
   form.contactPerson = undefined
   form.contactPhone = undefined
   form.remark = undefined

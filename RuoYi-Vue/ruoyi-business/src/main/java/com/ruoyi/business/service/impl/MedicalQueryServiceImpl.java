@@ -8,13 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson2.JSON;
-import com.ruoyi.business.domain.BizFeeFlow;
 import com.ruoyi.business.domain.BizInsuranceCompany;
 import com.ruoyi.business.domain.BizQueryLog;
 import com.ruoyi.business.domain.BizQueryPrice;
 import com.ruoyi.business.domain.medical.MedicalQueryRequest;
 import com.ruoyi.business.domain.medical.MedicalQueryResult;
-import com.ruoyi.business.mapper.BizFeeFlowMapper;
 import com.ruoyi.business.mapper.BizInsuranceCompanyMapper;
 import com.ruoyi.business.mapper.BizQueryLogMapper;
 import com.ruoyi.business.mapper.BizQueryPriceMapper;
@@ -29,16 +27,14 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
     private final BizInsuranceCompanyMapper companyMapper;
     private final BizQueryPriceMapper priceMapper;
     private final BizQueryLogMapper queryLogMapper;
-    private final BizFeeFlowMapper feeFlowMapper;
     private final MedicalDataSource medicalDataSource;
 
     public MedicalQueryServiceImpl(BizInsuranceCompanyMapper companyMapper, BizQueryPriceMapper priceMapper,
-            BizQueryLogMapper queryLogMapper, BizFeeFlowMapper feeFlowMapper, MedicalDataSource medicalDataSource)
+            BizQueryLogMapper queryLogMapper, MedicalDataSource medicalDataSource)
     {
         this.companyMapper = companyMapper;
         this.priceMapper = priceMapper;
         this.queryLogMapper = queryLogMapper;
-        this.feeFlowMapper = feeFlowMapper;
         this.medicalDataSource = medicalDataSource;
     }
 
@@ -52,21 +48,18 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         {
             throw new MedicalQueryException("4002", "company disabled or not found");
         }
-        BigDecimal balanceBefore = before.getBalance();
-        BigDecimal fee = getQueryPrice(request.getQueryType());
-        if (companyMapper.deductBalance(request.getCompanyId(), fee) == 0)
+        if (isNegative(before.getBalance()))
         {
             throw new MedicalQueryException("4001", "insufficient balance");
         }
+        BigDecimal fee = getQueryPrice(request.getQueryType());
 
         Map<String, Object> data = DesensitizeUtil.desensitize(medicalDataSource.query(request));
-        BizInsuranceCompany after = companyMapper.selectBizInsuranceCompanyById(request.getCompanyId());
-        BizQueryLog log = insertQueryLog(request, fee);
-        insertFeeFlow(request.getCompanyId(), fee, balanceBefore, after.getBalance(), log.getId());
+        insertQueryLog(request, fee);
 
         MedicalQueryResult result = new MedicalQueryResult();
         result.setFee(fee);
-        result.setBalanceAfter(after.getBalance());
+        result.setBalanceAfter(before.getBalance());
         result.setData(data);
         return result;
     }
@@ -117,17 +110,8 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         return log;
     }
 
-    private void insertFeeFlow(Long companyId, BigDecimal fee, BigDecimal balanceBefore, BigDecimal balanceAfter, Long logId)
+    private boolean isNegative(BigDecimal value)
     {
-        BizFeeFlow flow = new BizFeeFlow();
-        flow.setCompanyId(companyId);
-        flow.setOperationType("DEDUCT");
-        flow.setAmount(fee);
-        flow.setBalanceBefore(balanceBefore);
-        flow.setBalanceAfter(balanceAfter);
-        flow.setOperator("external-api");
-        flow.setBizId(logId);
-        flow.setOperationTime(new Date());
-        feeFlowMapper.insertBizFeeFlow(flow);
+        return value != null && value.compareTo(BigDecimal.ZERO) < 0;
     }
 }

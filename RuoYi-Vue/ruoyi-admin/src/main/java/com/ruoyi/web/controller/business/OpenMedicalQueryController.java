@@ -16,17 +16,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ruoyi.business.domain.BizFeeFlow;
 import com.ruoyi.business.domain.BizInsuranceCompany;
 import com.ruoyi.business.domain.BizQueryLog;
 import com.ruoyi.business.domain.BizQueryPrice;
-import com.ruoyi.business.service.IBizFeeFlowService;
 import com.ruoyi.business.service.IBizInsuranceCompanyService;
 import com.ruoyi.business.service.IBizQueryLogService;
 import com.ruoyi.business.service.IBizQueryPriceService;
 import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.common.utils.http.HttpHelper;
 import com.ruoyi.common.utils.ip.IpUtils;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -47,16 +46,17 @@ public class OpenMedicalQueryController
     private IBizQueryLogService queryLogService;
 
     @Autowired
-    private IBizFeeFlowService feeFlowService;
-
-    @Autowired
     private ObjectMapper objectMapper;
 
     @PostMapping("/query")
     @Transactional(rollbackFor = Exception.class)
     public AjaxResult query(@RequestBody Map<String, String> params, HttpServletRequest request)
     {
-        String body = toJson(params);
+        String body = HttpHelper.getBodyString(request);
+        if (StringUtils.isEmpty(body))
+        {
+            body = toJson(params);
+        }
         BizInsuranceCompany company = authenticate(request, body);
         if (company == null)
         {
@@ -65,6 +65,10 @@ public class OpenMedicalQueryController
         if (!"0".equals(company.getStatus()))
         {
             return AjaxResult.error(403, "COMPANY_DISABLED");
+        }
+        if (isNegative(company.getBalance()))
+        {
+            return AjaxResult.error(402, "INSUFFICIENT_BALANCE");
         }
 
         String queryType = trim(params.get("queryType"));
@@ -84,17 +88,7 @@ public class OpenMedicalQueryController
         }
 
         BigDecimal fee = price.getFee() == null ? BigDecimal.ZERO : price.getFee();
-        BigDecimal before = company.getBalance() == null ? BigDecimal.ZERO : company.getBalance();
-        int deducted = companyService.deductBalance(company.getId(), fee);
-        if (deducted == 0)
-        {
-            recordLog(company.getId(), queryType, name, idCard, BigDecimal.ZERO, "1", "INSUFFICIENT_BALANCE");
-            return AjaxResult.error(402, "INSUFFICIENT_BALANCE");
-        }
-
-        BizQueryLog log = recordLog(company.getId(), queryType, name, idCard, fee, "0", "SUCCESS");
-        BizInsuranceCompany updated = companyService.selectBizInsuranceCompanyById(company.getId());
-        recordFeeFlow(company.getId(), fee, before, updated.getBalance(), log.getId());
+        recordLog(company.getId(), queryType, name, idCard, fee, "0", "SUCCESS");
         return AjaxResult.success("SUCCESS", buildResult(price, name, idCard));
     }
 
@@ -153,20 +147,6 @@ public class OpenMedicalQueryController
         return log;
     }
 
-    private void recordFeeFlow(Long companyId, BigDecimal fee, BigDecimal before, BigDecimal after, Long queryLogId)
-    {
-        BizFeeFlow flow = new BizFeeFlow();
-        flow.setCompanyId(companyId);
-        flow.setOperationType("SETTLEMENT");
-        flow.setAmount(fee.negate());
-        flow.setBalanceBefore(before);
-        flow.setBalanceAfter(after);
-        flow.setOperator("OPEN_API");
-        flow.setBizId(queryLogId);
-        flow.setRemark("QUERY_FEE");
-        feeFlowService.insertBizFeeFlow(flow);
-    }
-
     private Map<String, Object> buildResult(BizQueryPrice price, String name, String idCard)
     {
         Map<String, Object> result = new HashMap<>();
@@ -223,6 +203,11 @@ public class OpenMedicalQueryController
     private String trim(String value)
     {
         return value == null ? null : value.trim();
+    }
+
+    private boolean isNegative(BigDecimal value)
+    {
+        return value != null && value.compareTo(BigDecimal.ZERO) < 0;
     }
 
     private String maskName(String value)
