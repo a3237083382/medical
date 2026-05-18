@@ -68,6 +68,11 @@ export const constantRoutes = [
     hidden: true
   },
   {
+    path: '/company/medical-query',
+    component: () => import('@/views/company/medicalQuery'),
+    hidden: true
+  },
+  {
     path: '/company',
     component: Layout,
     hidden: true,

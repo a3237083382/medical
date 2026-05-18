@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>保险公司系统嵌入演示</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #172033;
+      background: #eef3f8;
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+      font-size: 14px;
+    }
+    .host {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+    }
+    .side {
+      background: #101828;
+      color: #d7deea;
+      padding: 22px 14px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 8px 26px;
+    }
+    .logo {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #fff;
+      color: #101828;
+      font-weight: 800;
+    }
+    .brand strong {
+      display: block;
+      color: #fff;
+      font-size: 15px;
+    }
+    .brand span {
+      display: block;
+      margin-top: 3px;
+      color: #98a2b3;
+      font-size: 12px;
+    }
+    .nav-title {
+      padding: 0 10px 8px;
+      color: #98a2b3;
+      font-size: 12px;
+    }
+    .nav {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 24px;
+    }
+    .nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 40px;
+      border-radius: 7px;
+      padding: 0 12px;
+      color: #d7deea;
+      text-decoration: none;
+    }
+    .nav a::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .8;
+    }
+    .nav a.active {
+      background: #eef6ff;
+      color: #0d4385;
+      font-weight: 700;
+    }
+    .main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .top {
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: #fff;
+      border-bottom: 1px solid #d9e2ef;
+      color: #667085;
+    }
+    .user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: #1957a6;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .content {
+      padding: 20px;
+      min-height: calc(100vh - 58px);
+    }
+    .embed-frame {
+      width: 100%;
+      height: calc(100vh - 98px);
+      min-height: 680px;
+      border: 1px solid #d9e2ef;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 18px 44px rgba(20, 39, 68, .10);
+    }
+    @media (max-width: 900px) {
+      .host { grid-template-columns: 1fr; }
+      .side { display: none; }
+      .content { padding: 12px; }
+      .embed-frame { height: calc(100vh - 82px); min-height: 720px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="host">
+    <aside class="side">
+      <div class="brand">
+        <div class="logo">保</div>
+        <div>
+          <strong>保险公司业务系统</strong>
+          <span>承保作业平台</span>
+        </div>
+      </div>
+      <div class="nav-title">业务办理</div>
+      <nav class="nav">
+        <a href="#">投保申请</a>
+        <a href="#">客户资料</a>
+        <a class="active" href="#">查询投保人医疗信息</a>
+        <a href="#">核保任务</a>
+      </nav>
+      <div class="nav-title">管理</div>
+      <nav class="nav">
+        <a href="#">保单管理</a>
+        <a href="#">统计报表</a>
+        <a href="#">系统设置</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="top">
+        <div>业务办理 / 查询投保人医疗信息</div>
+        <div class="user">
+          <span>核保员：张经理</span>
+          <span class="avatar">张</span>
+        </div>
+      </header>
+      <section class="content">
+        <iframe
+          class="embed-frame"
+          src="./insurer-medical-query-widget.html"
+          title="医疗信息查询平台">
+        </iframe>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
