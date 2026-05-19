@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>医疗查询信息平台</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #14213d;
+      background: #eef4f8;
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+      font-size: 14px;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .page {
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .shell {
+      max-width: 1160px;
+      margin: 0 auto;
+    }
+
+    .header {
+      min-height: 76px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      background: #ffffff;
+      border: 1px solid #d8e2ec;
+      border-radius: 8px;
+      box-shadow: 0 18px 42px rgba(28, 44, 74, .08);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #ffffff;
+      background: #1957a6;
+      font-size: 20px;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .brand-title {
+      color: #0f1d35;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .brand-subtitle {
+      margin-top: 4px;
+      color: #667085;
+      font-size: 13px;
+    }
+
+    .state {
+      min-height: 36px;
+      padding: 0 14px;
+      border: 1px solid #b9ddcc;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #08734f;
+      background: #eefaf5;
+      white-space: nowrap;
+      font-weight: 700;
+    }
+
+    .state::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .main {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 380px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: #ffffff;
+      border: 1px solid #d8e2ec;
+      border-radius: 8px;
+      box-shadow: 0 18px 42px rgba(28, 44, 74, .08);
+      min-width: 0;
+    }
+
+    .panel-head {
+      padding: 18px 20px 12px;
+      border-bottom: 1px solid #e5edf5;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      color: #0f1d35;
+      font-size: 17px;
+    }
+
+    .panel-head span {
+      display: block;
+      margin-top: 5px;
+      color: #667085;
+      font-size: 13px;
+    }
+
+    .form {
+      padding: 18px 20px 20px;
+      display: grid;
+      gap: 15px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field label {
+      color: #344054;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      height: 42px;
+      border: 1px solid #cfd9e5;
+      border-radius: 7px;
+      padding: 0 12px;
+      color: #172033;
+      background: #ffffff;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: #1957a6;
+      box-shadow: 0 0 0 3px rgba(25, 87, 166, .12);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      height: 42px;
+      min-width: 108px;
+      border: 0;
+      border-radius: 7px;
+      padding: 0 18px;
+      color: #ffffff;
+      background: #1957a6;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .btn.secondary {
+      color: #344054;
+      background: #edf2f7;
+    }
+
+    .hint {
+      color: #667085;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .query-panel.locked {
+      opacity: .54;
+      pointer-events: none;
+    }
+
+    .fee-line {
+      min-height: 42px;
+      padding: 0 12px;
+      border: 1px solid #d8e2ec;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+    }
+
+    .fee-line strong {
+      color: #b54708;
+      font-size: 18px;
+    }
+
+    .result {
+      padding: 18px 20px 20px;
+    }
+
+    .empty {
+      min-height: 308px;
+      border: 1px dashed #cfd9e5;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #667085;
+      text-align: center;
+      background: #f8fafc;
+    }
+
+    .empty strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #344054;
+      font-size: 18px;
+    }
+
+    .result-body {
+      display: none;
+      gap: 14px;
+    }
+
+    .result-body.active {
+      display: grid;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid #d8e2ec;
+      border-radius: 8px;
+      padding: 12px;
+      background: #f8fafc;
+      min-width: 0;
+    }
+
+    .metric span {
+      display: block;
+      color: #667085;
+      font-size: 12px;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      color: #0f1d35;
+      overflow-wrap: anywhere;
+    }
+
+    .summary {
+      border-left: 4px solid #1957a6;
+      border-radius: 7px;
+      padding: 12px 14px;
+      color: #344054;
+      background: #f1f6fd;
+      line-height: 1.7;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 8px;
+      border-style: hidden;
+      box-shadow: 0 0 0 1px #d8e2ec;
+    }
+
+    th,
+    td {
+      border: 1px solid #d8e2ec;
+      padding: 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: #344054;
+      background: #f8fafc;
+      font-weight: 800;
+    }
+
+    @media (max-width: 960px) {
+      .page {
+        padding: 14px;
+      }
+
+      .header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .main {
+        grid-template-columns: 1fr;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="shell">
+      <header class="header">
+        <div class="brand">
+          <div class="brand-icon">医</div>
+          <div>
+            <div class="brand-title">医疗查询信息平台</div>
+            <div class="brand-subtitle">保险公司投保人医疗信息查询</div>
+          </div>
+        </div>
+        <div class="state" id="stateText">待登录</div>
+      </header>
+
+      <main class="main">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>保险公司账号登录</h2>
+            <span>登录后可发起医疗信息查询</span>
+          </div>
+          <form class="form" id="loginForm">
+            <div class="field">
+              <label for="username">账号</label>
+              <input id="username" name="username" value="test001" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="password">密码</label>
+              <input id="password" name="password" type="password" value="123456" autocomplete="off">
+            </div>
+            <div class="button-row">
+              <button class="btn" type="submit">登录</button>
+            </div>
+            <div class="hint" id="loginHint">测试账号：test001 / 123456</div>
+          </form>
+        </section>
+
+        <section class="panel query-panel locked" id="queryPanel">
+          <div class="panel-head">
+            <h2>投保人医疗信息查询</h2>
+            <span>选择接口并输入投保人身份信息</span>
+          </div>
+          <form class="form" id="queryForm">
+            <div class="field">
+              <label for="queryType">查询接口</label>
+              <select id="queryType" name="queryType">
+                <option value="medical_all" data-fee="50.00">医疗大数据</option>
+                <option value="medical_insurance" data-fee="30.00">医保信息</option>
+                <option value="medical_record" data-fee="40.00">电子病历</option>
+                <option value="medical_order" data-fee="20.00">医嘱信息</option>
+                <option value="medical_image" data-fee="25.00">影像信息</option>
+                <option value="medical_surgery" data-fee="35.00">近期手术</option>
+                <option value="medical_exam" data-fee="20.00">体检信息</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="personName">投保人姓名</label>
+              <input id="personName" name="personName" value="张三" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="idCard">身份证号</label>
+              <input id="idCard" name="idCard" value="430102199001018888" maxlength="18" autocomplete="off">
+            </div>
+            <div class="fee-line">
+              <span>本次查询费用</span>
+              <strong id="feeText">￥2.00</strong>
+            </div>
+            <div class="button-row">
+              <button class="btn" type="submit">查询</button>
+              <button class="btn secondary" id="resetBtn" type="button">清空</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel" style="grid-column: 1 / -1;">
+          <div class="panel-head">
+            <h2>查询结果</h2>
+            <span id="resultTime">等待查询</span>
+          </div>
+          <div class="result">
+            <div class="empty" id="emptyResult">
+              <div>
+                <strong>暂无查询结果</strong>
+                <span>完成登录并提交查询后显示结果</span>
+              </div>
+            </div>
+
+            <div class="result-body" id="resultBody">
+              <div class="metrics">
+                <div class="metric">
+                  <span>查询接口</span>
+                  <strong id="resultType">-</strong>
+                </div>
+                <div class="metric">
+                  <span>姓名</span>
+                  <strong id="resultName">-</strong>
+                </div>
+                <div class="metric">
+                  <span>身份证号</span>
+                  <strong id="resultIdCard">-</strong>
+                </div>
+                <div class="metric">
+                  <span>扣费金额</span>
+                  <strong id="resultFee">-</strong>
+                </div>
+              </div>
+
+              <div class="summary" id="resultSummary"></div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 180px;">项目</th>
+                    <th style="width: 160px;">结果</th>
+                    <th>说明</th>
+                  </tr>
+                </thead>
+                <tbody id="resultRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const loginForm = document.getElementById("loginForm");
+    const queryForm = document.getElementById("queryForm");
+    const queryPanel = document.getElementById("queryPanel");
+    const stateText = document.getElementById("stateText");
+    const loginHint = document.getElementById("loginHint");
+    const queryType = document.getElementById("queryType");
+    const feeText = document.getElementById("feeText");
+    const emptyResult = document.getElementById("emptyResult");
+    const resultBody = document.getElementById("resultBody");
+    const resultTime = document.getElementById("resultTime");
+    const resultRows = document.getElementById("resultRows");
+
+    function selectedOption() {
+      return queryType.options[queryType.selectedIndex];
+    }
+
+    function currentFee() {
+      return Number(selectedOption().dataset.fee || 0).toFixed(2);
+    }
+
+    function maskIdCard(value) {
+      if (!value || value.length < 8) {
+        return "****";
+      }
+      return value.slice(0, 4) + "**********" + value.slice(-4);
+    }
+
+    function updateFee() {
+      feeText.textContent = "￥" + currentFee();
+    }
+
+    loginForm.addEventListener("submit", function(event) {
+      event.preventDefault();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (!username || !password) {
+        loginHint.textContent = "请输入账号和密码";
+        return;
+      }
+      queryPanel.classList.remove("locked");
+      stateText.textContent = "已登录：测试保险公司";
+      loginHint.textContent = "登录成功";
+    });
+
+    queryType.addEventListener("change", updateFee);
+
+    queryForm.addEventListener("submit", function(event) {
+      event.preventDefault();
+      const name = document.getElementById("personName").value.trim();
+      const idCard = document.getElementById("idCard").value.trim();
+      if (!name || !/^[0-9]{17}[0-9Xx]$/.test(idCard)) {
+        alert("请输入正确的投保人姓名和18位身份证号");
+        return;
+      }
+
+      emptyResult.style.display = "none";
+      resultBody.classList.add("active");
+      resultTime.textContent = new Date().toLocaleString("zh-CN", { hour12: false });
+      document.getElementById("resultType").textContent = selectedOption().textContent;
+      document.getElementById("resultName").textContent = name.slice(0, 1) + "*";
+      document.getElementById("resultIdCard").textContent = maskIdCard(idCard);
+      document.getElementById("resultFee").textContent = "￥" + currentFee();
+      const sample = sampleResults[queryType.value] || sampleResults.medical_all;
+      document.getElementById("resultSummary").textContent = sample.summary;
+      resultRows.innerHTML = sample.rows.map(function(row) {
+        return "<tr><td>" + row[0] + "</td><td>" + row[1] + "</td><td>" + row[2] + "</td></tr>";
+      }).join("");
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", function() {
+      document.getElementById("personName").value = "";
+      document.getElementById("idCard").value = "";
+      emptyResult.style.display = "grid";
+      resultBody.classList.remove("active");
+      resultTime.textContent = "等待查询";
+    });
+
+    const sampleResults = {
+      medical_all: {
+        summary: "返回医疗机构、科室、就诊类型、日期和诊断。样例结果来自 Excel 的“医疗大数据”模板。",
+        rows: [
+          ["湘雅医院 神经内科", "住院/门诊 20251001", "诊断：高血压"],
+          ["湘雅医院 神经内科", "住院 20251001-20251007", "诊断：高血压"],
+          ["数据处理", "已脱敏", "姓名、身份证号按展示规则脱敏"]
+        ]
+      },
+      medical_insurance: {
+        summary: "返回医保参保信息和参保至今的就诊记录。",
+        rows: [
+          ["参保状态", "正常参保", "医保区划：长沙市，单位名称：中南大学"],
+          ["住院记录", "湘雅医院 20251001-20251023", "病种：高血压，报销费用：2000"],
+          ["门诊记录", "湘雅医院 20251201", "病种：高血压，报销费用：100"]
+        ]
+      },
+      medical_record: {
+        summary: "返回电子病历中的入院记录、出院记录、手术记录和影像报告。",
+        rows: [
+          ["入院记录", "2022-09-20 涟源中医院骨科", "主诉：腰退疼痛，入院诊断：伤筋"],
+          ["出院记录", "住院 7 天", "诊疗经过：中医+西医，医嘱：定期门诊复查"],
+          ["手术记录", "2022-10-01 半月板修复", "麻醉方法：椎管内麻醉"],
+          ["影像报告", "左膝关节正侧位", "报告医生：练小红"]
+        ]
+      },
+      medical_order: {
+        summary: "返回医嘱相关的就诊日期、医院、药品、科室和诊断。",
+        rows: [
+          ["浏阳市中医院 针灸科", "红花 1(g)", "就诊日期：20250611，诊断：尾骨折，类型：门诊"]
+        ]
+      },
+      medical_image: {
+        summary: "返回影像检查报告单信息。",
+        rows: [
+          ["左膝关节正侧位", "影像号：1067216", "检查日期：2022-07-22，医院：涟源中医院，科室：骨科，报告医生：练小红"]
+        ]
+      },
+      medical_surgery: {
+        summary: "返回近期手术记录。",
+        rows: [
+          ["半月板修复", "2022-10-01", "术前/术中诊断：半月板撕裂，手术者：毛晓东，麻醉者：张旭佳"]
+        ]
+      },
+      medical_exam: {
+        summary: "返回体检项目、小结、报告日期、医师和体检医院。",
+        rows: [
+          ["总检结果", "身体健康", "模板样例"],
+          ["总检建议", "身体健康，注意清淡饮食", "模板样例"],
+          ["心电图", "未见明显异常", "2025-01-01 湘雅二医院 毛晓东"],
+          ["血常规", "未见明显异常", "2025-01-01 湘雅二医院 毛晓东"],
+          ["B超检查", "未见明显异常", "2025-01-01 湘雅二医院 毛晓东"],
+          ["CT", "未见明显异常", "2025-01-01 湘雅二医院 毛晓东"]
+        ]
+      }
+    };
+
+    updateFee();
+  </script>
+</body>
+</html>
