@@ -26,9 +26,6 @@
       <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" v-hasPermi="['business:company:export']">导出</el-button>
       </el-col>
-      <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-key" size="mini" :disabled="multiple" @click="handleCredentialExport" v-hasPermi="['business:company:export']">导出密钥</el-button>
-      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList" />
     </el-row>
 
@@ -37,8 +34,7 @@
       <el-table-column label="公司名称" align="center" prop="companyName" min-width="180" />
       <el-table-column label="AppKey" align="center" prop="appKey" min-width="280">
         <template slot-scope="{ row }">
-          <span>{{ row.appKey }}</span>
-          <el-button type="text" icon="el-icon-copy-document" @click="copyText(row.appKey)" style="margin-left: 5px;" />
+          <span>{{ maskAppKey(row.appKey) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="余额(元)" align="center" prop="balance" width="120">
@@ -261,9 +257,6 @@ export default {
     handleExport() {
       this.download('business/company/export', { ...this.queryParams }, `company_${new Date().getTime()}.xlsx`)
     },
-    handleCredentialExport() {
-      this.download('business/company/credentials/export', { ids: this.ids.join(',') }, `company_credentials_${new Date().getTime()}.xlsx`)
-    },
     cancel() {
       this.open = false
       this.reset()
@@ -284,14 +277,10 @@ export default {
     formatMoney(value) {
       return Number(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
     },
-    copyText(text) {
-      const input = document.createElement('input')
-      input.value = text || ''
-      document.body.appendChild(input)
-      input.select()
-      document.execCommand('copy')
-      document.body.removeChild(input)
-      this.$modal.msgSuccess('已复制')
+    maskAppKey(value) {
+      if (!value) return '-'
+      if (value.length <= 8) return value.slice(0, 2) + '****' + value.slice(-2)
+      return value.slice(0, 4) + '****' + value.slice(-4)
     }
   }
 }

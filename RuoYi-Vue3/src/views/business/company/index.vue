@@ -34,8 +34,15 @@
       <el-table-column label="公司名称" align="center" prop="companyName" />
       <el-table-column label="AppKey" align="center" prop="appKey" width="280">
         <template #default="scope">
-          <span>{{ scope.row.appKey }}</span>
-          <el-button type="primary" link icon="CopyDocument" @click="copyText(scope.row.appKey)" style="margin-left: 5px;" />
+          <span>{{ scope.row.appKey || "未生成" }}</span>
+          <el-button
+            type="primary"
+            link
+            icon="CopyDocument"
+            :disabled="!scope.row.appKey"
+            @click="copyText(scope.row.appKey)"
+            style="margin-left: 5px;"
+          />
         </template>
       </el-table-column>
       <el-table-column label="余额(元)" align="center" prop="balance">

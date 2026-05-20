@@ -46,6 +46,13 @@ export function updateCompanyPassword(data) {
   })
 }
 
+export function regenerateCompanyAppKey() {
+  return request({
+    url: '/company/api/profile/app-key',
+    method: 'post'
+  })
+}
+
 export function listQueryLogs(query) {
   return request({
     url: '/company/api/query-log/list',
@@ -58,6 +65,14 @@ export function listMedicalQueryTypes() {
   return request({
     url: '/company/api/medical/query-types',
     method: 'get'
+  })
+}
+
+export function queryMedical(data) {
+  return request({
+    url: '/company/api/medical/query',
+    method: 'post',
+    data
   })
 }
 

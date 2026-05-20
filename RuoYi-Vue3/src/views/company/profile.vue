@@ -37,7 +37,7 @@
       <article class="form-panel">
         <div class="panel-title">
           <h3>修改密码</h3>
-          <p>建议定期更换密码，并将 AppSecret 保存在保险公司服务端。</p>
+          <p>建议定期更换密码，并将 AppKey 保存在保险公司服务端。</p>
         </div>
         <el-form ref="pwdRef" :model="pwdForm" :rules="pwdRules" label-width="100px">
             <el-form-item label="原密码" prop="oldPassword">

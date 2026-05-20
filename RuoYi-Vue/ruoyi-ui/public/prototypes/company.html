@@ -199,11 +199,6 @@
       line-height: 1.6;
     }
 
-    .query-panel.locked {
-      opacity: .54;
-      pointer-events: none;
-    }
-
     .fee-line {
       min-height: 42px;
       padding: 0 12px;
@@ -347,32 +342,32 @@
             <div class="brand-subtitle">保险公司投保人医疗信息查询</div>
           </div>
         </div>
-        <div class="state" id="stateText">待登录</div>
+        <div class="state" id="stateText">已接入</div>
       </header>
 
       <main class="main">
         <section class="panel">
           <div class="panel-head">
-            <h2>保险公司账号登录</h2>
-            <span>登录后可发起医疗信息查询</span>
+            <h2>保险公司接入信息</h2>
+            <span>由保险公司系统带入 AppKey 后发起查询</span>
           </div>
-          <form class="form" id="loginForm">
+          <div class="form">
             <div class="field">
-              <label for="username">账号</label>
-              <input id="username" name="username" value="test001" autocomplete="off">
-            </div>
-            <div class="field">
-              <label for="password">密码</label>
-              <input id="password" name="password" type="password" value="123456" autocomplete="off">
+              <label for="appKeyInput">AppKey</label>
+              <input id="appKeyInput" name="appKeyInput" type="password" placeholder="请粘贴保险公司 AppKey" autocomplete="off">
             </div>
             <div class="button-row">
-              <button class="btn" type="submit">登录</button>
+              <button class="btn" id="applyKeyBtn" type="button">确认接入</button>
             </div>
-            <div class="hint" id="loginHint">测试账号：test001 / 123456</div>
-          </form>
+            <div class="fee-line">
+              <span>接入状态</span>
+              <strong id="accessState">待验证</strong>
+            </div>
+            <div class="hint" id="keyHint"></div>
+          </div>
         </section>
 
-        <section class="panel query-panel locked" id="queryPanel">
+        <section class="panel query-panel" id="queryPanel">
           <div class="panel-head">
             <h2>投保人医疗信息查询</h2>
             <span>选择接口并输入投保人身份信息</span>
@@ -418,7 +413,7 @@
             <div class="empty" id="emptyResult">
               <div>
                 <strong>暂无查询结果</strong>
-                <span>完成登录并提交查询后显示结果</span>
+                <span>输入投保人信息并提交查询后显示结果</span>
               </div>
             </div>
 
@@ -462,11 +457,15 @@
   </div>
 
   <script>
-    const loginForm = document.getElementById("loginForm");
+    const API_BASE_URL = "http://localhost:8088";
+    const urlParams = new URLSearchParams(window.location.search);
+    let appKey = urlParams.get("appKey") || urlParams.get("key") || "";
     const queryForm = document.getElementById("queryForm");
-    const queryPanel = document.getElementById("queryPanel");
     const stateText = document.getElementById("stateText");
-    const loginHint = document.getElementById("loginHint");
+    const keyHint = document.getElementById("keyHint");
+    const accessState = document.getElementById("accessState");
+    const appKeyInput = document.getElementById("appKeyInput");
+    const applyKeyBtn = document.getElementById("applyKeyBtn");
     const queryType = document.getElementById("queryType");
     const feeText = document.getElementById("feeText");
     const emptyResult = document.getElementById("emptyResult");
@@ -493,20 +492,73 @@
       feeText.textContent = "￥" + currentFee();
     }
 
-    loginForm.addEventListener("submit", function(event) {
-      event.preventDefault();
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
-      if (!username || !password) {
-        loginHint.textContent = "请输入账号和密码";
+    function request(path, options) {
+      const headers = Object.assign({
+        "Content-Type": "application/json"
+      }, options && options.headers ? options.headers : {});
+      return fetch(API_BASE_URL + path, Object.assign({}, options, {
+        headers: headers
+      })).then(function(response) {
+        return response.json().then(function(json) {
+          if (!response.ok || json.code !== 200) {
+            throw new Error(json.msg || "请求失败");
+          }
+          return json;
+        });
+      });
+    }
+
+    function authHeaders() {
+      return {
+        "X-App-Key": appKey
+      };
+    }
+
+    function loadQueryTypes() {
+      if (!appKey) {
+        return Promise.resolve();
+      }
+      return request("/company/embed/medical/query-types", {
+        method: "GET",
+        headers: authHeaders()
+      }).then(function(json) {
+        const list = Array.isArray(json.data) ? json.data : [];
+        if (!list.length) {
+          return;
+        }
+        queryType.innerHTML = list.map(function(item) {
+          return '<option value="' + item.queryType + '" data-fee="' + Number(item.fee || 0).toFixed(2) + '">' +
+            (item.queryName || item.queryType) +
+            "</option>";
+        }).join("");
+        updateFee();
+      });
+    }
+
+    function applyAppKey() {
+      appKey = appKeyInput.value.trim();
+      if (!appKey) {
+        accessState.textContent = "缺少 AppKey";
+        keyHint.textContent = "请粘贴保险公司 AppKey 后再发起查询。";
         return;
       }
-      queryPanel.classList.remove("locked");
-      stateText.textContent = "已登录：测试保险公司";
-      loginHint.textContent = "登录成功";
-    });
+      accessState.textContent = "验证中";
+      stateText.textContent = "验证中";
+      keyHint.textContent = "正在校验 AppKey 并加载查询接口。";
+      loadQueryTypes().then(function() {
+        accessState.textContent = "已接入";
+        stateText.textContent = "已接入";
+        keyHint.textContent = "AppKey 已带入，页面查询时会自动放入 X-App-Key 请求头。";
+      }).catch(function(error) {
+        accessState.textContent = "接入失败";
+        stateText.textContent = "接入失败";
+        keyHint.textContent = "接口列表加载失败：" + error.message;
+        updateFee();
+      });
+    }
 
     queryType.addEventListener("change", updateFee);
+    applyKeyBtn.addEventListener("click", applyAppKey);
 
     queryForm.addEventListener("submit", function(event) {
       event.preventDefault();
@@ -516,19 +568,44 @@
         alert("请输入正确的投保人姓名和18位身份证号");
         return;
       }
+      if (!appKey) {
+        alert("缺少保险公司 AppKey");
+        return;
+      }
 
-      emptyResult.style.display = "none";
-      resultBody.classList.add("active");
-      resultTime.textContent = new Date().toLocaleString("zh-CN", { hour12: false });
-      document.getElementById("resultType").textContent = selectedOption().textContent;
-      document.getElementById("resultName").textContent = name.slice(0, 1) + "*";
-      document.getElementById("resultIdCard").textContent = maskIdCard(idCard);
-      document.getElementById("resultFee").textContent = "￥" + currentFee();
-      const sample = sampleResults[queryType.value] || sampleResults.medical_all;
-      document.getElementById("resultSummary").textContent = sample.summary;
-      resultRows.innerHTML = sample.rows.map(function(row) {
-        return "<tr><td>" + row[0] + "</td><td>" + row[1] + "</td><td>" + row[2] + "</td></tr>";
-      }).join("");
+      request("/company/embed/medical/query", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          queryType: queryType.value,
+          queryParams: {
+            name: name,
+            idCard: idCard
+          }
+        })
+      }).then(function(json) {
+        const result = json.data || {};
+        const payload = result.data || {};
+        const rows = Array.isArray(payload.records) ? payload.records : [];
+        emptyResult.style.display = "none";
+        resultBody.classList.add("active");
+        resultTime.textContent = new Date().toLocaleString("zh-CN", { hour12: false });
+        document.getElementById("resultType").textContent = selectedOption().textContent;
+        document.getElementById("resultName").textContent = payload.patientName || name.slice(0, 1) + "*";
+        document.getElementById("resultIdCard").textContent = payload.idCard || maskIdCard(idCard);
+        document.getElementById("resultFee").textContent = "￥" + Number(result.fee || currentFee()).toFixed(2);
+        document.getElementById("resultSummary").textContent = payload.summary || "查询完成，已返回服务器演示数据。";
+        resultRows.innerHTML = rows.length ? rows.map(function(row) {
+          return "<tr><td>" + (row.name || "") + "</td><td>" + (row.value || "") + "</td><td>" + (row.remark || "") + "</td></tr>";
+        }).join("") : [
+          ["诊断", payload.diagnosis || "-", "服务器返回字段"],
+          ["风险等级", payload.riskLevel || "-", "服务器返回字段"]
+        ].map(function(row) {
+          return "<tr><td>" + row[0] + "</td><td>" + row[1] + "</td><td>" + row[2] + "</td></tr>";
+        }).join("");
+      }).catch(function(error) {
+        alert(error.message);
+      });
     });
 
     document.getElementById("resetBtn").addEventListener("click", function() {
@@ -596,7 +673,24 @@
       }
     };
 
-    updateFee();
+    appKeyInput.value = appKey;
+    accessState.textContent = appKey ? "验证中" : "缺少 AppKey";
+    stateText.textContent = appKey ? "验证中" : "缺少 AppKey";
+    keyHint.textContent = appKey ? "正在校验 AppKey 并加载查询接口。" : "请粘贴保险公司 AppKey 后再发起查询。";
+    if (appKey) {
+      loadQueryTypes().then(function() {
+        accessState.textContent = "已接入";
+        stateText.textContent = "已接入";
+        keyHint.textContent = "AppKey 已带入，页面查询时会自动放入 X-App-Key 请求头。";
+      }).catch(function(error) {
+        accessState.textContent = "接入失败";
+        stateText.textContent = "接入失败";
+        keyHint.textContent = "接口列表加载失败：" + error.message;
+        updateFee();
+      });
+    } else {
+      updateFee();
+    }
   </script>
 </body>
 </html>

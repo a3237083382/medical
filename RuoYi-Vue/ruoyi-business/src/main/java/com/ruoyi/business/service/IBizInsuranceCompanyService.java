@@ -42,4 +42,6 @@ public interface IBizInsuranceCompanyService
     public int changeStatus(Long id, String status);
 
     public int updatePassword(Long id, String password);
+
+    public String regenerateAppKey(Long id);
 }

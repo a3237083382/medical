@@ -1,12 +1,12 @@
 <template>
   <div class="login">
-    <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
+    <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" autocomplete="off">
       <h3 class="title">{{title}}</h3>
       <el-form-item prop="username">
         <el-input
           v-model="loginForm.username"
           type="text"
-          auto-complete="off"
+          autocomplete="off"
           placeholder="账号"
         >
           <svg-icon slot="prefix" icon-class="user" class="el-input__icon input-icon" />
@@ -16,7 +16,7 @@
         <el-input
           v-model="loginForm.password"
           type="password"
-          auto-complete="off"
+          autocomplete="new-password"
           placeholder="密码"
           @keyup.enter.native="handleLogin"
         >
@@ -37,7 +37,6 @@
           <img :src="codeUrl" @click="getCode" class="login-code-img"/>
         </div>
       </el-form-item>
-      <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">记住密码</el-checkbox>
       <el-form-item style="width:100%;">
         <el-button
           :loading="loading"
@@ -64,7 +63,6 @@
 <script>
 import { getCodeImg } from "@/api/login"
 import Cookies from "js-cookie"
-import { encrypt, decrypt } from '@/utils/jsencrypt'
 import defaultSettings from '@/settings'
 
 export default {
@@ -75,9 +73,8 @@ export default {
       footerContent: defaultSettings.footerContent,
       codeUrl: "",
       loginForm: {
-        username: "admin",
-        password: "admin123",
-        rememberMe: false,
+        username: "",
+        password: "",
         code: "",
         uuid: ""
       },
@@ -108,7 +105,7 @@ export default {
   },
   created() {
     this.getCode()
-    this.getCookie()
+    this.clearLoginCookie()
   },
   methods: {
     getCode() {
@@ -120,29 +117,16 @@ export default {
         }
       })
     },
-    getCookie() {
-      const username = Cookies.get("username")
-      const password = Cookies.get("password")
-      const rememberMe = Cookies.get('rememberMe')
-      this.loginForm = {
-        username: username === undefined ? this.loginForm.username : username,
-        password: password === undefined ? this.loginForm.password : decrypt(password),
-        rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
-      }
+    clearLoginCookie() {
+      Cookies.remove("username")
+      Cookies.remove("password")
+      Cookies.remove('rememberMe')
     },
     handleLogin() {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
-          if (this.loginForm.rememberMe) {
-            Cookies.set("username", this.loginForm.username, { expires: 30 })
-            Cookies.set("password", encrypt(this.loginForm.password), { expires: 30 })
-            Cookies.set('rememberMe', this.loginForm.rememberMe, { expires: 30 })
-          } else {
-            Cookies.remove("username")
-            Cookies.remove("password")
-            Cookies.remove('rememberMe')
-          }
+          this.clearLoginCookie()
           this.$store.dispatch("Login", this.loginForm).then(() => {
             this.$router.push({ path: this.redirect || "/" }).catch(()=>{})
           }).catch(() => {

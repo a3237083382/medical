@@ -4,7 +4,7 @@
       <div class="hero-copy">
         <span class="eyebrow">账户概览</span>
         <h2>{{ company.companyName || "保险公司门户" }}</h2>
-        <p>用于医疗信息查询接口接入、余额核对、充值申请和调用留痕查看。</p>
+        <p>用于医疗信息查询、余额核对、充值申请和调用留痕查看。</p>
       </div>
       <div class="balance-tile">
         <span>当前余额</span>
@@ -29,10 +29,6 @@
     </section>
 
     <section class="work-grid">
-      <button class="action-card action-primary" @click="goQuery">
-        <span>接口接入</span>
-        <strong>查看签名规则和调用示例</strong>
-      </button>
       <button class="action-card" @click="goRecharge">
         <span>充值申请</span>
         <strong>提交公对公转账上账申请</strong>
@@ -52,19 +48,47 @@
     </section>
 
     <section v-if="!isEmbedded" class="key-strip">
-      <span>AppKey</span>
-      <code>{{ company.appKey || "-" }}</code>
+      <div>
+        <span>AppKey</span>
+        <code>{{ company.appKeyMasked || "未生成" }}</code>
+      </div>
+      <div class="key-actions">
+        <el-button type="primary" plain icon="Plus" :loading="generatingKey" @click="requestNewAppKey">
+          {{ company.hasAppKey ? "换发 AppKey" : "新增 AppKey" }}
+        </el-button>
+      </div>
     </section>
+
+    <el-dialog v-model="keyDialogOpen" title="AppKey 已生成" width="560px" append-to-body @closed="clearGeneratedKey">
+      <el-alert
+        title="请立即复制并保存到保险公司系统中。关闭弹窗后，门户不再展示完整 AppKey。"
+        type="warning"
+        :closable="false"
+        show-icon
+      />
+      <div class="generated-key">
+        <span>完整 AppKey</span>
+        <code>{{ generatedAppKey }}</code>
+      </div>
+      <template #footer>
+        <el-button type="primary" icon="CopyDocument" @click="copyGeneratedAppKey">复制 AppKey</el-button>
+        <el-button @click="keyDialogOpen = false">我已保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup name="CompanyDashboard">
-import { getCompanyProfile } from "@/api/business/portal"
+import { getCompanyProfile, regenerateCompanyAppKey } from "@/api/business/portal"
 import { getCompanyEmbedMode, getCompanyInfo, setCompanyInfo } from "@/utils/companyAuth"
+import { ElMessage, ElMessageBox } from "element-plus"
 
 const router = useRouter()
 const company = ref(getCompanyInfo())
 const nextUpdateTime = ref("-")
+const generatingKey = ref(false)
+const keyDialogOpen = ref(false)
+const generatedAppKey = ref("")
 const isEmbedded = computed(() => ["iframe", "webview", "browser"].includes(getCompanyEmbedMode()))
 
 function calcNextUpdate() {
@@ -104,7 +128,42 @@ function formatDateTime(val) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
-function goQuery() { router.push("/company/query") }
+function requestNewAppKey() {
+  const message = company.value.hasAppKey
+    ? "换发后旧 AppKey 会立即失效，保险公司系统需要改用新的 AppKey。确认继续？"
+    : "确认为当前保险公司生成 AppKey？完整 AppKey 只会在生成成功后展示一次。"
+  ElMessageBox.confirm(message, company.value.hasAppKey ? "换发 AppKey" : "新增 AppKey", {
+    confirmButtonText: "确认",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    generatingKey.value = true
+    return regenerateCompanyAppKey()
+  }).then(res => {
+    const data = res.data || {}
+    generatedAppKey.value = data.appKey || ""
+    company.value = Object.assign({}, company.value, {
+      hasAppKey: true,
+      appKeyMasked: data.appKeyMasked || "已生成"
+    })
+    localStorage.setItem("companyInfo", JSON.stringify(company.value))
+    keyDialogOpen.value = true
+    loadProfile()
+  }).finally(() => {
+    generatingKey.value = false
+  }).catch(() => {})
+}
+
+async function copyGeneratedAppKey() {
+  if (!generatedAppKey.value) return
+  await navigator.clipboard.writeText(generatedAppKey.value)
+  ElMessage.success("AppKey 已复制")
+}
+
+function clearGeneratedKey() {
+  generatedAppKey.value = ""
+}
+
 function goRecharge() { router.push("/company/recharge") }
 function goRechargeList() { router.push("/company/recharge-list") }
 function goQueryLog() { router.push("/company/query-log") }
@@ -227,7 +286,7 @@ loadProfile()
 }
 
 .work-grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .action-card {
@@ -252,20 +311,17 @@ loadProfile()
   line-height: 1.55;
 }
 
-.action-primary {
-  background: #effaf8;
-  border-color: rgba(15, 118, 110, 0.2);
-}
-
 .key-strip {
-  display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
+  display: flex;
+  justify-content: space-between;
   gap: 14px;
   align-items: center;
   padding: 16px 18px;
 }
 
 .key-strip code {
+  display: block;
+  margin-top: 8px;
   overflow: hidden;
   color: #10202f;
   font-weight: 700;
@@ -273,11 +329,50 @@ loadProfile()
   white-space: nowrap;
 }
 
+.key-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.generated-key {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid rgba(16, 32, 47, 0.08);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.generated-key span {
+  display: block;
+  margin-bottom: 8px;
+  color: #667781;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.generated-key code {
+  display: block;
+  color: #10202f;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 1100px) {
   .hero-panel,
   .meta-grid,
   .work-grid {
     grid-template-columns: 1fr;
+  }
+
+  .key-strip {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .key-actions {
+    justify-content: flex-start;
   }
 }
 </style>

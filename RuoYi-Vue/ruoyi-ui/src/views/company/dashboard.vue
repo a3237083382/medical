@@ -31,7 +31,15 @@
           <div slot="header"><span>公司信息</span></div>
           <div style="font-size:13px;color:#666;padding:10px">
             <p><b>公司名称：</b>{{ company.companyName }}</p>
-            <p><b>AppKey：</b>{{ company.appKey || '-' }}</p>
+            <p class="app-key-line">
+              <b>AppKey：</b><span>{{ company.appKey || '-' }}</span>
+              <el-button
+                v-if="company.appKey"
+                type="text"
+                icon="el-icon-document-copy"
+                @click="copyAppKey"
+              >复制</el-button>
+            </p>
           </div>
         </el-card>
       </el-col>
@@ -64,9 +72,39 @@ export default {
       if (!val) return "0.00";
       return Number(val).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     },
+    copyAppKey() {
+      const value = this.company.appKey || "";
+      if (!value) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(value).then(() => {
+          this.$message.success("AppKey 已复制");
+        });
+        return;
+      }
+      const input = document.createElement("textarea");
+      input.value = value;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      document.body.removeChild(input);
+      this.$message.success("AppKey 已复制");
+    },
     goRecharge() { this.$router.push("/company/recharge"); },
     goLogs() { this.$router.push("/company/logs"); },
     goRechargeList() { this.$router.push("/company/recharge-list"); },
   },
 };
 </script>
+
+<style scoped>
+.app-key-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.app-key-line span {
+  overflow-wrap: anywhere;
+}
+</style>

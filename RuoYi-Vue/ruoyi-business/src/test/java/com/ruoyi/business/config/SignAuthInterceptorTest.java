@@ -142,6 +142,7 @@ class SignAuthInterceptorTest
         @Override public int deductBalance(Long companyId, BigDecimal amount) { return 0; }
         @Override public int changeStatus(Long id, String status) { return 0; }
         @Override public int updatePassword(Long id, String password) { return 0; }
+        @Override public String regenerateAppKey(Long id) { return null; }
     }
 
     private static class FakeRedisCache extends RedisCache

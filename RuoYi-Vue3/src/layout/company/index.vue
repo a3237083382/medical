@@ -13,10 +13,6 @@
           <el-icon><House /></el-icon>
           <span>账户概览</span>
         </el-menu-item>
-        <el-menu-item index="/company/query">
-          <el-icon><Search /></el-icon>
-          <span>接口接入</span>
-        </el-menu-item>
         <el-menu-item index="/company/recharge">
           <el-icon><Money /></el-icon>
           <span>提交充值申请</span>
@@ -46,14 +42,13 @@
           <div class="company-name">{{ companyName }} · 医疗数据查询服务</div>
         </div>
         <div class="header-actions">
-          <span class="service-pill">签名接口已启用</span>
+          <span class="service-pill">医疗查询服务已启用</span>
           <el-button type="primary" plain @click="logout">退出登录</el-button>
         </div>
       </header>
       <nav v-else class="embed-nav">
         <el-tabs :model-value="activeMenu" @tab-change="goTab">
           <el-tab-pane label="账户概览" name="/company/dashboard" />
-          <el-tab-pane label="接口接入" name="/company/query" />
           <el-tab-pane label="充值申请" name="/company/recharge" />
           <el-tab-pane label="充值记录" name="/company/recharge-list" />
           <el-tab-pane label="查询记录" name="/company/query-log" />

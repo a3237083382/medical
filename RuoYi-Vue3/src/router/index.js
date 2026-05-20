@@ -82,12 +82,6 @@ export const constantRoutes = [
         meta: { title: '公司首页' }
       },
       {
-        path: 'query',
-        component: () => import('@/views/company/query'),
-        name: 'CompanyQuery',
-        meta: { title: '医疗查询' }
-      },
-      {
         path: 'recharge',
         component: () => import('@/views/company/recharge'),
         name: 'CompanyRecharge',

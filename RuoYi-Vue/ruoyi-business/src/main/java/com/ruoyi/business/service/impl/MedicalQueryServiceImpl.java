@@ -48,18 +48,19 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         {
             throw new MedicalQueryException("4002", "company disabled or not found");
         }
-        if (isNegative(before.getBalance()))
+        BigDecimal fee = getQueryPrice(request.getQueryType());
+        BigDecimal balanceBefore = before.getBalance() == null ? BigDecimal.ZERO : before.getBalance();
+        if (balanceBefore.compareTo(fee) < 0)
         {
             throw new MedicalQueryException("4001", "insufficient balance");
         }
-        BigDecimal fee = getQueryPrice(request.getQueryType());
 
         Map<String, Object> data = DesensitizeUtil.desensitize(medicalDataSource.query(request));
         insertQueryLog(request, fee);
 
         MedicalQueryResult result = new MedicalQueryResult();
         result.setFee(fee);
-        result.setBalanceAfter(before.getBalance());
+        result.setBalanceAfter(balanceBefore);
         result.setData(data);
         return result;
     }
@@ -110,8 +111,4 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         return log;
     }
 
-    private boolean isNegative(BigDecimal value)
-    {
-        return value != null && value.compareTo(BigDecimal.ZERO) < 0;
-    }
 }

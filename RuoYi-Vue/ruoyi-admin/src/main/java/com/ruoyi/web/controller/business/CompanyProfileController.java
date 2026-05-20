@@ -5,6 +5,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -71,6 +72,17 @@ public class CompanyProfileController extends BaseController
         return toAjax(companyService.updatePassword(companyId, newPassword));
     }
 
+    @PostMapping("/app-key")
+    public AjaxResult regenerateAppKey(HttpServletRequest request)
+    {
+        Long companyId = (Long) request.getAttribute("companyId");
+        String appKey = companyService.regenerateAppKey(companyId);
+        Map<String, Object> result = new HashMap<>();
+        result.put("appKey", appKey);
+        result.put("appKeyMasked", maskAppKey(appKey));
+        return AjaxResult.success(result);
+    }
+
     private Map<String, Object> toProfile(BizInsuranceCompany company)
     {
         Map<String, Object> result = new HashMap<>();
@@ -82,7 +94,8 @@ public class CompanyProfileController extends BaseController
         result.put("companyName", company.getCompanyName());
         result.put("companyCode", company.getCompanyCode());
         result.put("username", company.getUsername());
-        result.put("appKey", company.getAppKey());
+        result.put("hasAppKey", company.getAppKey() != null && !company.getAppKey().isEmpty());
+        result.put("appKeyMasked", maskAppKey(company.getAppKey()));
         result.put("balance", company.getBalance());
         result.put("billingCycleDays", billingCycleConfigService.getBillingCycleDays());
         result.put("balanceUpdateTime", company.getBalanceUpdateTime());
@@ -90,5 +103,18 @@ public class CompanyProfileController extends BaseController
         result.put("contactPhone", company.getContactPhone());
         result.put("remark", company.getRemark());
         return result;
+    }
+
+    private String maskAppKey(String value)
+    {
+        if (value == null || value.isEmpty())
+        {
+            return "-";
+        }
+        if (value.length() <= 8)
+        {
+            return value.substring(0, 2) + "****" + value.substring(value.length() - 2);
+        }
+        return value.substring(0, 4) + "****" + value.substring(value.length() - 4);
     }
 }

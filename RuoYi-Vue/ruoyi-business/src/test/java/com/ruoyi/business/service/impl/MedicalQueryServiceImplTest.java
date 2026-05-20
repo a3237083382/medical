@@ -67,7 +67,7 @@ public class MedicalQueryServiceImplTest
     }
 
     @Test
-    public void queryAllowsWhenBalanceIsNonNegativeEvenIfFeeIsHigher()
+    public void queryReturns4001WhenBalanceIsLowerThanFee()
     {
         FakeCompanyMapper companyMapper = new FakeCompanyMapper(company(1L, "20.00"));
         FakePriceMapper priceMapper = new FakePriceMapper(price("medical_all", "50.00"));
@@ -82,13 +82,20 @@ public class MedicalQueryServiceImplTest
         request.setQueryType("medical_all");
         request.setQueryParams(params("idCard", "430102199001011234"));
 
-        MedicalQueryResult result = service.query(request);
+        try
+        {
+            service.query(request);
+            fail("Expected balance error");
+        }
+        catch (MedicalQueryException ex)
+        {
+            assertEquals("4001", ex.getCode());
+        }
 
         assertEquals(new BigDecimal("20.00"), companyMapper.company.getBalance());
-        assertEquals(new BigDecimal("20.00"), result.getBalanceAfter());
-        assertEquals(1, queryLogMapper.logs.size());
+        assertTrue(queryLogMapper.logs.isEmpty());
         assertTrue(feeFlowMapper.flows.isEmpty());
-        assertEquals(1, dataSource.queryCount);
+        assertEquals(0, dataSource.queryCount);
     }
 
     @Test
