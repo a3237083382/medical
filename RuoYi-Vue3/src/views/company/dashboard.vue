@@ -155,9 +155,47 @@ function requestNewAppKey() {
 }
 
 async function copyGeneratedAppKey() {
-  if (!generatedAppKey.value) return
-  await navigator.clipboard.writeText(generatedAppKey.value)
-  ElMessage.success("AppKey 已复制")
+  if (!generatedAppKey.value) {
+    ElMessage.warning("暂无可复制的 AppKey，请先新增或换发")
+    return
+  }
+
+  const copied = await copyText(generatedAppKey.value)
+  if (copied) {
+    ElMessage.success("AppKey 已复制")
+  } else {
+    ElMessage.warning("浏览器限制自动复制，请手动选中完整 AppKey 复制")
+  }
+}
+
+async function copyText(text) {
+  if (window.isSecureContext && navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch (error) {
+      // Fall back below for HTTP deployments or browser permission denial.
+    }
+  }
+
+  const textarea = document.createElement("textarea")
+  textarea.value = text
+  textarea.setAttribute("readonly", "readonly")
+  textarea.style.position = "fixed"
+  textarea.style.top = "-9999px"
+  textarea.style.left = "-9999px"
+  document.body.appendChild(textarea)
+  textarea.focus()
+  textarea.select()
+  textarea.setSelectionRange(0, text.length)
+
+  try {
+    return document.execCommand("copy")
+  } catch (error) {
+    return false
+  } finally {
+    document.body.removeChild(textarea)
+  }
 }
 
 function clearGeneratedKey() {
@@ -357,6 +395,7 @@ loadProfile()
   color: #10202f;
   font-weight: 800;
   overflow-wrap: anywhere;
+  user-select: all;
 }
 
 @media (max-width: 1100px) {

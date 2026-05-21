@@ -12,9 +12,6 @@
         <el-form-item>
           <el-button type="primary" :loading="loading" style="width:100%" size="large" @click="handleLogin">登 录</el-button>
         </el-form-item>
-        <div style="text-align:center;font-size:12px;color:#999">
-          <router-link to="/login" style="color:#409EFF">管理员登录</router-link>
-        </div>
       </el-form>
     </div>
   </div>
@@ -43,7 +40,7 @@ export default {
         companyLogin(this.form).then(res => {
           localStorage.setItem("companyToken", res.data.token);
           localStorage.setItem("companyInfo", JSON.stringify(res.data));
-          this.$router.push("/company/dashboard");
+          this.$router.push(this.$route.query.redirect || "/company/dashboard");
         }).catch(() => {
           this.loading = false;
         });

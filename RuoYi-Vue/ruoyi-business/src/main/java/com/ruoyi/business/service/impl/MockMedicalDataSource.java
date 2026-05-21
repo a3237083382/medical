@@ -27,18 +27,21 @@ public class MockMedicalDataSource implements MedicalDataSource
     @Override
     public Map<String, Object> query(MedicalQueryRequest request)
     {
+        Map<String, Object> params = request == null ? null : request.getQueryParams();
+        String patientName = valueOrDefault(params, "name", "");
+        String idCard = valueOrDefault(params, "idCard", "");
         MockMedicalData data;
         try
         {
-            data = mockMedicalDataMapper.selectAvailableByQueryType(request.getQueryType());
+            data = mockMedicalDataMapper.selectAvailableByQuery(request.getQueryType(), patientName, idCard);
         }
         catch (BadSqlGrammarException e)
         {
-            return buildFallbackData(request);
+            return new LinkedHashMap<>();
         }
         if (data == null)
         {
-            throw new MedicalQueryException("4004", "medical data not found");
+            return new LinkedHashMap<>();
         }
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("patientName", data.getPatientName());

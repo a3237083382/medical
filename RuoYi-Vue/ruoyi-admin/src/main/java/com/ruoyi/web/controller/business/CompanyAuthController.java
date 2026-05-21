@@ -74,6 +74,8 @@ public class CompanyAuthController extends BaseController
         result.put("companyId", company.getId());
         result.put("companyName", company.getCompanyName());
         result.put("balance", company.getBalance());
+        result.put("monthlyBudget", company.getMonthlyBudget());
+        result.put("budgetEnabled", company.getBudgetEnabled());
         result.put("balanceUpdateTime", company.getBalanceUpdateTime());
         result.put("billingCycleDays", billingCycleConfigService.getBillingCycleDays());
 

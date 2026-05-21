@@ -61,6 +61,12 @@ public class BizInsuranceCompany extends BaseEntity
     @Excel(name = "结算周期(天)", cellType = ColumnType.NUMERIC)
     private Integer billingCycleDays;
 
+    @Excel(name = "月度预算", cellType = ColumnType.NUMERIC)
+    private BigDecimal monthlyBudget;
+
+    @Excel(name = "预算状态", readConverterExp = "0=启用,1=停用")
+    private String budgetEnabled;
+
     /** 余额最后更新时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Excel(name = "余额更新时间", dateFormat = "yyyy-MM-dd HH:mm:ss")
@@ -111,6 +117,12 @@ public class BizInsuranceCompany extends BaseEntity
     public Integer getBillingCycleDays() { return billingCycleDays; }
     public void setBillingCycleDays(Integer billingCycleDays) { this.billingCycleDays = billingCycleDays; }
 
+    public BigDecimal getMonthlyBudget() { return monthlyBudget; }
+    public void setMonthlyBudget(BigDecimal monthlyBudget) { this.monthlyBudget = monthlyBudget; }
+
+    public String getBudgetEnabled() { return budgetEnabled; }
+    public void setBudgetEnabled(String budgetEnabled) { this.budgetEnabled = budgetEnabled; }
+
     public Date getBalanceUpdateTime() { return balanceUpdateTime; }
     public void setBalanceUpdateTime(Date balanceUpdateTime) { this.balanceUpdateTime = balanceUpdateTime; }
 
@@ -132,6 +144,8 @@ public class BizInsuranceCompany extends BaseEntity
             .append("appKey", getAppKey())
             .append("balance", getBalance())
             .append("billingCycleDays", getBillingCycleDays())
+            .append("monthlyBudget", getMonthlyBudget())
+            .append("budgetEnabled", getBudgetEnabled())
             .append("balanceUpdateTime", getBalanceUpdateTime())
             .append("status", getStatus())
             .append("contactPerson", getContactPerson())

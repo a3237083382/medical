@@ -1,5 +1,7 @@
 package com.ruoyi.web.controller.business;
 
+import java.math.BigDecimal;
+import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.business.domain.BizInsuranceCompany;
+import com.ruoyi.business.domain.BizMonthlyUsage;
+import com.ruoyi.business.mapper.BizMonthlyUsageMapper;
 import com.ruoyi.business.service.IBizInsuranceCompanyService;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
@@ -26,6 +30,9 @@ public class CompanyProfileController extends BaseController
 
     @Autowired
     private BillingCycleConfigService billingCycleConfigService;
+
+    @Autowired
+    private BizMonthlyUsageMapper monthlyUsageMapper;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -99,10 +106,35 @@ public class CompanyProfileController extends BaseController
         result.put("balance", company.getBalance());
         result.put("billingCycleDays", billingCycleConfigService.getBillingCycleDays());
         result.put("balanceUpdateTime", company.getBalanceUpdateTime());
+        result.put("monthlyBudget", company.getMonthlyBudget());
+        result.put("budgetEnabled", company.getBudgetEnabled());
+        putUsageStatus(result, company);
         result.put("contactPerson", company.getContactPerson());
         result.put("contactPhone", company.getContactPhone());
         result.put("remark", company.getRemark());
         return result;
+    }
+
+    private void putUsageStatus(Map<String, Object> result, BizInsuranceCompany company)
+    {
+        String billingMonth = YearMonth.now().toString();
+        BigDecimal monthlyBudget = company.getMonthlyBudget() == null ? BigDecimal.ZERO : company.getMonthlyBudget();
+        BigDecimal usedAmount = BigDecimal.ZERO;
+        BigDecimal reservedAmount = BigDecimal.ZERO;
+        BizMonthlyUsage usage = monthlyUsageMapper.selectUsage(company.getId(), billingMonth);
+        if (usage != null)
+        {
+            usedAmount = usage.getUsedAmount() == null ? BigDecimal.ZERO : usage.getUsedAmount();
+            reservedAmount = usage.getReservedAmount() == null ? BigDecimal.ZERO : usage.getReservedAmount();
+        }
+        BigDecimal activeAmount = usedAmount.add(reservedAmount);
+        int usagePercent = BigDecimal.ZERO.compareTo(monthlyBudget) == 0 ? 0
+                : activeAmount.multiply(new BigDecimal("100")).divide(monthlyBudget, 0, java.math.RoundingMode.DOWN).intValue();
+        result.put("billingMonth", billingMonth);
+        result.put("usedAmount", usedAmount);
+        result.put("reservedAmount", reservedAmount);
+        result.put("usagePercent", Math.min(usagePercent, 100));
+        result.put("serviceStatus", usagePercent >= 100 ? "LIMIT_REACHED" : usagePercent >= 80 ? "NEAR_LIMIT" : "NORMAL");
     }
 
     private String maskAppKey(String value)

@@ -5,6 +5,7 @@ Vue.use(Router)
 
 /* Layout */
 import Layout from '@/layout'
+import CompanyLayout from '@/layout/company'
 
 /**
  * Note: 路由配置项
@@ -65,7 +66,8 @@ export const constantRoutes = [
   {
     path: '/company/login',
     component: () => import('@/views/company/login'),
-    hidden: true
+    hidden: true,
+    meta: { title: '医疗查询信息平台' }
   },
   {
     path: '/company/medical-query',
@@ -74,7 +76,7 @@ export const constantRoutes = [
   },
   {
     path: '/company',
-    component: Layout,
+    component: CompanyLayout,
     hidden: true,
     children: [
       {
@@ -87,13 +89,25 @@ export const constantRoutes = [
         path: 'recharge',
         component: () => import('@/views/company/recharge'),
         name: 'CompanyRecharge',
-        meta: { title: '提交充值' }
+        meta: { title: '额度申请' }
       },
       {
         path: 'recharge-list',
         component: () => import('@/views/company/rechargeList'),
         name: 'CompanyRechargeList',
-        meta: { title: '充值记录' }
+        meta: { title: '额度申请记录' }
+      },
+      {
+        path: 'logs',
+        component: () => import('@/views/company/logs'),
+        name: 'CompanyLogs',
+        meta: { title: '查询记录' }
+      },
+      {
+        path: 'monthly-bill',
+        component: () => import('@/views/company/monthlyBill'),
+        name: 'CompanyMonthlyBill',
+        meta: { title: '月度对账' }
       },
     ]
   },

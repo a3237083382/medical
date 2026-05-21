@@ -14,24 +14,17 @@
       </div>
     </div>
 
-    <section class="login-section">
+    <section class="login-section" v-if="!loggedIn">
       <div class="section-head">
         <h2>保险公司账号登录</h2>
-        <span>登录后调用我方接口查询投保人医疗信息</span>
+        <span>登录后调用医疗数据查询服务</span>
       </div>
       <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" label-position="top">
         <el-form-item label="账号" prop="username">
           <el-input v-model="loginForm.username" placeholder="请输入保险公司账号" autocomplete="off" />
         </el-form-item>
         <el-form-item label="密码" prop="password">
-          <el-input
-            v-model="loginForm.password"
-            type="password"
-            placeholder="请输入密码"
-            autocomplete="off"
-            show-password
-            @keyup.enter.native="handleLogin"
-          />
+          <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" autocomplete="off" show-password @keyup.enter.native="handleLogin" />
         </el-form-item>
         <el-form-item class="login-action">
           <el-button type="primary" :loading="loginLoading" @click="handleLogin">登录</el-button>
@@ -53,10 +46,7 @@
                 :key="item.queryType"
                 :label="item.queryName || item.queryType"
                 :value="item.queryType"
-              >
-                <span>{{ item.queryName || item.queryType }}</span>
-                <span class="option-fee">￥{{ formatMoney(item.fee) }}</span>
-              </el-option>
+              />
             </el-select>
           </el-form-item>
 
@@ -67,11 +57,6 @@
           <el-form-item label="身份证号" prop="idCard">
             <el-input v-model="queryForm.idCard" placeholder="请输入18位身份证号" maxlength="18" autocomplete="off" />
           </el-form-item>
-
-          <div class="fee-line">
-            <span>本次查询费用</span>
-            <strong>￥{{ formatMoney(selectedFee) }}</strong>
-          </div>
 
           <div class="actions">
             <el-button type="primary" :loading="queryLoading" @click="handleQuery">查询</el-button>
@@ -98,21 +83,21 @@
               <strong>{{ result.queryName || result.queryType || '-' }}</strong>
             </div>
             <div class="metric">
-              <span>姓名</span>
-              <strong>{{ result.name || result.patientName || maskedName }}</strong>
+              <span>查询编号</span>
+              <strong>{{ result.queryId || '-' }}</strong>
+            </div>
+            <div class="metric">
+              <span>结果类型</span>
+              <strong>{{ result.resultStatus === 'NO_RESULT' ? '未查得' : '查得数据' }}</strong>
             </div>
             <div class="metric">
               <span>身份证号</span>
               <strong>{{ result.idCard || maskedIdCard }}</strong>
             </div>
-            <div class="metric">
-              <span>本次费用</span>
-              <strong>￥{{ formatMoney(result.fee || selectedFee) }}</strong>
-            </div>
           </div>
 
           <div class="summary">
-            {{ result.summary || '查询已完成，正式环境以数据源返回结果为准。' }}
+            {{ result.summary || (result.resultStatus === 'NO_RESULT' ? '当前查询未查得对应医疗信息。' : '查询已完成，正式环境以数据源返回结果为准。') }}
           </div>
 
           <el-table :data="resultRecords" border>
@@ -140,15 +125,8 @@ export default {
       queryTypes: [],
       result: null,
       resultTime: '',
-      loginForm: {
-        username: '',
-        password: ''
-      },
-      queryForm: {
-        queryType: '',
-        name: '',
-        idCard: ''
-      },
+      loginForm: { username: '', password: '' },
+      queryForm: { queryType: '', name: '', idCard: '' },
       loginRules: {
         username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
         password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
@@ -164,26 +142,15 @@ export default {
     }
   },
   computed: {
-    selectedFee() {
-      const current = this.queryTypes.find(item => item.queryType === this.queryForm.queryType)
-      return current && current.fee ? current.fee : 0
-    },
-    maskedName() {
-      const name = this.queryForm.name || ''
-      return name.length <= 1 ? '*' : name.substring(0, 1) + '*'
-    },
     maskedIdCard() {
       const value = this.queryForm.idCard || ''
-      if (value.length < 8) {
-        return '****'
-      }
+      if (value.length < 8) return '****'
       return value.substring(0, 4) + '**********' + value.substring(value.length - 4)
     },
     resultRecords() {
       const records = this.result && this.result.records
-      if (Array.isArray(records)) {
-        return records
-      }
+      if (Array.isArray(records)) return records
+      if (this.result && this.result.resultStatus === 'NO_RESULT') return []
       return [
         { name: '医疗风险汇总', value: this.result && this.result.riskLevel ? this.result.riskLevel : '低风险', remark: '未命中样例高风险医疗记录' },
         { name: '数据处理', value: '已脱敏', remark: '姓名、身份证和诊断信息按平台规则脱敏展示' }
@@ -197,9 +164,7 @@ export default {
     restoreCompanySession() {
       const token = sessionStorage.getItem('companyToken') || localStorage.getItem('companyToken')
       const infoText = sessionStorage.getItem('companyInfo') || localStorage.getItem('companyInfo')
-      if (!token || !infoText) {
-        return
-      }
+      if (!token || !infoText) return
       try {
         this.companyInfo = JSON.parse(infoText)
         this.loggedIn = true
@@ -210,9 +175,7 @@ export default {
     },
     handleLogin() {
       this.$refs.loginForm.validate(valid => {
-        if (!valid) {
-          return
-        }
+        if (!valid) return
         this.loginLoading = true
         companyLogin(this.loginForm).then(res => {
           const data = res.data || {}
@@ -237,11 +200,10 @@ export default {
     },
     handleQuery() {
       this.$refs.queryForm.validate(valid => {
-        if (!valid) {
-          return
-        }
+        if (!valid) return
         this.queryLoading = true
         this.result = null
+        const current = this.queryTypes.find(item => item.queryType === this.queryForm.queryType) || {}
         queryMedical({
           queryType: this.queryForm.queryType,
           queryParams: {
@@ -251,8 +213,10 @@ export default {
         }).then(res => {
           const data = res.data || {}
           this.result = Object.assign({}, data.data || {}, {
-            fee: data.fee,
-            queryType: this.queryForm.queryType
+            queryId: data.queryId,
+            resultStatus: data.resultStatus,
+            queryType: this.queryForm.queryType,
+            queryName: current.queryName
           })
           this.resultTime = new Date().toLocaleString('zh-CN', { hour12: false })
         }).finally(() => {
@@ -264,13 +228,7 @@ export default {
       this.$refs.queryForm.resetFields()
       this.result = null
       this.resultTime = ''
-      if (this.queryTypes.length > 0) {
-        this.queryForm.queryType = this.queryTypes[0].queryType
-      }
-    },
-    formatMoney(value) {
-      const number = Number(value || 0)
-      return number.toFixed(2)
+      if (this.queryTypes.length > 0) this.queryForm.queryType = this.queryTypes[0].queryType
     }
   }
 }
@@ -282,7 +240,6 @@ export default {
   background: #fff;
   color: #172033;
 }
-
 .query-header {
   min-height: 64px;
   padding: 0 24px;
@@ -292,13 +249,11 @@ export default {
   justify-content: space-between;
   gap: 16px;
 }
-
 .brand {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-
 .brand-icon {
   width: 36px;
   height: 36px;
@@ -309,19 +264,16 @@ export default {
   background: #e8f1fb;
   font-weight: 900;
 }
-
 .brand-title {
   font-size: 17px;
   font-weight: 700;
 }
-
 .brand-subtitle,
 .company-state,
 .section-head span {
   color: #667085;
   font-size: 12px;
 }
-
 .login-section,
 .query-section,
 .result-section {
@@ -329,11 +281,9 @@ export default {
   border-radius: 8px;
   background: #fff;
 }
-
 .login-section {
   margin: 20px 24px 0;
 }
-
 .section-head {
   min-height: 54px;
   padding: 0 18px;
@@ -343,12 +293,10 @@ export default {
   justify-content: space-between;
   gap: 12px;
 }
-
 .section-head h2 {
   margin: 0;
   font-size: 16px;
 }
-
 .login-form {
   padding: 16px 18px;
   display: grid;
@@ -356,55 +304,26 @@ export default {
   gap: 12px;
   align-items: end;
 }
-
 .login-action {
   margin-bottom: 22px;
 }
-
 .workbench {
   padding: 18px 24px 24px;
   display: grid;
   grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
   gap: 16px;
 }
-
 .workbench.disabled {
   opacity: 0.5;
   pointer-events: none;
 }
-
 .query-form {
   padding: 18px;
 }
-
-.option-fee {
-  float: right;
-  color: #b7791f;
-  margin-left: 24px;
-}
-
-.fee-line {
-  min-height: 42px;
-  padding: 0 12px;
-  margin-bottom: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-radius: 7px;
-  background: #f5f8fc;
-  color: #667085;
-}
-
-.fee-line strong {
-  color: #b7791f;
-  font-size: 16px;
-}
-
 .actions {
   display: flex;
   gap: 10px;
 }
-
 .empty-result {
   min-height: 360px;
   display: grid;
@@ -413,7 +332,6 @@ export default {
   text-align: center;
   padding: 34px 20px;
 }
-
 .empty-icon {
   width: 62px;
   height: 62px;
@@ -426,18 +344,15 @@ export default {
   font-size: 24px;
   font-weight: 900;
 }
-
 .result-body {
   padding: 18px;
 }
-
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
-
 .metric {
   min-height: 78px;
   border: 1px solid #d9e2ef;
@@ -445,59 +360,19 @@ export default {
   background: #fbfcfe;
   padding: 13px;
 }
-
 .metric span {
   display: block;
   color: #667085;
   font-size: 12px;
   margin-bottom: 8px;
 }
-
 .metric strong {
   display: block;
   font-size: 16px;
   overflow-wrap: anywhere;
 }
-
 .summary {
-  border-left: 4px solid #168464;
-  background: #effaf5;
-  color: #165b47;
-  padding: 12px 14px;
   margin-bottom: 16px;
-  line-height: 1.7;
-}
-
-@media (max-width: 960px) {
-  .login-form,
-  .workbench {
-    grid-template-columns: 1fr;
-  }
-
-  .metric-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 560px) {
-  .query-header,
-  .section-head {
-    align-items: flex-start;
-    flex-direction: column;
-    justify-content: center;
-    padding: 14px 16px;
-  }
-
-  .login-section {
-    margin: 12px 12px 0;
-  }
-
-  .workbench {
-    padding: 12px;
-  }
-
-  .metric-grid {
-    grid-template-columns: 1fr;
-  }
+  color: #475467;
 }
 </style>

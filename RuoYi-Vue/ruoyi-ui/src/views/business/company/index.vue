@@ -32,13 +32,19 @@
     <el-table v-loading="loading" :data="companyList" border stripe @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="公司名称" align="center" prop="companyName" min-width="180" />
-      <el-table-column label="AppKey" align="center" prop="appKey" min-width="280">
-        <template slot-scope="{ row }">
-          <span>{{ maskAppKey(row.appKey) }}</span>
-        </template>
+      <el-table-column label="AppKey" align="center" prop="appKey" min-width="260">
+        <template slot-scope="{ row }">{{ maskAppKey(row.appKey) }}</template>
       </el-table-column>
-      <el-table-column label="余额(元)" align="center" prop="balance" width="120">
+      <el-table-column label="内部余额(元)" align="center" prop="balance" width="120">
         <template slot-scope="{ row }">{{ formatMoney(row.balance) }}</template>
+      </el-table-column>
+      <el-table-column label="月度预算(元)" align="center" prop="monthlyBudget" width="130">
+        <template slot-scope="{ row }">{{ formatMoney(row.monthlyBudget) }}</template>
+      </el-table-column>
+      <el-table-column label="预算控制" align="center" prop="budgetEnabled" width="100">
+        <template slot-scope="{ row }">
+          <el-tag :type="row.budgetEnabled === '0' ? 'success' : 'info'">{{ row.budgetEnabled === '0' ? '启用' : '停用' }}</el-tag>
+        </template>
       </el-table-column>
       <el-table-column label="联系人" align="center" prop="contactPerson" width="120" />
       <el-table-column label="联系电话" align="center" prop="contactPhone" width="140" />
@@ -47,7 +53,7 @@
           <el-switch v-model="row.status" active-value="0" inactive-value="1" @change="handleStatusChange(row)" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="250" fixed="right">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="240" fixed="right">
         <template slot-scope="{ row }">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(row)" v-hasPermi="['business:company:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-tickets" @click="handleRecords(row)">记录</el-button>
@@ -58,7 +64,7 @@
 
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" @pagination="getList" />
 
-    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="620px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="110px">
         <el-form-item label="公司名称" prop="companyName">
           <el-input v-model="form.companyName" placeholder="请输入公司名称" />
@@ -69,8 +75,17 @@
         <el-form-item label="登录用户名" prop="username" v-if="!form.id">
           <el-input v-model="form.username" placeholder="请输入登录用户名" />
         </el-form-item>
-        <el-form-item :label="form.id ? '登录密码' : '登录密码'" :prop="form.id ? '' : 'password'">
+        <el-form-item label="登录密码" :prop="form.id ? '' : 'password'">
           <el-input v-model="form.password" type="password" placeholder="留空则不修改" show-password />
+        </el-form-item>
+        <el-form-item label="月度预算" prop="monthlyBudget">
+          <el-input-number v-model="form.monthlyBudget" :min="0" :precision="2" />
+        </el-form-item>
+        <el-form-item label="预算控制" prop="budgetEnabled">
+          <el-radio-group v-model="form.budgetEnabled">
+            <el-radio label="0">启用</el-radio>
+            <el-radio label="1">停用</el-radio>
+          </el-radio-group>
         </el-form-item>
         <el-form-item label="联系人" prop="contactPerson">
           <el-input v-model="form.contactPerson" placeholder="请输入联系人" />
@@ -83,8 +98,8 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
+        <el-button type="primary" @click="submitForm">确定</el-button>
+        <el-button @click="cancel">取消</el-button>
       </div>
     </el-dialog>
 
@@ -93,18 +108,18 @@
         <el-tab-pane label="查询日志" name="log">
           <el-table v-loading="recordLoading" :data="companyLogs" height="320" border>
             <el-table-column label="查询类型" prop="queryType" min-width="120" />
-            <el-table-column label="费用" prop="fee" width="100">
-              <template slot-scope="{ row }">{{ formatMoney(row.fee) }}</template>
+            <el-table-column label="计费结果" prop="resultStatus" width="110">
+              <template slot-scope="{ row }">{{ formatResultStatus(row.resultStatus) }}</template>
             </el-table-column>
-            <el-table-column label="状态" prop="status" width="90">
-              <template slot-scope="{ row }">{{ row.status === '0' ? '成功' : '失败' }}</template>
+            <el-table-column label="金额快照" prop="feeSnapshot" width="100">
+              <template slot-scope="{ row }">{{ formatMoney(row.feeSnapshot || row.fee) }}</template>
             </el-table-column>
             <el-table-column label="请求时间" prop="requestTime" width="170" />
             <el-table-column label="请求 IP" prop="requestIp" width="140" />
             <el-table-column label="备注" prop="remark" min-width="140" />
           </el-table>
         </el-tab-pane>
-        <el-tab-pane label="费用流水" name="fee">
+        <el-tab-pane label="内部流水" name="fee">
           <el-table v-loading="recordLoading" :data="companyFees" height="320" border>
             <el-table-column label="类型" prop="operationType" width="110" />
             <el-table-column label="金额" prop="amount" width="100">
@@ -196,7 +211,7 @@ export default {
       this.reset()
       const id = row.id || this.ids
       getCompany(id).then(response => {
-        this.form = response.data
+        this.form = Object.assign({ budgetEnabled: '0', monthlyBudget: 0 }, response.data)
         this.form.password = undefined
         this.open = true
         this.title = '修改保险公司'
@@ -268,6 +283,8 @@ export default {
         companyCode: undefined,
         username: undefined,
         password: undefined,
+        monthlyBudget: 0,
+        budgetEnabled: '0',
         contactPerson: undefined,
         contactPhone: undefined,
         remark: undefined
@@ -276,6 +293,11 @@ export default {
     },
     formatMoney(value) {
       return Number(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+    },
+    formatResultStatus(value) {
+      if (value === 'HIT') return '查得数据'
+      if (value === 'NO_RESULT') return '未查得'
+      return value || '-'
     },
     maskAppKey(value) {
       if (!value) return '-'

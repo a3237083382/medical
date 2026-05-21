@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BizMonthlyBillMapper">
+
+    <resultMap type="com.ruoyi.business.domain.BizMonthlyBill" id="BizMonthlyBillResult">
+        <result property="id" column="id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="billingMonth" column="billing_month"/>
+        <result property="queryCount" column="query_count"/>
+        <result property="hitCount" column="hit_count"/>
+        <result property="noResultCount" column="no_result_count"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="status" column="status"/>
+        <result property="generatedTime" column="generated_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectVo">
+        select b.id, b.company_id, c.company_name, b.billing_month, b.query_count,
+               b.hit_count, b.no_result_count, b.total_amount, b.status,
+               b.generated_time, b.remark
+        from biz_monthly_bill b
+        left join biz_insurance_company c on b.company_id = c.id
+    </sql>
+
+    <select id="selectBill" resultMap="BizMonthlyBillResult">
+        <include refid="selectVo"/>
+        where b.company_id = #{companyId}
+          and b.billing_month = #{billingMonth}
+    </select>
+
+    <select id="selectBizMonthlyBillById" parameterType="Long" resultMap="BizMonthlyBillResult">
+        <include refid="selectVo"/>
+        where b.id = #{id}
+    </select>
+
+    <select id="selectBizMonthlyBillList" parameterType="com.ruoyi.business.domain.BizMonthlyBill" resultMap="BizMonthlyBillResult">
+        <include refid="selectVo"/>
+        <where>
+            <if test="companyId != null">and b.company_id = #{companyId}</if>
+            <if test="companyName != null and companyName != ''">and c.company_name like concat('%', #{companyName}, '%')</if>
+            <if test="billingMonth != null and billingMonth != ''">and b.billing_month = #{billingMonth}</if>
+        </where>
+        order by b.billing_month desc, b.id desc
+    </select>
+
+    <delete id="deleteBillDetails">
+        delete from biz_monthly_bill_detail where bill_id = #{billId}
+    </delete>
+
+    <delete id="deleteBill">
+        delete from biz_monthly_bill
+        where company_id = #{companyId}
+          and billing_month = #{billingMonth}
+    </delete>
+
+    <insert id="insertBizMonthlyBill" parameterType="com.ruoyi.business.domain.BizMonthlyBill" useGeneratedKeys="true" keyProperty="id">
+        insert into biz_monthly_bill
+            (company_id, billing_month, query_count, hit_count, no_result_count,
+             total_amount, status, generated_time, remark)
+        values
+            (#{companyId}, #{billingMonth}, #{queryCount}, #{hitCount}, #{noResultCount},
+             #{totalAmount}, #{status}, #{generatedTime}, #{remark})
+    </insert>
+</mapper>

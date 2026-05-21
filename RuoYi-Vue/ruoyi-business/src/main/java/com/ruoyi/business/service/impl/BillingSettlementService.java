@@ -7,11 +7,16 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ruoyi.business.domain.BizFeeFlow;
 import com.ruoyi.business.domain.BizInsuranceCompany;
+import com.ruoyi.business.domain.BizMonthlyBill;
+import com.ruoyi.business.domain.BizMonthlyBillDetail;
 import com.ruoyi.business.mapper.BizFeeFlowMapper;
 import com.ruoyi.business.mapper.BizInsuranceCompanyMapper;
+import com.ruoyi.business.mapper.BizMonthlyBillDetailMapper;
+import com.ruoyi.business.mapper.BizMonthlyBillMapper;
 import com.ruoyi.business.mapper.BizQueryLogMapper;
 
 @Service
@@ -22,13 +27,25 @@ public class BillingSettlementService
     private final BizInsuranceCompanyMapper companyMapper;
     private final BizQueryLogMapper queryLogMapper;
     private final BizFeeFlowMapper feeFlowMapper;
+    private final BizMonthlyBillMapper monthlyBillMapper;
+    private final BizMonthlyBillDetailMapper monthlyBillDetailMapper;
 
     public BillingSettlementService(BizInsuranceCompanyMapper companyMapper,
             BizQueryLogMapper queryLogMapper, BizFeeFlowMapper feeFlowMapper)
     {
+        this(companyMapper, queryLogMapper, feeFlowMapper, null, null);
+    }
+
+    @Autowired
+    public BillingSettlementService(BizInsuranceCompanyMapper companyMapper,
+            BizQueryLogMapper queryLogMapper, BizFeeFlowMapper feeFlowMapper,
+            BizMonthlyBillMapper monthlyBillMapper, BizMonthlyBillDetailMapper monthlyBillDetailMapper)
+    {
         this.companyMapper = companyMapper;
         this.queryLogMapper = queryLogMapper;
         this.feeFlowMapper = feeFlowMapper;
+        this.monthlyBillMapper = monthlyBillMapper;
+        this.monthlyBillDetailMapper = monthlyBillDetailMapper;
     }
 
     @Transactional
@@ -52,6 +69,82 @@ public class BillingSettlementService
             }
         }
         return settledCount;
+    }
+
+    @Transactional
+    public int generateMonthlyBills(String billingMonth)
+    {
+        if (monthlyBillMapper == null || monthlyBillDetailMapper == null)
+        {
+            return 0;
+        }
+        List<BizInsuranceCompany> companies = companyMapper.selectBizInsuranceCompanyList(new BizInsuranceCompany());
+        int generatedCount = 0;
+        for (BizInsuranceCompany company : companies)
+        {
+            if (company.getId() != null && generateMonthlyBill(company, billingMonth))
+            {
+                generatedCount++;
+            }
+        }
+        return generatedCount;
+    }
+
+    private boolean generateMonthlyBill(BizInsuranceCompany company, String billingMonth)
+    {
+        BizMonthlyBillDetail filter = new BizMonthlyBillDetail();
+        filter.setCompanyId(company.getId());
+        filter.setBillingMonth(billingMonth);
+        List<BizMonthlyBillDetail> details = monthlyBillDetailMapper.selectSummaryDetails(filter);
+        if (details == null || details.isEmpty())
+        {
+            monthlyBillMapper.deleteBill(company.getId(), billingMonth);
+            return false;
+        }
+
+        int queryCount = 0;
+        int hitCount = 0;
+        int noResultCount = 0;
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        for (BizMonthlyBillDetail detail : details)
+        {
+            int count = detail.getQueryCount() == null ? 0 : detail.getQueryCount();
+            queryCount += count;
+            if ("HIT".equals(detail.getResultStatus()))
+            {
+                hitCount += count;
+            }
+            if ("NO_RESULT".equals(detail.getResultStatus()))
+            {
+                noResultCount += count;
+            }
+            totalAmount = totalAmount.add(detail.getTotalAmount() == null ? BigDecimal.ZERO : detail.getTotalAmount());
+        }
+
+        BizMonthlyBill existing = monthlyBillMapper.selectBill(company.getId(), billingMonth);
+        if (existing != null && existing.getId() != null)
+        {
+            monthlyBillMapper.deleteBillDetails(existing.getId());
+        }
+        monthlyBillMapper.deleteBill(company.getId(), billingMonth);
+
+        BizMonthlyBill bill = new BizMonthlyBill();
+        bill.setCompanyId(company.getId());
+        bill.setBillingMonth(billingMonth);
+        bill.setQueryCount(queryCount);
+        bill.setHitCount(hitCount);
+        bill.setNoResultCount(noResultCount);
+        bill.setTotalAmount(totalAmount);
+        bill.setStatus("0");
+        bill.setGeneratedTime(new Date());
+        monthlyBillMapper.insertBizMonthlyBill(bill);
+
+        for (BizMonthlyBillDetail detail : details)
+        {
+            detail.setBillId(bill.getId());
+            monthlyBillDetailMapper.insertBizMonthlyBillDetail(detail);
+        }
+        return true;
     }
 
     private boolean settleCompany(BizInsuranceCompany company, Date settlementTime)

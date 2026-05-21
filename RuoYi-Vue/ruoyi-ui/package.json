@@ -1,8 +1,8 @@
 {
-  "name": "ruoyi",
+  "name": "medical-query-platform",
   "version": "3.9.2",
-  "description": "若依管理系统",
-  "author": "若依",
+  "description": "医疗查询信息平台",
+  "author": "医疗查询信息平台",
   "license": "MIT",
   "scripts": {
     "dev": "vue-cli-service serve",

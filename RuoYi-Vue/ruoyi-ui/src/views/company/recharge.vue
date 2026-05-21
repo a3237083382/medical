@@ -1,13 +1,13 @@
 <template>
   <div class="app-container">
     <el-card shadow="hover">
-      <div slot="header"><span>提交充值申请</span></div>
-      <el-form ref="form" :model="form" :rules="rules" label-width="100px" style="max-width:500px">
-        <el-form-item label="充值金额" prop="amount">
-          <el-input-number v-model="form.amount" :min="0.01" :precision="2" style="width:200px" />
+      <div slot="header"><span>额度申请</span></div>
+      <el-form ref="form" :model="form" :rules="rules" label-width="110px" style="max-width:520px">
+        <el-form-item label="申请额度" prop="amount">
+          <el-input-number v-model="form.amount" :min="0.01" :precision="2" style="width:220px" />
         </el-form-item>
-        <el-form-item label="备注说明" prop="submitRemark">
-          <el-input v-model="form.submitRemark" type="textarea" :rows="3" placeholder="请填写转账信息或备注" />
+        <el-form-item label="申请说明" prop="submitRemark">
+          <el-input v-model="form.submitRemark" type="textarea" :rows="3" placeholder="请填写申请原因或线下对接信息" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="submitting" @click="submitForm">提交申请</el-button>
@@ -19,30 +19,32 @@
 </template>
 
 <script>
-import { submitRecharge } from "@/api/business/portal";
+import { submitRecharge } from '@/api/business/portal'
 
 export default {
-  name: "CompanyRecharge",
+  name: 'CompanyRecharge',
   data() {
     return {
       submitting: false,
-      form: { amount: 0.01, submitRemark: "" },
+      form: { amount: 0.01, submitRemark: '' },
       rules: {
-        amount: [{ required: true, message: "请输入充值金额" }],
-      },
-    };
+        amount: [{ required: true, message: '请输入申请额度', trigger: 'blur' }]
+      }
+    }
   },
   methods: {
     submitForm() {
-      this.$refs["form"].validate(valid => {
-        if (!valid) return;
-        this.submitting = true;
+      this.$refs.form.validate(valid => {
+        if (!valid) return
+        this.submitting = true
         submitRecharge(this.form).then(() => {
-          this.$modal.msgSuccess("充值申请已提交，等待管理员审核");
-          this.form = { amount: 0.01, submitRemark: "" };
-        }).finally(() => { this.submitting = false; });
-      });
-    },
-  },
-};
+          this.$modal.msgSuccess('额度申请已提交，等待管理员审核')
+          this.form = { amount: 0.01, submitRemark: '' }
+        }).finally(() => {
+          this.submitting = false
+        })
+      })
+    }
+  }
+}
 </script>

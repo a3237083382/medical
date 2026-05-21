@@ -2,12 +2,18 @@ package com.ruoyi.business.domain.medical;
 
 import java.math.BigDecimal;
 import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class MedicalQueryResult
 {
     private String code = "0";
     private String msg = "success";
+    private Long queryId;
+    private String resultStatus;
+    private String serviceStatus;
+    @JsonIgnore
     private BigDecimal fee;
+    @JsonIgnore
     private BigDecimal balanceAfter;
     private Map<String, Object> data;
 
@@ -29,6 +35,36 @@ public class MedicalQueryResult
     public void setMsg(String msg)
     {
         this.msg = msg;
+    }
+
+    public Long getQueryId()
+    {
+        return queryId;
+    }
+
+    public void setQueryId(Long queryId)
+    {
+        this.queryId = queryId;
+    }
+
+    public String getResultStatus()
+    {
+        return resultStatus;
+    }
+
+    public void setResultStatus(String resultStatus)
+    {
+        this.resultStatus = resultStatus;
+    }
+
+    public String getServiceStatus()
+    {
+        return serviceStatus;
+    }
+
+    public void setServiceStatus(String serviceStatus)
+    {
+        this.serviceStatus = serviceStatus;
     }
 
     public BigDecimal getFee()

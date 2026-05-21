@@ -9,14 +9,33 @@ import { isRelogin } from '@/utils/request'
 
 NProgress.configure({ showSpinner: false })
 
-const whiteList = ['/login', '/register', '/company/login', '/company/medical-query']
+const whiteList = ['/login', '/register', '/company/login', '/company/medical-query', '/company/dashboard', '/company/recharge', '/company/recharge-list', '/company/monthly-bill', '/company/logs']
 
 const isWhiteList = (path) => {
   return whiteList.some(pattern => isPathMatch(pattern, path))
 }
 
+const isCompanyPath = (path) => {
+  return path === '/company' || path.startsWith('/company/')
+}
+
+const getCompanyToken = () => {
+  return sessionStorage.getItem('companyToken') || localStorage.getItem('companyToken')
+}
+
 router.beforeEach((to, from, next) => {
   NProgress.start()
+  if (isCompanyPath(to.path)) {
+    document.title = '医疗信息接口台'
+    to.meta.title && store.dispatch('settings/setTitle', to.meta.title)
+    if (to.path === '/company/login' || to.path === '/company/medical-query' || getCompanyToken()) {
+      next()
+    } else {
+      next(`/company/login?redirect=${encodeURIComponent(to.fullPath)}`)
+      NProgress.done()
+    }
+    return
+  }
   if (getToken()) {
     to.meta.title && store.dispatch('settings/setTitle', to.meta.title)
     const isLock = store.getters.isLock

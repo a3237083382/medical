@@ -1,6 +1,8 @@
 package com.ruoyi.web.controller.business;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,10 +11,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.ruoyi.business.domain.BizCompanyQueryPrice;
 import com.ruoyi.business.domain.BizInsuranceCompany;
 import com.ruoyi.business.domain.BizQueryPrice;
 import com.ruoyi.business.domain.medical.MedicalQueryRequest;
 import com.ruoyi.business.domain.medical.MedicalQueryResult;
+import com.ruoyi.business.mapper.BizCompanyQueryPriceMapper;
 import com.ruoyi.business.service.IBizQueryPriceService;
 import com.ruoyi.business.service.IMedicalQueryService;
 import com.ruoyi.business.service.MedicalQueryException;
@@ -28,14 +32,36 @@ public class CompanyMedicalQueryController extends BaseController
     private IBizQueryPriceService priceService;
 
     @Autowired
+    private BizCompanyQueryPriceMapper companyPriceMapper;
+
+    @Autowired
     private IMedicalQueryService medicalQueryService;
 
     @GetMapping("/query-types")
-    public AjaxResult queryTypes()
+    public AjaxResult queryTypes(HttpServletRequest request)
     {
-        BizQueryPrice filter = new BizQueryPrice();
-        filter.setStatus("0");
-        return AjaxResult.success(priceService.selectBizQueryPriceList(filter));
+        Long companyId = resolveCompanyId(request);
+        List<Map<String, Object>> result = new ArrayList<>();
+        if (companyId != null)
+        {
+            BizCompanyQueryPrice filter = new BizCompanyQueryPrice();
+            filter.setCompanyId(companyId);
+            filter.setStatus("0");
+            for (BizCompanyQueryPrice item : companyPriceMapper.selectBizCompanyQueryPriceList(filter))
+            {
+                result.add(queryTypeItem(item.getQueryType(), item.getQueryName()));
+            }
+        }
+        if (result.isEmpty())
+        {
+            BizQueryPrice filter = new BizQueryPrice();
+            filter.setStatus("0");
+            for (BizQueryPrice item : priceService.selectBizQueryPriceList(filter))
+            {
+                result.add(queryTypeItem(item.getQueryType(), item.getQueryName()));
+            }
+        }
+        return AjaxResult.success(result);
     }
 
     @PostMapping("/query")
@@ -111,5 +137,13 @@ public class CompanyMedicalQueryController extends BaseController
         {
             return 500;
         }
+    }
+
+    private Map<String, Object> queryTypeItem(String queryType, String queryName)
+    {
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("queryType", queryType);
+        item.put("queryName", queryName);
+        return item;
     }
 }

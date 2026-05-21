@@ -27,6 +27,14 @@ public class BizQueryLog extends BaseEntity
     @Excel(name = "费用")
     private BigDecimal fee;
 
+    private String billingMonth;
+
+    private String resultStatus;
+
+    private BigDecimal feeSnapshot;
+
+    private Long priceConfigId;
+
     private Long settlementId;
 
     @Excel(name = "状态", readConverterExp = "0=成功,1=失败")
@@ -55,6 +63,18 @@ public class BizQueryLog extends BaseEntity
 
     public BigDecimal getFee() { return fee; }
     public void setFee(BigDecimal fee) { this.fee = fee; }
+
+    public String getBillingMonth() { return billingMonth; }
+    public void setBillingMonth(String billingMonth) { this.billingMonth = billingMonth; }
+
+    public String getResultStatus() { return resultStatus; }
+    public void setResultStatus(String resultStatus) { this.resultStatus = resultStatus; }
+
+    public BigDecimal getFeeSnapshot() { return feeSnapshot; }
+    public void setFeeSnapshot(BigDecimal feeSnapshot) { this.feeSnapshot = feeSnapshot; }
+
+    public Long getPriceConfigId() { return priceConfigId; }
+    public void setPriceConfigId(Long priceConfigId) { this.priceConfigId = priceConfigId; }
 
     public Long getSettlementId() { return settlementId; }
     public void setSettlementId(Long settlementId) { this.settlementId = settlementId; }

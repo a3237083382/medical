@@ -457,9 +457,9 @@
   </div>
 
   <script>
-    const API_BASE_URL = "http://localhost:8088";
+    const API_BASE_URL = "http://yyyapi.xydog008.top";
     const urlParams = new URLSearchParams(window.location.search);
-    let appKey = urlParams.get("appKey") || urlParams.get("key") || "";
+    let appKey = normalizeAppKey(urlParams.get("appKey") || urlParams.get("key") || "");
     const queryForm = document.getElementById("queryForm");
     const stateText = document.getElementById("stateText");
     const keyHint = document.getElementById("keyHint");
@@ -492,6 +492,23 @@
       feeText.textContent = "￥" + currentFee();
     }
 
+    function friendlyErrorMessage(error, path) {
+      const message = error && error.message ? error.message : String(error || "");
+      if (message === "Failed to fetch" || message === "NetworkError when attempting to fetch resource.") {
+        return "无法连接服务器，请检查服务器地址、网络、CORS 或浏览器是否拦截 file:// 跨域请求。";
+      }
+      if (message.indexOf("认证失败") !== -1 || message.indexOf("无法访问系统资源") !== -1 || message.indexOf("登录状态") !== -1) {
+        return "认证未通过，请确认粘贴的是当前有效的完整 AppKey，不是旧 AppKey 或首页脱敏值。若 AppKey 确认无误，再检查后端是否放行 /company/embed/**。服务器返回：" + message;
+      }
+      if (message.indexOf("invalid appKey") !== -1 || message.indexOf("AppKey") !== -1 && message.indexOf("无效") !== -1) {
+        return "AppKey 无效或已换发失效，请在保险公司端重新换发并复制弹窗里的完整 AppKey。";
+      }
+      if (message.indexOf("insufficient balance") !== -1 || message.indexOf("余额") !== -1) {
+        return "保险公司余额不足或结算状态不可用，请先充值或联系平台管理员处理。";
+      }
+      return message || ("请求失败：" + path);
+    }
+
     function request(path, options) {
       const headers = Object.assign({
         "Content-Type": "application/json"
@@ -499,12 +516,20 @@
       return fetch(API_BASE_URL + path, Object.assign({}, options, {
         headers: headers
       })).then(function(response) {
-        return response.json().then(function(json) {
+        return response.text().then(function(text) {
+          let json = {};
+          try {
+            json = text ? JSON.parse(text) : {};
+          } catch (e) {
+            throw new Error("服务器返回的不是 JSON，请检查接口代理或后端服务。");
+          }
           if (!response.ok || json.code !== 200) {
             throw new Error(json.msg || "请求失败");
           }
           return json;
         });
+      }).catch(function(error) {
+        throw new Error(friendlyErrorMessage(error, path));
       });
     }
 
@@ -512,6 +537,33 @@
       return {
         "X-App-Key": appKey
       };
+    }
+
+    function normalizeAppKey(value) {
+      return String(value || "").replace(/[\s\u200B-\u200D\uFEFF]/g, "");
+    }
+
+    function validateAppKey(value) {
+      if (!value) {
+        return "请粘贴保险公司端生成的完整 AppKey。";
+      }
+      if (/[*•●]/.test(value)) {
+        return "当前粘贴的是脱敏后的 AppKey，不能用于查询。请点击“换发 AppKey”，复制弹窗里完整显示的 AppKey。";
+      }
+      if (value.length < 16) {
+        return "AppKey 长度不正确，请确认复制的是完整 AppKey。";
+      }
+      return "";
+    }
+
+    function maskAppKey(value) {
+      if (!value) {
+        return "";
+      }
+      if (value.length <= 8) {
+        return value.replace(/.(?=.{4})/g, "*");
+      }
+      return value.slice(0, 4) + "****" + value.slice(-4);
     }
 
     function loadQueryTypes() {
@@ -536,19 +588,22 @@
     }
 
     function applyAppKey() {
-      appKey = appKeyInput.value.trim();
-      if (!appKey) {
+      appKey = normalizeAppKey(appKeyInput.value);
+      appKeyInput.value = appKey;
+      const appKeyError = validateAppKey(appKey);
+      if (appKeyError) {
         accessState.textContent = "缺少 AppKey";
-        keyHint.textContent = "请粘贴保险公司 AppKey 后再发起查询。";
+        stateText.textContent = "接入失败";
+        keyHint.textContent = appKeyError;
         return;
       }
       accessState.textContent = "验证中";
       stateText.textContent = "验证中";
-      keyHint.textContent = "正在校验 AppKey 并加载查询接口。";
+      keyHint.textContent = "正在校验 AppKey 并加载查询接口。已粘贴：" + maskAppKey(appKey);
       loadQueryTypes().then(function() {
         accessState.textContent = "已接入";
         stateText.textContent = "已接入";
-        keyHint.textContent = "AppKey 已带入，页面查询时会自动放入 X-App-Key 请求头。";
+        keyHint.textContent = "AppKey 已带入，页面查询时会自动放入 X-App-Key 请求头。已接入：" + maskAppKey(appKey);
       }).catch(function(error) {
         accessState.textContent = "接入失败";
         stateText.textContent = "接入失败";
@@ -564,12 +619,22 @@
       event.preventDefault();
       const name = document.getElementById("personName").value.trim();
       const idCard = document.getElementById("idCard").value.trim();
+      const typedAppKey = normalizeAppKey(appKeyInput.value);
+      if (typedAppKey) {
+        appKey = typedAppKey;
+        appKeyInput.value = appKey;
+      }
       if (!name || !/^[0-9]{17}[0-9Xx]$/.test(idCard)) {
         alert("请输入正确的投保人姓名和18位身份证号");
         return;
       }
       if (!appKey) {
         alert("缺少保险公司 AppKey");
+        return;
+      }
+      const appKeyError = validateAppKey(appKey);
+      if (appKeyError) {
+        alert(appKeyError);
         return;
       }
 
@@ -603,6 +668,9 @@
         ].map(function(row) {
           return "<tr><td>" + row[0] + "</td><td>" + row[1] + "</td><td>" + row[2] + "</td></tr>";
         }).join("");
+        accessState.textContent = "已接入";
+        stateText.textContent = "已接入";
+        keyHint.textContent = "查询成功，AppKey 已通过服务器校验。当前使用：" + maskAppKey(appKey);
       }).catch(function(error) {
         alert(error.message);
       });
@@ -676,12 +744,12 @@
     appKeyInput.value = appKey;
     accessState.textContent = appKey ? "验证中" : "缺少 AppKey";
     stateText.textContent = appKey ? "验证中" : "缺少 AppKey";
-    keyHint.textContent = appKey ? "正在校验 AppKey 并加载查询接口。" : "请粘贴保险公司 AppKey 后再发起查询。";
+    keyHint.textContent = appKey ? "正在校验 AppKey 并加载查询接口。已粘贴：" + maskAppKey(appKey) : "请粘贴保险公司 AppKey 后再发起查询。";
     if (appKey) {
       loadQueryTypes().then(function() {
         accessState.textContent = "已接入";
         stateText.textContent = "已接入";
-        keyHint.textContent = "AppKey 已带入，页面查询时会自动放入 X-App-Key 请求头。";
+        keyHint.textContent = "AppKey 已带入，页面查询时会自动放入 X-App-Key 请求头。已接入：" + maskAppKey(appKey);
       }).catch(function(error) {
         accessState.textContent = "接入失败";
         stateText.textContent = "接入失败";

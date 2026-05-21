@@ -12,7 +12,6 @@ function companyHeaders() {
   }
 }
 
-// 保险公司登录
 export function companyLogin(data) {
   return request({
     url: '/company/login',
@@ -24,7 +23,6 @@ export function companyLogin(data) {
   })
 }
 
-// 提交充值申请
 export function submitRecharge(data) {
   return request({
     url: '/company/api/recharge/submit',
@@ -34,7 +32,6 @@ export function submitRecharge(data) {
   })
 }
 
-// 充值记录列表
 export function listRecharge() {
   return request({
     url: '/company/api/recharge/list',
@@ -43,7 +40,48 @@ export function listRecharge() {
   })
 }
 
-// 查询可用医疗接口类型
+export function getProfile() {
+  return request({
+    url: '/company/api/profile',
+    method: 'get',
+    headers: companyHeaders()
+  })
+}
+
+export function regenerateAppKey() {
+  return request({
+    url: '/company/api/profile/app-key',
+    method: 'post',
+    headers: companyHeaders()
+  })
+}
+
+export function listMonthlyBill(query) {
+  return request({
+    url: '/company/api/monthly-bill/list',
+    method: 'get',
+    params: query,
+    headers: companyHeaders()
+  })
+}
+
+export function getMonthlyBill(id) {
+  return request({
+    url: '/company/api/monthly-bill/' + id,
+    method: 'get',
+    headers: companyHeaders()
+  })
+}
+
+export function listQueryLogs(query) {
+  return request({
+    url: '/company/api/query-log/list',
+    method: 'get',
+    params: query,
+    headers: companyHeaders()
+  })
+}
+
 export function listMedicalQueryTypes() {
   return request({
     url: '/company/api/medical/query-types',
@@ -52,7 +90,6 @@ export function listMedicalQueryTypes() {
   })
 }
 
-// 公司端医疗信息查询
 export function queryMedical(data) {
   return request({
     url: '/company/api/medical/query',
