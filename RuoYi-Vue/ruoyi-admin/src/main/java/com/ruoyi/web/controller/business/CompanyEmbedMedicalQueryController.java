@@ -20,6 +20,12 @@ import com.ruoyi.business.service.MedicalQueryException;
 import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.utils.StringUtils;
+import java.math.BigDecimal;
+import java.time.YearMonth;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import com.ruoyi.business.domain.BizMonthlyUsage;
+import com.ruoyi.business.mapper.BizMonthlyUsageMapper;
 
 @Anonymous
 @RestController
@@ -122,5 +128,55 @@ public class CompanyEmbedMedicalQueryController
         {
             return 500;
         }
+    }
+
+    @Autowired
+    private BizMonthlyUsageMapper monthlyUsageMapper;
+
+    @GetMapping("/usage")
+    public AjaxResult usage(HttpServletRequest request)
+    {
+        BizInsuranceCompany company = resolveCompany(request);
+        if (company == null)
+        {
+            return AjaxResult.error(401, "invalid appKey");
+        }
+
+        String billingMonth = YearMonth.now().toString();
+        BigDecimal budget = company.getMonthlyBudget() == null ? BigDecimal.ZERO : company.getMonthlyBudget();
+
+        BizMonthlyUsage usage = monthlyUsageMapper.selectUsage(company.getId(), billingMonth);
+        BigDecimal usedAmount = BigDecimal.ZERO;
+        BigDecimal reservedAmount = BigDecimal.ZERO;
+        if (usage != null)
+        {
+            usedAmount = usage.getUsedAmount() == null ? BigDecimal.ZERO : usage.getUsedAmount();
+            reservedAmount = usage.getReservedAmount() == null ? BigDecimal.ZERO : usage.getReservedAmount();
+        }
+
+        BigDecimal remaining = budget.subtract(usedAmount).subtract(reservedAmount);
+        if (remaining.compareTo(BigDecimal.ZERO) < 0)
+        {
+            remaining = BigDecimal.ZERO;
+        }
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("budget", budget);
+        data.put("usedAmount", usedAmount);
+        data.put("reservedAmount", reservedAmount);
+        data.put("remaining", remaining);
+        data.put("usagePercent", calcPercent(usedAmount.add(reservedAmount), budget));
+        data.put("billingMonth", billingMonth);
+        data.put("serviceStatus", remaining.compareTo(BigDecimal.ZERO) <= 0 ? "LIMIT_REACHED" : "NORMAL");
+        return AjaxResult.success(data);
+    }
+
+    private int calcPercent(BigDecimal used, BigDecimal total)
+    {
+        if (total == null || BigDecimal.ZERO.compareTo(total) == 0)
+        {
+            return 0;
+        }
+        return Math.min(100, used.multiply(new BigDecimal("100")).divide(total, 0, java.math.RoundingMode.DOWN).intValue());
     }
 }

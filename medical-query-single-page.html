@@ -1,0 +1,513 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>医疗查询信息平台</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      color: #14213d; background: #eef4f8;
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+      font-size: 14px;
+    }
+    button, input, select { font: inherit; }
+
+    .page { min-height: 100vh; padding: 24px; }
+    .shell { max-width: 1160px; margin: 0 auto; }
+
+    .header {
+      min-height: 76px; padding: 18px 22px;
+      display: flex; align-items: center; justify-content: space-between; gap: 18px;
+      background: #fff; border: 1px solid #d8e2ec; border-radius: 8px;
+      box-shadow: 0 18px 42px rgba(28,44,74,.08);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand-icon {
+      width: 42px; height: 42px; border-radius: 8px;
+      display: grid; place-items: center;
+      color: #fff; background: #1957a6; font-size: 20px; font-weight: 900;
+    }
+    .brand-title { color: #0f1d35; font-size: 20px; font-weight: 800; }
+    .brand-subtitle { margin-top: 4px; color: #667085; font-size: 13px; }
+
+    .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .state {
+      min-height: 36px; padding: 0 14px; border: 1px solid #b9ddcc; border-radius: 999px;
+      display: inline-flex; align-items: center; gap: 8px;
+      color: #08734f; background: #eefaf5; white-space: nowrap; font-weight: 700;
+    }
+    .state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+    .usage-badge {
+      min-height: 36px; padding: 0 14px; border: 1px solid #d8e2ec; border-radius: 999px;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #fff; white-space: nowrap; font-weight: 600;
+    }
+    .usage-badge .num { color: #1957a6; font-size: 18px; font-weight: 800; }
+    .usage-badge.warn { border-color: #f0c000; background: #fffbe6; }
+    .usage-badge.warn .num { color: #d48806; }
+    .usage-badge.danger { border-color: #ff4d4f; background: #fff2f0; }
+    .usage-badge.danger .num { color: #cf1322; }
+
+    .main { margin-top: 18px; display: grid; grid-template-columns: 380px minmax(0,1fr); gap: 18px; align-items: start; }
+    .panel {
+      background: #fff; border: 1px solid #d8e2ec; border-radius: 8px;
+      box-shadow: 0 18px 42px rgba(28,44,74,.08); min-width: 0;
+    }
+    .panel-head { padding: 18px 20px 12px; border-bottom: 1px solid #e5edf5; }
+    .panel-head h2 { margin: 0; color: #0f1d35; font-size: 17px; }
+    .panel-head span { display: block; margin-top: 5px; color: #667085; font-size: 13px; }
+
+    .form { padding: 18px 20px 20px; display: grid; gap: 15px; }
+    .field { display: grid; gap: 7px; }
+    .field label { color: #344054; font-weight: 700; }
+    .field input, .field select {
+      width: 100%; height: 42px; border: 1px solid #cfd9e5; border-radius: 7px;
+      padding: 0 12px; color: #172033; background: #fff; outline: none;
+    }
+    .field input:focus, .field select:focus {
+      border-color: #1957a6; box-shadow: 0 0 0 3px rgba(25,87,166,.12);
+    }
+    .button-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      height: 42px; min-width: 108px; border: 0; border-radius: 7px;
+      padding: 0 18px; color: #fff; background: #1957a6; cursor: pointer; font-weight: 800;
+    }
+    .btn.secondary { color: #344054; background: #edf2f7; }
+    .hint { color: #667085; font-size: 12px; line-height: 1.6; }
+
+    .result { padding: 18px 20px 20px; }
+    .empty {
+      min-height: 308px; border: 1px dashed #cfd9e5; border-radius: 8px;
+      display: grid; place-items: center; color: #667085; text-align: center; background: #f8fafc;
+    }
+    .empty strong { display: block; margin-bottom: 8px; color: #344054; font-size: 18px; }
+    .result-body { display: none; gap: 14px; }
+    .result-body.active { display: grid; }
+
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+    .metric {
+      border: 1px solid #d8e2ec; border-radius: 8px; padding: 12px;
+      background: #f8fafc; text-align: center;
+    }
+    .metric .label { color: #667085; font-size: 12px; }
+    .metric .value { margin-top: 4px; color: #0f1d35; font-size: 18px; font-weight: 800; }
+
+    .result-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .result-table th, .result-table td {
+      padding: 10px 12px; border: 1px solid #e5edf5; text-align: left;
+    }
+    .result-table th { background: #f8fafc; color: #344054; font-weight: 700; }
+
+    .risk-tag {
+      display: inline-block; padding: 2px 10px; border-radius: 999px;
+      font-size: 12px; font-weight: 700;
+    }
+    .risk-high { background: #fee2e2; color: #991b1b; }
+    .risk-mid { background: #fef3c7; color: #92400e; }
+    .risk-low { background: #d1fae5; color: #065f46; }
+
+    @media (max-width: 720px) {
+      .main { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .header { flex-direction: column; align-items: stretch; }
+      .header-right { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="shell">
+
+    <!-- 头部 -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon">医</div>
+        <div>
+          <div class="brand-title">医疗查询信息平台</div>
+          <div class="brand-subtitle">保险公司嵌入式查询入口</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="usage-badge" id="usageBadge">
+          本月剩余：<span class="num" id="usageRemaining">--</span> 次
+        </span>
+        <span class="state" id="accessState">未接入</span>
+      </div>
+    </header>
+
+    <!-- 主体 -->
+    <div class="main">
+      <!-- 左侧：查询表单 -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>医疗信息查询</h2>
+          <span id="keyHint">请在 URL 参数中传入 AppKey</span>
+        </div>
+        <div class="form">
+          <div class="field">
+            <label>查询接口</label>
+            <select id="queryType">
+              <option value="">请先接入后选择</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>患者姓名</label>
+            <input type="text" id="personName" placeholder="请输入患者姓名" autocomplete="off">
+          </div>
+          <div class="field">
+            <label>身份证号</label>
+            <input type="text" id="idCard" placeholder="请输入身份证号" maxlength="18" autocomplete="off">
+          </div>
+          <div class="button-row">
+            <button class="btn" id="queryBtn">查询</button>
+            <button class="btn secondary" id="resetBtn">重置</button>
+          </div>
+          <div class="hint" id="modeHint"></div>
+        </div>
+      </div>
+
+      <!-- 右侧：查询结果 -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>查询结果</h2>
+          <span>查询时间：<span id="resultTime">等待查询</span></span>
+        </div>
+        <div class="result">
+          <div class="empty" id="emptyResult">
+            <div>
+              <strong>等待查询</strong>
+              <p>填写左侧表单后点击"查询"按钮</p>
+            </div>
+          </div>
+          <div class="result-body" id="resultBody">
+            <div class="metrics">
+              <div class="metric">
+                <div class="label">查询类型</div>
+                <div class="value" id="resultType">-</div>
+              </div>
+              <div class="metric">
+                <div class="label">患者</div>
+                <div class="value" id="resultName">-</div>
+              </div>
+              <div class="metric">
+                <div class="label">结果</div>
+                <div class="value" id="resultStatus">-</div>
+              </div>
+              <div class="metric">
+                <div class="label">剩余次数</div>
+                <div class="value" id="resultRemaining">-</div>
+              </div>
+            </div>
+            <div id="resultSummary" style="color:#667085;font-size:13px;padding:4px 0;"></div>
+            <table class="result-table" id="resultTable">
+              <thead><tr><th>项目</th><th>内容</th><th>备注</th></tr></thead>
+              <tbody id="resultRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== DOM 引用 =====
+  var queryType = document.getElementById('queryType');
+  var personName = document.getElementById('personName');
+  var idCard = document.getElementById('idCard');
+  var queryBtn = document.getElementById('queryBtn');
+  var resetBtn = document.getElementById('resetBtn');
+  var emptyResult = document.getElementById('emptyResult');
+  var resultBody = document.getElementById('resultBody');
+  var resultTime = document.getElementById('resultTime');
+  var resultType = document.getElementById('resultType');
+  var resultName = document.getElementById('resultName');
+  var resultStatus = document.getElementById('resultStatus');
+  var resultRemaining = document.getElementById('resultRemaining');
+  var resultSummary = document.getElementById('resultSummary');
+  var resultRows = document.getElementById('resultRows');
+  var accessState = document.getElementById('accessState');
+  var keyHint = document.getElementById('keyHint');
+  var modeHint = document.getElementById('modeHint');
+  var usageRemaining = document.getElementById('usageRemaining');
+  var usageBadge = document.getElementById('usageBadge');
+
+  // ===== AppKey 从 URL 获取 =====
+  var appKey = '';
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    appKey = (params.get('appKey') || '').trim();
+  })();
+
+  // ===== API 基础路径 =====
+  // 自动检测：file:// 协议下使用绝对路径，否则使用相对路径
+  var API_BASE = window.location.protocol === 'file:'
+    ? 'http://localhost:8088'
+    : '';
+
+  // ===== 工具函数 =====
+  function maskAppKey(key) {
+    if (!key || key.length < 8) return key || '';
+    return key.slice(0, 4) + '****' + key.slice(-4);
+  }
+
+  function maskIdCard(value) {
+    if (!value || value.length < 8) return '****';
+    return value.slice(0, 4) + '**********' + value.slice(-4);
+  }
+
+  function maskName(value) {
+    if (!value) return '';
+    return value.length <= 1 ? '*' : value.slice(0, 1) + '*';
+  }
+
+  function authHeaders() {
+    var headers = {};
+    if (appKey) headers['X-App-Key'] = appKey;
+    return headers;
+  }
+
+  function request(path, options) {
+    options = options || {};
+    var headers = Object.assign({
+      'Content-Type': 'application/json'
+    }, options.headers || {}, authHeaders());
+
+    return fetch(API_BASE + path, Object.assign({}, options, { headers: headers }))
+      .then(function(response) {
+        return response.text().then(function(text) {
+          var json = {};
+          try { json = JSON.parse(text); } catch (e) {}
+          if (!response.ok) {
+            var err = new Error(json.msg || 'HTTP ' + response.status);
+            err.code = response.status;
+            throw err;
+          }
+          if (json.code && json.code !== 200) {
+            var err2 = new Error(json.msg || '请求失败');
+            err2.code = json.code;
+            throw err2;
+          }
+          return json;
+        });
+      });
+  }
+
+  function setLoading(loading) {
+    queryBtn.disabled = !!loading;
+    queryBtn.textContent = loading ? '查询中...' : '查询';
+  }
+
+  // ===== 接入状态 =====
+  function updateAccessState(state, msg) {
+    accessState.textContent = state;
+    if (state === '已接入') {
+      accessState.style.color = '#08734f';
+      accessState.style.borderColor = '#b9ddcc';
+      accessState.style.background = '#eefaf5';
+    } else if (state === '接入失败') {
+      accessState.style.color = '#991b1b';
+      accessState.style.borderColor = '#fecaca';
+      accessState.style.background = '#fee2e2';
+    } else {
+      accessState.style.color = '#92400e';
+      accessState.style.borderColor = '#fde68a';
+      accessState.style.background = '#fffbeb';
+    }
+    if (msg) keyHint.textContent = msg;
+  }
+
+  // ===== 剩余次数刷新 =====
+  function refreshUsage() {
+    if (!appKey) {
+      usageRemaining.textContent = '--';
+      usageBadge.className = 'usage-badge';
+      return;
+    }
+    return request('/company/embed/medical/usage', { method: 'GET' })
+      .then(function(json) {
+        var data = json.data || {};
+        var remaining = data.remaining;
+        if (typeof remaining === 'number') {
+          usageRemaining.textContent = Math.floor(remaining);
+        } else {
+          usageRemaining.textContent = '--';
+        }
+        var status = data.serviceStatus || '';
+        usageBadge.className = 'usage-badge';
+        if (status === 'LIMIT_REACHED') {
+          usageBadge.classList.add('danger');
+        } else if ((data.usagePercent || 0) >= 80) {
+          usageBadge.classList.add('warn');
+        }
+        return data;
+      })
+      .catch(function() {
+        usageRemaining.textContent = '--';
+        usageBadge.className = 'usage-badge';
+      });
+  }
+
+  // ===== 加载查询类型 =====
+  function loadQueryTypes() {
+    if (!appKey) {
+      return Promise.reject(new Error('缺少 AppKey'));
+    }
+
+    return request('/company/embed/medical/query-types', { method: 'GET' })
+      .then(function(json) {
+        var list = Array.isArray(json.data) ? json.data : [];
+        if (!list.length) {
+          throw new Error('没有可用的查询接口');
+        }
+
+        queryType.innerHTML = '';
+        list.forEach(function(item) {
+          var opt = document.createElement('option');
+          opt.value = item.queryType;
+          opt.textContent = item.queryName;
+          queryType.appendChild(opt);
+        });
+
+        // 加载完成后刷新剩余次数
+        refreshUsage();
+        updateAccessState('已接入', 'AppKey 已通过校验，查询接口共 ' + list.length + ' 个。已接入：' + maskAppKey(appKey));
+        return list;
+      });
+  }
+
+  // ===== 查询主逻辑 =====
+  function doQuery() {
+    var name = personName.value.trim();
+    var card = idCard.value.trim();
+    var qt = queryType.value;
+
+    if (!appKey) {
+      alert('请先通过 URL 参数 ?appKey= 传入有效的 AppKey');
+      return;
+    }
+    if (!qt) {
+      alert('请选择查询接口');
+      return;
+    }
+    if (!name || !card) {
+      alert('请输入患者姓名和身份证号');
+      return;
+    }
+
+    setLoading(true);
+
+    request('/company/embed/medical/query', {
+      method: 'POST',
+      body: JSON.stringify({
+        queryType: qt,
+        queryParams: { name: name, idCard: card }
+      })
+    }).then(function(json) {
+      var result = json.data || {};
+      var rows = [];
+
+      // MedicalQueryResult 结构
+      if (result.data && result.data.records) {
+        rows = result.data.records;
+      } else if (result.records) {
+        rows = result.records;
+      }
+
+      showQueryResult(result, rows, name);
+
+      // 查询成功后刷新剩余次数
+      refreshUsage().then(function(usageData) {
+        if (usageData && typeof usageData.remaining === 'number') {
+          resultRemaining.textContent = Math.floor(usageData.remaining) + ' 次';
+        }
+      });
+    }).catch(function(error) {
+      alert('查询失败：' + error.message);
+    }).finally(function() {
+      setLoading(false);
+    });
+  }
+
+  // ===== 展示结果 =====
+  function showQueryResult(payload, rows, name) {
+    emptyResult.style.display = 'none';
+    resultBody.classList.add('active');
+    resultTime.textContent = new Date().toLocaleString('zh-CN', { hour12: false });
+
+    var selectedOpt = queryType.options[queryType.selectedIndex];
+    resultType.textContent = selectedOpt ? selectedOpt.textContent : '-';
+    resultName.textContent = payload.patientName || maskName(name) || '-';
+    resultSummary.textContent = payload.summary || '查询完成。';
+
+    // 根据是否有数据判断结果状态
+    var hasData = rows && rows.length > 0;
+    resultStatus.textContent = hasData ? '查得' : '未查得';
+    resultStatus.style.color = hasData ? '#065f46' : '#991b1b';
+
+    // 渲染表格
+    resultRows.innerHTML = '';
+    if (hasData) {
+      rows.forEach(function(row) {
+        var tr = document.createElement('tr');
+        if (Array.isArray(row)) {
+          for (var i = 0; i < 3; i++) {
+            var td = document.createElement('td');
+            td.textContent = row[i] || '-';
+            tr.appendChild(td);
+          }
+        } else if (typeof row === 'object') {
+          tr.innerHTML = '<td>' + (row.name || '-') + '</td>' +
+                         '<td>' + (row.value || '-') + '</td>' +
+                         '<td>' + (row.remark || '-') + '</td>';
+        }
+        resultRows.appendChild(tr);
+      });
+    } else {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="3" style="text-align:center;color:#999;">未查询到匹配数据</td>';
+      resultRows.appendChild(tr);
+    }
+
+    updateAccessState('已接入', '查询成功，AppKey 已通过服务器校验。当前使用：' + maskAppKey(appKey));
+  }
+
+  // ===== 重置 =====
+  resetBtn.addEventListener('click', function() {
+    personName.value = '';
+    idCard.value = '';
+    emptyResult.style.display = 'grid';
+    resultBody.classList.remove('active');
+    resultTime.textContent = '等待查询';
+  });
+
+  // ===== 事件绑定 =====
+  queryBtn.addEventListener('click', doQuery);
+
+  // Enter 键触发查询
+  idCard.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doQuery();
+  });
+
+  // ===== 初始化 =====
+  if (appKey) {
+    updateAccessState('验证中', '正在校验 AppKey 并加载查询接口。已粘贴：' + maskAppKey(appKey));
+    loadQueryTypes().catch(function(error) {
+      updateAccessState('接入失败', '接口列表加载失败：' + error.message);
+    });
+  } else {
+    updateAccessState('未接入', '请在 URL 中添加参数 ?appKey=你的AppKey，或联系管理员获取。');
+    queryType.innerHTML = '<option value="">请先接入后选择</option>';
+  }
+
+})();
+</script>
+</body>
+</html>

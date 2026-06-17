@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BizDataImportLogMapper">
+
+    <resultMap type="com.ruoyi.business.domain.BizDataImportLog" id="BizDataImportLogResult">
+        <result property="id" column="id"/>
+        <result property="batchNo" column="batch_no"/>
+        <result property="fileName" column="file_name"/>
+        <result property="fileSize" column="file_size"/>
+        <result property="totalRows" column="total_rows"/>
+        <result property="successRows" column="success_rows"/>
+        <result property="failedRows" column="failed_rows"/>
+        <result property="status" column="status"/>
+        <result property="errorMsg" column="error_msg"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <sql id="selectBizDataImportLogVo">
+        select id, batch_no, file_name, file_size, total_rows, success_rows, failed_rows,
+               status, error_msg, create_by, create_time
+        from biz_data_import_log
+    </sql>
+
+    <select id="selectBizDataImportLogById" parameterType="Long" resultMap="BizDataImportLogResult">
+        <include refid="selectBizDataImportLogVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectBizDataImportLogList" parameterType="com.ruoyi.business.domain.BizDataImportLog" resultMap="BizDataImportLogResult">
+        <include refid="selectBizDataImportLogVo"/>
+        <where>
+            <if test="batchNo != null and batchNo != ''">
+                AND batch_no = #{batchNo}
+            </if>
+        </where>
+        order by id desc
+    </select>
+
+    <insert id="insertBizDataImportLog" parameterType="com.ruoyi.business.domain.BizDataImportLog" useGeneratedKeys="true" keyProperty="id">
+        insert into biz_data_import_log (
+            batch_no, file_name, file_size, total_rows, success_rows, failed_rows,
+            status, error_msg, create_by, create_time
+        ) values (
+            #{batchNo}, #{fileName}, #{fileSize}, #{totalRows}, #{successRows}, #{failedRows},
+            #{status}, #{errorMsg}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateBizDataImportLog" parameterType="com.ruoyi.business.domain.BizDataImportLog">
+        update biz_data_import_log
+        <set>
+            <if test="totalRows != null">total_rows = #{totalRows},</if>
+            <if test="successRows != null">success_rows = #{successRows},</if>
+            <if test="failedRows != null">failed_rows = #{failedRows},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="errorMsg != null">error_msg = #{errorMsg},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+</mapper>

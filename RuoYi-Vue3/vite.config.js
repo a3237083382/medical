@@ -1,31 +1,31 @@
-import { defineConfig, loadEnv } from 'vite'
+﻿import { defineConfig, loadEnv } from 'vite'
 import path from 'path'
 import createVitePlugins from './vite/plugins'
 
-const baseUrl = process.env.VITE_PROXY_TARGET || 'http://localhost:8088' // 后端接口
+const baseUrl = process.env.VITE_PROXY_TARGET || 'http://localhost:8088' // 鍚庣鎺ュ彛
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd())
   const { VITE_APP_ENV } = env
   return {
-    // 部署生产环境和开发环境下的URL。
-    // 默认情况下，vite 会假设你的应用是被部署在一个域名的根路径上
-    // 例如 https://www.ruoyi.vip/。如果应用被部署在一个子路径上，你就需要用这个选项指定这个子路径。例如，如果你的应用被部署在 https://www.ruoyi.vip/admin/，则设置 baseUrl 为 /admin/。
+    // 閮ㄧ讲鐢熶骇鐜鍜屽紑鍙戠幆澧冧笅鐨刄RL銆?
+    // 榛樿鎯呭喌涓嬶紝vite 浼氬亣璁句綘鐨勫簲鐢ㄦ槸琚儴缃插湪涓€涓煙鍚嶇殑鏍硅矾寰勪笂
+    // 渚嬪 https://www.ruoyi.vip/銆傚鏋滃簲鐢ㄨ閮ㄧ讲鍦ㄤ竴涓瓙璺緞涓婏紝浣犲氨闇€瑕佺敤杩欎釜閫夐」鎸囧畾杩欎釜瀛愯矾寰勩€備緥濡傦紝濡傛灉浣犵殑搴旂敤琚儴缃插湪 https://www.ruoyi.vip/admin/锛屽垯璁剧疆 baseUrl 涓?/admin/銆?
     base: VITE_APP_ENV === 'production' ? '/' : '/',
     plugins: createVitePlugins(env, command === 'build'),
     resolve: {
       // https://cn.vitejs.dev/config/#resolve-alias
       alias: {
-        // 设置路径
+        // 璁剧疆璺緞
         '~': path.resolve(__dirname, './'),
-        // 设置别名
+        // 璁剧疆鍒悕
         '@': path.resolve(__dirname, './src')
       },
       // https://cn.vitejs.dev/config/#resolve-extensions
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue']
     },
-    // 打包配置
+    // 鎵撳寘閰嶇疆
     build: {
       // https://vite.dev/config/build-options.html
       sourcemap: command === 'build' ? false : 'inline',
@@ -40,9 +40,9 @@ export default defineConfig(({ mode, command }) => {
         }
       }
     },
-    // vite 相关配置
+    // vite 鐩稿叧閰嶇疆
     server: {
-      port: 80,
+      port: 3000,
       host: true,
       open: true,
       proxy: {

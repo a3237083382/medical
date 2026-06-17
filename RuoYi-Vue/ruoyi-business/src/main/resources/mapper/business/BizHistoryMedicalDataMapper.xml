@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BizHistoryMedicalDataMapper">
+
+    <resultMap type="com.ruoyi.business.domain.BizHistoryMedicalData" id="BizHistoryMedicalDataResult">
+        <result property="id" column="id"/>
+        <result property="importBatchNo" column="import_batch_no"/>
+        <result property="queryType" column="query_type"/>
+        <result property="patientName" column="patient_name"/>
+        <result property="idCard" column="id_card"/>
+        <result property="gender" column="gender"/>
+        <result property="birthDate" column="birth_date"/>
+        <result property="phone" column="phone"/>
+        <result property="diagnosis" column="diagnosis"/>
+        <result property="hospital" column="hospital"/>
+        <result property="department" column="department"/>
+        <result property="visitDate" column="visit_date"/>
+        <result property="visitType" column="visit_type"/>
+        <result property="diseaseCode" column="disease_code"/>
+        <result property="medicalRecordNo" column="medical_record_no"/>
+        <result property="doctor" column="doctor"/>
+        <result property="dataJson" column="data_json"/>
+        <result property="status" column="status"/>
+        <result property="remark" column="remark"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <sql id="selectBizHistoryMedicalDataVo">
+        select id, import_batch_no, query_type, patient_name, id_card,
+               gender, birth_date, phone, diagnosis, hospital, department,
+               visit_date, visit_type, disease_code, medical_record_no, doctor,
+               data_json, status, remark, create_by, create_time
+        from biz_history_medical_data
+    </sql>
+
+    <select id="selectBizHistoryMedicalDataById" parameterType="Long" resultMap="BizHistoryMedicalDataResult">
+        <include refid="selectBizHistoryMedicalDataVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectBizHistoryMedicalDataList" parameterType="com.ruoyi.business.domain.BizHistoryMedicalData" resultMap="BizHistoryMedicalDataResult">
+        <include refid="selectBizHistoryMedicalDataVo"/>
+        <where>
+            <if test="patientName != null and patientName != ''">
+                AND patient_name LIKE CONCAT('%', #{patientName}, '%')
+            </if>
+            <if test="idCard != null and idCard != ''">
+                AND id_card LIKE CONCAT('%', #{idCard}, '%')
+            </if>
+            <if test="queryType != null and queryType != ''">
+                AND query_type = #{queryType}
+            </if>
+            <if test="importBatchNo != null and importBatchNo != ''">
+                AND import_batch_no = #{importBatchNo}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+        order by id desc
+    </select>
+
+    <select id="selectByQuery" resultMap="BizHistoryMedicalDataResult">
+        <include refid="selectBizHistoryMedicalDataVo"/>
+        where status = '0'
+          and query_type = #{queryType}
+          and patient_name = #{patientName}
+          and id_card = #{idCard}
+        order by visit_date desc
+        limit 1
+    </select>
+
+    <insert id="insertBizHistoryMedicalData" parameterType="com.ruoyi.business.domain.BizHistoryMedicalData" useGeneratedKeys="true" keyProperty="id">
+        insert into biz_history_medical_data (
+            import_batch_no, query_type, patient_name, id_card,
+            gender, birth_date, phone, diagnosis, hospital, department,
+            visit_date, visit_type, disease_code, medical_record_no, doctor,
+            data_json, status, remark, create_by, create_time
+        ) values (
+            #{importBatchNo}, #{queryType}, #{patientName}, #{idCard},
+            #{gender}, #{birthDate}, #{phone}, #{diagnosis}, #{hospital}, #{department},
+            #{visitDate}, #{visitType}, #{diseaseCode}, #{medicalRecordNo}, #{doctor},
+            #{dataJson}, #{status}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <insert id="insertBatch" parameterType="java.util.List">
+        insert into biz_history_medical_data (
+            import_batch_no, query_type, patient_name, id_card,
+            gender, birth_date, phone, diagnosis, hospital, department,
+            visit_date, visit_type, disease_code, medical_record_no, doctor,
+            data_json, status, remark, create_by, create_time
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.importBatchNo}, #{item.queryType}, #{item.patientName}, #{item.idCard},
+            #{item.gender}, #{item.birthDate}, #{item.phone}, #{item.diagnosis}, #{item.hospital}, #{item.department},
+            #{item.visitDate}, #{item.visitType}, #{item.diseaseCode}, #{item.medicalRecordNo}, #{item.doctor},
+            #{item.dataJson}, '0', #{item.remark}, #{item.createBy}, sysdate()
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteBizHistoryMedicalDataByBatchNo" parameterType="String">
+        delete from biz_history_medical_data where import_batch_no = #{batchNo}
+    </delete>
+
+    <select id="selectDistinctBatchNo" resultType="String">
+        select distinct import_batch_no from biz_history_medical_data order by import_batch_no desc
+    </select>
+
+</mapper>
