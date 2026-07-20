@@ -1,0 +1,10 @@
+﻿{
+  "id": "external_price_query",
+  "name": "价格查询",
+  "path": "/external/price/query",
+  "method": "GET",
+  "parameter": [{"name":"queryType","required":true}],
+  "option": [],
+  "createDate": "2026-07-20 15:50:00",
+  "updateDate": "2026-07-20 15:50:00"
+}

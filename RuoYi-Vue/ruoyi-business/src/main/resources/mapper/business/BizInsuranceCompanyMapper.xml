@@ -13,8 +13,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="loginIp" column="login_ip"/>
         <result property="loginDate" column="login_date"/>
         <result property="appKey" column="app_key"/>
-        <result property="appSecret" column="app_secret"/>
-        <result property="balance" column="balance"/>
+<result property="balance" column="balance"/>
         <result property="billingCycleDays" column="billing_cycle_days"/>
         <result property="monthlyBudget" column="monthly_budget"/>
         <result property="budgetEnabled" column="budget_enabled"/>
@@ -31,7 +30,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <sql id="selectBizInsuranceCompanyVo">
         select id, company_name, company_code, username, password, login_ip, login_date,
-               app_key, app_secret, balance, billing_cycle_days, monthly_budget, budget_enabled,
+               app_key, balance, billing_cycle_days, monthly_budget, budget_enabled,
                balance_update_time, status, contact_person, contact_phone, remark,
                create_by, create_time, update_by, update_time
         from biz_insurance_company

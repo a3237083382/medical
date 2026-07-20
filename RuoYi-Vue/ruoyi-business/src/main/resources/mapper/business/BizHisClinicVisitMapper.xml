@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BizHisClinicVisitMapper">
+<resultMap type="com.ruoyi.business.domain.BizHisClinicVisit" id="BizHisClinicVisitResult">
+<result property="id" column="id"/><result property="importBatchNo" column="import_batch_no"/>
+<result property="patientName" column="patient_name"/><result property="idCard" column="id_card"/>
+<result property="visitTime" column="visit_time"/><result property="patientNo" column="patient_no"/>
+<result property="insuranceType" column="insurance_type"/><result property="validFlag" column="valid_flag"/>
+<result property="orgCode" column="org_code"/><result property="orgName" column="org_name"/>
+<result property="medicalRecordNo" column="medical_record_no"/><result property="diseaseName" column="disease_name"/>
+<result property="outpatientDiagnosis" column="outpatient_diagnosis"/><result property="doctorName" column="doctor_name"/>
+<result property="inpatientDiagnosis" column="inpatient_diagnosis"/><result property="endTime" column="end_time"/>
+<result property="conditionDesc" column="condition_desc"/>
+<result property="remark" column="remark"/><result property="createBy" column="create_by"/><result property="createTime" column="create_time"/>
+</resultMap>
+<sql id="selectVo">select id, import_batch_no, patient_name, id_card, visit_time, patient_no, insurance_type, valid_flag, org_code, org_name, medical_record_no, disease_name, outpatient_diagnosis, doctor_name, inpatient_diagnosis, end_time, condition_desc, remark, create_by, create_time from biz_his_clinic_visit</sql>
+<select id="selectBizHisClinicVisitById" parameterType="Long" resultMap="BizHisClinicVisitResult"><include refid="selectVo"/> where id = #{id}</select>
+<select id="selectBizHisClinicVisitList" parameterType="com.ruoyi.business.domain.BizHisClinicVisit" resultMap="BizHisClinicVisitResult"><include refid="selectVo"/><where><if test="patientName != null and patientName != ''">AND patient_name LIKE CONCAT('%', #{patientName}, '%')</if><if test="idCard != null and idCard != ''">AND id_card LIKE CONCAT('%', #{idCard}, '%')</if><if test="importBatchNo != null and importBatchNo != ''">AND import_batch_no = #{importBatchNo}</if></where> order by visit_time desc</select>
+<select id="selectByPerson" resultMap="BizHisClinicVisitResult"><include refid="selectVo"/> where patient_name = #{patientName} and id_card = #{idCard} order by visit_time desc</select>
+<insert id="insertBizHisClinicVisit" parameterType="com.ruoyi.business.domain.BizHisClinicVisit" useGeneratedKeys="true" keyProperty="id">insert ignore into biz_his_clinic_visit (import_batch_no, patient_name, id_card, visit_time, patient_no, insurance_type, valid_flag, org_code, org_name, medical_record_no, disease_name, outpatient_diagnosis, doctor_name, inpatient_diagnosis, end_time, condition_desc, remark, create_by, create_time) values (#{importBatchNo}, #{patientName}, #{idCard}, #{visitTime}, #{patientNo}, #{insuranceType}, #{validFlag}, #{orgCode}, #{orgName}, #{medicalRecordNo}, #{diseaseName}, #{outpatientDiagnosis}, #{doctorName}, #{inpatientDiagnosis}, #{endTime}, #{conditionDesc}, #{remark}, #{createBy}, sysdate())</insert>
+<insert id="insertBatch" parameterType="java.util.List">insert into biz_his_clinic_visit (import_batch_no, patient_name, id_card, visit_time, patient_no, insurance_type, valid_flag, org_code, org_name, medical_record_no, disease_name, outpatient_diagnosis, doctor_name, inpatient_diagnosis, end_time, condition_desc, remark, create_by, create_time) values <foreach collection="list" item="item" separator=",">(#{item.importBatchNo}, #{item.patientName}, #{item.idCard}, #{item.visitTime}, #{item.patientNo}, #{item.insuranceType}, #{item.validFlag}, #{item.orgCode}, #{item.orgName}, #{item.medicalRecordNo}, #{item.diseaseName}, #{item.outpatientDiagnosis}, #{item.doctorName}, #{item.inpatientDiagnosis}, #{item.endTime}, #{item.conditionDesc}, #{item.remark}, #{item.createBy}, sysdate())</foreach></insert>
+<delete id="deleteBizHisClinicVisitByBatchNo" parameterType="String">delete from biz_his_clinic_visit where import_batch_no = #{batchNo}</delete>
+</mapper>

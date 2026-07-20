@@ -1,9 +1,6 @@
 package com.ruoyi.web.controller.business;
 
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -14,18 +11,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.business.domain.BizInsuranceCompany;
 import com.ruoyi.business.domain.BizQueryLog;
 import com.ruoyi.business.domain.BizQueryPrice;
 import com.ruoyi.business.service.IBizInsuranceCompanyService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.ruoyi.business.service.IBizQueryLogService;
 import com.ruoyi.business.service.IBizQueryPriceService;
 import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.http.HttpHelper;
 import com.ruoyi.common.utils.ip.IpUtils;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -34,10 +30,12 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequestMapping("/open/api/medical")
 public class OpenMedicalQueryController
 {
-    private static final long SIGN_EXPIRE_MILLIS = 5 * 60 * 1000L;
 
     @Autowired
     private IBizInsuranceCompanyService companyService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private IBizQueryPriceService priceService;
@@ -45,19 +43,12 @@ public class OpenMedicalQueryController
     @Autowired
     private IBizQueryLogService queryLogService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @PostMapping("/query")
     @Transactional(rollbackFor = Exception.class)
     public AjaxResult query(@RequestBody Map<String, String> params, HttpServletRequest request)
     {
-        String body = HttpHelper.getBodyString(request);
-        if (StringUtils.isEmpty(body))
-        {
-            body = toJson(params);
-        }
-        BizInsuranceCompany company = authenticate(request, body);
+        BizInsuranceCompany company = resolveCompany(request);
         if (company == null)
         {
             return AjaxResult.error(401, "INVALID_SIGNATURE");
@@ -92,44 +83,7 @@ public class OpenMedicalQueryController
         return AjaxResult.success("SUCCESS", buildResult(price, name, idCard));
     }
 
-    private BizInsuranceCompany authenticate(HttpServletRequest request, String body)
-    {
-        String appKey = trim(request.getHeader("X-App-Key"));
-        String timestamp = trim(request.getHeader("X-Timestamp"));
-        String nonce = trim(request.getHeader("X-Nonce"));
-        String sign = trim(request.getHeader("X-Sign"));
-        if (StringUtils.isEmpty(appKey) || StringUtils.isEmpty(timestamp)
-                || StringUtils.isEmpty(nonce) || StringUtils.isEmpty(sign))
-        {
-            return null;
-        }
-        if (!isValidTimestamp(timestamp))
-        {
-            return null;
-        }
 
-        BizInsuranceCompany company = companyService.selectBizInsuranceCompanyByAppKey(appKey);
-        if (company == null || StringUtils.isEmpty(company.getAppSecret()))
-        {
-            return null;
-        }
-
-        String expected = sha256(appKey + timestamp + nonce + body + company.getAppSecret());
-        return sign.equalsIgnoreCase(expected) ? company : null;
-    }
-
-    private boolean isValidTimestamp(String timestamp)
-    {
-        try
-        {
-            long value = Long.parseLong(timestamp);
-            return Math.abs(System.currentTimeMillis() - value) <= SIGN_EXPIRE_MILLIS;
-        }
-        catch (NumberFormatException e)
-        {
-            return false;
-        }
-    }
 
     private BizQueryLog recordLog(Long companyId, String queryType, String name, String idCard,
             BigDecimal fee, String status, String remark)
@@ -169,6 +123,21 @@ public class OpenMedicalQueryController
         return data;
     }
 
+    private BizInsuranceCompany resolveCompany(HttpServletRequest request)
+    {
+        String appKey = trim(request.getHeader("X-App-Key"));
+        if (StringUtils.isEmpty(appKey))
+        {
+            return null;
+        }
+        BizInsuranceCompany company = companyService.selectBizInsuranceCompanyByAppKey(appKey);
+        if (company == null || !"0".equals(company.getStatus()))
+        {
+            return null;
+        }
+        return company;
+    }
+
     private String toJson(Object value)
     {
         try
@@ -181,24 +150,6 @@ public class OpenMedicalQueryController
         }
     }
 
-    private String sha256(String value)
-    {
-        try
-        {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] bytes = digest.digest(value.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder();
-            for (byte b : bytes)
-            {
-                hex.append(String.format("%02x", b));
-            }
-            return hex.toString();
-        }
-        catch (NoSuchAlgorithmException e)
-        {
-            throw new IllegalStateException(e);
-        }
-    }
 
     private String trim(String value)
     {

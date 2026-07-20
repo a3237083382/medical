@@ -39,7 +39,7 @@ public class MedicalQueryServiceImplTest
         FakeCompanyQueryPriceMapper companyPriceMapper = new FakeCompanyQueryPriceMapper(1L, "medical_all", "20.00", "3.00");
         FakeMonthlyUsageMapper monthlyUsageMapper = new FakeMonthlyUsageMapper();
         MedicalQueryServiceImpl service = new MedicalQueryServiceImpl(
-                companyMapper, priceMapper, queryLogMapper, dataSource, companyPriceMapper, monthlyUsageMapper);
+                companyMapper, priceMapper, queryLogMapper, dataSource, companyPriceMapper, monthlyUsageMapper, null);
 
         MedicalQueryRequest hitRequest = request(1L, "medical_all");
         MedicalQueryResult hitResult = service.query(hitRequest);
@@ -75,7 +75,7 @@ public class MedicalQueryServiceImplTest
         monthlyUsageMapper.usedAmount = new BigDecimal("10.00");
         monthlyUsageMapper.reservedAmount = new BigDecimal("0.00");
         MedicalQueryServiceImpl service = new MedicalQueryServiceImpl(
-                companyMapper, priceMapper, queryLogMapper, dataSource, companyPriceMapper, monthlyUsageMapper);
+                companyMapper, priceMapper, queryLogMapper, dataSource, companyPriceMapper, monthlyUsageMapper, null);
 
         try
         {

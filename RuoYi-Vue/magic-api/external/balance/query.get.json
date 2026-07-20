@@ -1,0 +1,10 @@
+﻿{
+  "id": "external_balance_query",
+  "name": "余额查询",
+  "path": "/external/balance/query",
+  "method": "GET",
+  "parameter": [{"name":"companyId","required":true}],
+  "option": [],
+  "createDate": "2026-07-20 15:50:00",
+  "updateDate": "2026-07-20 15:50:00"
+}

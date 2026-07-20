@@ -1,0 +1,85 @@
+﻿mysql : mysql: [Warning] Using a password on the command line interface can be insecure.
+所在位置 行:2 字符: 1
++ mysql -u root -proot -e "
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (mysql: [Warning...an be insecure.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+file_path	content
+magic-api/api/对外接口/外部余额查询.ms	{
+\n  "properties" : { },
+\n  "id" : "external_balance_query",
+\n  "script" : null,
+\n  "groupId" : "external_group",
+\n  "name" : "外部余额查询",
+\n  "createTime" : 1778663247148,
+\n  "updateTime" : 1778663247148,
+\n  "lock" : null,
+\n  "createBy" : "system",
+\n  "updateBy" : null,
+\n  "path" : "/balance/query",
+\n 
+magic-api/api/对外接口/外部医疗场景清单.ms	{
+\n  "properties" : { },
+\n  "id" : "external_scenario_list",
+\n  "script" : null,
+\n  "groupId" : "external_group",
+\n  "name" : "外部医疗场景清单",
+\n  "createTime" : 1778663247141,
+\n  "updateTime" : 1778663247141,
+\n  "lock" : null,
+\n  "createBy" : "system",
+\n  "updateBy" : null,
+\n  "path" : "/scenario/list",
+
+magic-api/api/对外接口/外部医疗大数据模拟查询.ms	{
+\n  "properties" : { },
+\n  "id" : "external_medical_query",
+\n  "script" : null,
+\n  "groupId" : "external_group",
+\n  "name" : "外部医疗大数据模拟查询",
+\n  "createTime" : 1778663247170,
+\n  "updateTime" : 1778663247170,
+\n  "lock" : null,
+\n  "createBy" : "system",
+\n  "updateBy" : null,
+\n  "path" : "/medical/query
+magic-api/api/对外接口/外部查询日志.ms	{
+\n  "properties" : { },
+\n  "id" : "external_query_log_list",
+\n  "script" : null,
+\n  "groupId" : "external_group",
+\n  "name" : "外部查询日志",
+\n  "createTime" : 1778663247164,
+\n  "updateTime" : 1778663247164,
+\n  "lock" : null,
+\n  "createBy" : "system",
+\n  "updateBy" : null,
+\n  "path" : "/query-log/list",
+
+magic-api/api/对外接口/外部查询类型.ms	{
+\n  "properties" : { },
+\n  "id" : "external_types",
+\n  "script" : null,
+\n  "groupId" : "external_group",
+\n  "name" : "外部查询类型",
+\n  "createTime" : 1778663247127,
+\n  "updateTime" : 1778663247128,
+\n  "lock" : null,
+\n  "createBy" : "system",
+\n  "updateBy" : null,
+\n  "path" : "/medical/types",
+\n  "method
+magic-api/api/对外接口/外部账单查询.ms	{
+\n  "properties" : { },
+\n  "id" : "external_bill_list",
+\n  "script" : null,
+\n  "groupId" : "external_group",
+\n  "name" : "外部账单查询",
+\n  "createTime" : 1778663247156,
+\n  "updateTime" : 1778663247156,
+\n  "lock" : null,
+\n  "createBy" : "system",
+\n  "updateBy" : null,
+\n  "path" : "/bill/list",
+\n  "method

@@ -1,0 +1,4 @@
+{"properties": {}, "id": "external_medical_query", "script": "import biz;\nreturn biz.queryMedical(body.companyId, body.queryType, body.queryParams, request.getRemoteAddr());", "groupId": "external_group", "name": "外部医疗大数据模拟查询", "createTime": 1778663247170, "updateTime": 1778663247170, "lock": null, "createBy": "system", "updateBy": null, "path": "/medical/query", "method": "POST", "parameters": [{"name": "companyId", "required": true}, {"name": "queryType", "required": true}, {"name": "queryParams", "required": true}], "options": [], "requestBody": null, "headers": [], "paths": [], "responseBody": null, "description": null, "requestBodyDefinition": null, "responseBodyDefinition": null}
+================================
+import biz;
+return biz.queryMedical(body.companyId, body.queryType, body.queryParams, request.getRemoteAddr());

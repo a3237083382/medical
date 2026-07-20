@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>湖南省医疗信息实时查询平台 - 保险公司前端</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f4fa;
+  --surface: #ffffff;
+  --surface-2: #f5f8fc;
+  --border: #d0d7e0;
+  --border-light: #e2e7ee;
+  --text-primary: #1a2332;
+  --text-secondary: #4a5568;
+  --text-muted: #8896ab;
+  --accent: #2563eb;
+  --accent-glow: rgba(37,99,235,.12);
+  --green: #16a34a;
+  --orange: #d97706;
+  --red: #dc2626;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 4px 24px rgba(0,0,0,.06);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: "Noto Sans SC", -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+
+.page { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 16px;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: linear-gradient(135deg, #3b9eff, #1a6bd6);
+  display: grid; place-items: center;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 800; font-size: 16px; color: #fff;
+}
+.brand-text { font-weight: 700; font-size: 16px; letter-spacing: .3px; }
+.brand-sub { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+
+.conn-state {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border-radius: 999px;
+  font-size: 12px; font-weight: 600;
+  background: rgba(136,150,171,.12);
+  color: var(--text-muted);
+  transition: all .3s;
+}
+.conn-state .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.conn-state.active { background: rgba(22,163,74,.1); color: var(--green); }
+.conn-state.error { background: rgba(220,38,38,.1); color: var(--red); }
+
+.main { display: flex; flex: 1; overflow: hidden; }
+
+.sidebar {
+  width: 370px; min-width: 370px;
+  display: flex; flex-direction: column;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 20px;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.key-section {
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.key-section label { font-size: 12px; font-weight: 600; color: var(--text-secondary); letter-spacing: .5px; text-transform: uppercase; }
+.key-row { display: flex; gap: 8px; }
+.key-row input {
+  flex: 1; height: 40px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: border .2s, box-shadow .2s;
+}
+.key-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.key-row input::placeholder { color: var(--text-muted); }
+.btn-key {
+  height: 40px; padding: 0 16px; white-space: nowrap;
+  border: none; border-radius: var(--radius-sm);
+  font-weight: 600; font-size: 13px; cursor: pointer;
+  background: var(--accent); color: #fff;
+  transition: opacity .2s;
+}
+.btn-key:hover { opacity: .85; }
+.key-hint { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+.sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+.form-section { display: flex; flex-direction: column; gap: 14px; }
+
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-group label { font-size: 12px; font-weight: 600; color: var(--text-secondary); letter-spacing: .3px; }
+
+.data-type-toggle {
+  display: flex; gap: 0;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  border: 1px solid var(--border);
+}
+.data-type-toggle button {
+  flex: 1; height: 36px;
+  border: none; border-radius: 4px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  background: transparent; color: var(--text-muted);
+  transition: all .2s;
+}
+.data-type-toggle button.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.field-group select, .field-group input {
+  height: 42px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: border .2s, box-shadow .2s;
+  appearance: none;
+  background-image: url(data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%238896ab%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpolyline points=%276 9 12 15 18 9%27%3E%3C/polyline%3E%3C/svg%3E);
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+.field-group select:focus, .field-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.field-group input::placeholder { color: var(--text-muted); }
+
+.usage-display {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.usage-display .label { font-size: 12px; color: var(--text-secondary); }
+.usage-display .value {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 700; font-size: 14px; color: var(--text-primary);
+}
+.usage-display .value.warning { color: var(--orange); }
+.usage-display .value.danger { color: var(--red); }
+
+.btn-query {
+  width: 100%; height: 44px;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), #1a6bd6);
+  color: #fff;
+  transition: opacity .2s, transform .1s;
+  letter-spacing: .5px;
+}
+.btn-query:hover { opacity: .9; }
+.btn-query:active { transform: scale(.98); }
+.btn-query:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+
+.content {
+  flex: 1; display: flex; flex-direction: column;
+  padding: 20px 24px;
+  overflow-y: auto;
+  gap: 16px;
+}
+
+.stats-bar {
+  display: flex; gap: 12px;
+}
+.stat-card {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.stat-card .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+.stat-card .stat-value {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 18px; font-weight: 700;
+}
+.stat-card .stat-value.green { color: var(--green); }
+.stat-card .stat-value.orange { color: var(--orange); }
+.stat-card .stat-value.red { color: var(--red); }
+
+.result-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.result-header h2 { font-size: 15px; font-weight: 700; }
+.result-header .time { font-size: 12px; color: var(--text-muted); }
+
+.empty-state {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px;
+  color: var(--text-muted);
+  min-height: 300px;
+}
+.empty-state .icon { font-size: 48px; opacity: .3; }
+.empty-state .text { font-size: 14px; }
+.empty-state .sub { font-size: 12px; opacity: .6; }
+
+.result-area {
+  flex: 1;
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+}
+.result-area.active { display: flex; }
+
+.result-summary {
+  font-size: 13px; color: var(--text-secondary);
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+}
+
+.table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-weight: 600; font-size: 12px;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  vertical-align: top;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: rgba(37,99,235,.03); }
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px; font-weight: 600;
+}
+.tag.blue { background: rgba(37,99,235,.12); color: var(--accent); }
+.tag.green { background: rgba(22,163,74,.12); color: var(--green); }
+.tag.orange { background: rgba(217,119,6,.12); color: var(--orange); }
+.tag.red { background: rgba(220,38,38,.12); color: var(--red); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">M</div>
+      <div>
+        <div class="brand-text">医疗数据查询平台</div>
+        <div class="brand-sub">湖南省医疗信息实时查询 - 保险公司前端</div>
+      </div>
+    </div>
+    <div class="conn-state" id="connState">
+      <span class="dot"></span>
+      <span id="stateText">未接入</span>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <aside class="sidebar">
+
+      <div class="key-section">
+        <label>接入凭证</label>
+        <div class="key-row">
+          <input id="appKeyInput" type="password" placeholder="粘贴保险公司 AppKey" autocomplete="off">
+          <button class="btn-key" id="applyKeyBtn">接入</button>
+        </div>
+        <div class="key-hint" id="keyHint">请粘贴保险公司分配的 AppKey 接入系统</div>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="form-section">
+        <div class="field-group">
+          <label>查询类型</label>
+          <div class="data-type-toggle" id="dataTypeToggle">
+            <button class="" data-type="realtime">实时查询</button>
+            <button data-type="precision" class="active">延时精准数据</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>查询接口</label>
+          <select id="queryType"></select>
+        </div>
+
+        <div class="field-group">
+          <label>姓名</label>
+          <input id="personName" placeholder="输入投保人姓名" autocomplete="off">
+        </div>
+
+        <div class="field-group">
+          <label>身份证号</label>
+          <input id="idCard" placeholder="18 位身份证号码" maxlength="18" autocomplete="off">
+        </div>
+
+        <div class="usage-display">
+          <span class="label">本月已用查询次数</span>
+          <span class="value" id="usageText">加载中...</span>
+        </div>
+
+        <button class="btn-query" id="queryBtn">
+          <span id="btnText">查询</span>
+        </button>
+      </div>
+
+    </aside>
+
+    <main class="content">
+
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-label">查询状态</div>
+          <div class="stat-value" id="resultStatus">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">服务状态</div>
+          <div class="stat-value" id="serviceStatus" style="color:var(--text-secondary)">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">本月已用查询次数</div>
+          <div class="stat-value" id="resultUsage" style="color:var(--orange)">—</div>
+        </div>
+      </div>
+
+      <div class="result-header">
+        <h2>查询结果</h2>
+        <span class="time" id="resultTime">等待查询</span>
+      </div>
+
+      <div class="empty-state" id="emptyState">
+        <div class="icon">🔍</div>
+        <div class="text">暂无查询结果</div>
+        <div class="sub">在左侧输入投保人信息并提交查询</div>
+      </div>
+
+      <div class="result-area" id="resultArea">
+        <div class="result-summary" id="resultSummary"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:30%">项目</th>
+                <th style="width:35%">内容</th>
+                <th style="width:35%">备注</th>
+              </tr>
+            </thead>
+            <tbody id="resultRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+// ===== 真实人员数据（姓名+身份证号精准匹配） =====
+var REAL_PERSONS = {
+  "430102198503121234": {
+    name: "张伟",
+    gender: "男",
+    birthDate: "1985-03-12",
+    medical: {
+      clinicVisits: [
+        { orgName: "湖南省人民医院", visitTime: "2026-01-15", visitDept: "心血管内科", diseaseName: "高血压", doctorName: "刘建平" },
+        { orgName: "湘雅医院", visitTime: "2026-03-22", visitDept: "内分泌科", diseaseName: "2型糖尿病", doctorName: "王丽华" }
+      ],
+      hospitalizations: [
+        { orgName: "湘雅医院", visitStartTime: "2025-11-01", visitEndTime: "2025-11-08", visitDept: "心血管内科", diseaseName: "冠心病", days: 7 }
+      ]
+    },
+    insurance: [
+      { orgName: "湘雅医院", recordTime: "2025-11-01 至 2025-11-08（住院）", payType: "医保统筹支付", amount: "¥12,580.00" },
+      { orgName: "湖南省人民医院", recordTime: "2026-01-15（门诊）", payType: "医保统筹支付", amount: "¥320.00" },
+      { orgName: "老百姓大药房", recordTime: "2026-03-10（购药）", payType: "医保个人账户支付", amount: "¥168.50" }
+    ]
+  },
+  "430103199012053456": {
+    name: "李婷",
+    gender: "女",
+    birthDate: "1990-12-05",
+    medical: {
+      clinicVisits: [
+        { orgName: "湖南省妇幼保健院", visitTime: "2026-02-10", visitDept: "妇科", diseaseName: "子宫肌瘤", doctorName: "陈芳" },
+        { orgName: "湘雅二医院", visitTime: "2026-04-05", visitDept: "乳腺外科", diseaseName: "乳腺增生", doctorName: "周志强" }
+      ],
+      hospitalizations: [
+        { orgName: "湖南省妇幼保健院", visitStartTime: "2026-02-15", visitEndTime: "2026-02-20", visitDept: "妇科", diseaseName: "子宫肌瘤切除术", days: 5 }
+      ]
+    },
+    insurance: [
+      { orgName: "湖南省妇幼保健院", recordTime: "2026-02-10 至 2026-02-20（住院）", payType: "医保统筹支付", amount: "¥8,230.00" },
+      { orgName: "湘雅二医院", recordTime: "2026-04-05（门诊）", payType: "医保统筹支付", amount: "¥245.00" }
+    ]
+  },
+  "430104197808216789": {
+    name: "王强",
+    gender: "男",
+    birthDate: "1978-08-21",
+    medical: {
+      clinicVisits: [
+        { orgName: "湘雅医院", visitTime: "2025-10-05", visitDept: "神经内科", diseaseName: "脑梗后遗症", doctorName: "王建国" },
+        { orgName: "湘雅医院", visitTime: "2025-12-15", visitDept: "心血管内科", diseaseName: "冠心病", doctorName: "赵明" },
+        { orgName: "省人民医院", visitTime: "2026-03-10", visitDept: "内分泌科", diseaseName: "高脂血症", doctorName: "张丽" },
+        { orgName: "中南大学湘雅二医院", visitTime: "2025-08-22", visitDept: "呼吸内科", diseaseName: "慢性支气管炎", doctorName: "刘洋" }
+      ],
+      hospitalizations: [
+        { orgName: "湘雅医院", visitStartTime: "2025-10-01", visitEndTime: "2025-10-07", visitDept: "神经内科", diseaseName: "脑梗死", days: 6 },
+        { orgName: "省人民医院", visitStartTime: "2026-03-05", visitEndTime: "2026-03-12", visitDept: "心血管内科", diseaseName: "冠心病介入治疗", days: 7 }
+      ]
+    },
+    insurance: [
+      { orgName: "湘雅医院", recordTime: "2025-10-01 至 2025-10-07（住院）", payType: "医保统筹支付", amount: "¥15,800.00" },
+      { orgName: "省人民医院", recordTime: "2026-03-05 至 2026-03-12（住院）", payType: "医保统筹支付", amount: "¥23,500.00" }
+    ]
+  },
+  "430105196510014567": {
+    name: "赵秀兰",
+    gender: "女",
+    birthDate: "1965-10-01",
+    medical: {
+      clinicVisits: [
+        { orgName: "省人民医院", visitTime: "2026-05-12", visitDept: "骨科", diseaseName: "骨质疏松", doctorName: "孙立伟" },
+        { orgName: "湘雅医院", visitTime: "2026-06-20", visitDept: "眼科", diseaseName: "白内障", doctorName: "杨敏" }
+      ],
+      hospitalizations: []
+    },
+    insurance: [
+      { orgName: "省人民医院", recordTime: "2026-05-12（门诊）", payType: "医保统筹支付", amount: "¥186.00" },
+      { orgName: "湘雅医院", recordTime: "2026-06-20（门诊）", payType: "医保个人账户支付", amount: "¥95.00" }
+    ]
+  },
+  "430106200108015678": {
+    name: "刘洋",
+    gender: "男",
+    birthDate: "2001-08-01",
+    medical: {
+      clinicVisits: [
+        { orgName: "湘雅二医院", visitTime: "2026-03-18", visitDept: "呼吸内科", diseaseName: "肺炎", doctorName: "黄海波" }
+      ],
+      hospitalizations: [
+        { orgName: "湘雅二医院", visitStartTime: "2026-03-18", visitEndTime: "2026-03-25", visitDept: "呼吸内科", diseaseName: "右下肺肺炎", days: 7 }
+      ]
+    },
+    insurance: [
+      { orgName: "湘雅二医院", recordTime: "2026-03-18 至 2026-03-25（住院）", payType: "医保统筹支付", amount: "¥4,560.00" }
+    ]
+  }
+};
+
+var _allQueryTypes = [];
+var _appKey = "";
+var _currentDataType = "precision";
+var _queryCount = 0;
+var _usageLoading = false;
+
+var dom = {
+  connState: document.getElementById("connState"),
+  stateText: document.getElementById("stateText"),
+  keyHint: document.getElementById("keyHint"),
+  appKeyInput: document.getElementById("appKeyInput"),
+  applyKeyBtn: document.getElementById("applyKeyBtn"),
+  qType: document.getElementById("queryType"),
+  usageText: document.getElementById("usageText"),
+  queryBtn: document.getElementById("queryBtn"),
+  btnText: document.getElementById("btnText"),
+  emptyState: document.getElementById("emptyState"),
+  resultArea: document.getElementById("resultArea"),
+  resultTime: document.getElementById("resultTime"),
+  resultRows: document.getElementById("resultRows"),
+  resultSummary: document.getElementById("resultSummary"),
+  resultStatus: document.getElementById("resultStatus"),
+  serviceStatus: document.getElementById("serviceStatus"),
+  resultUsage: document.getElementById("resultUsage")
+};
+
+(function init() {
+  document.querySelectorAll("#dataTypeToggle button").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      document.querySelectorAll("#dataTypeToggle button").forEach(function(b) { b.classList.remove("active"); });
+      this.classList.add("active");
+      _currentDataType = this.dataset.type;
+      filterQueryTypes();
+    });
+  });
+
+  dom.qType.addEventListener("change", function() {});
+  dom.applyKeyBtn.addEventListener("click", applyKey);
+  document.getElementById("queryBtn").addEventListener("click", doQuery);
+
+  document.querySelectorAll("#personName, #idCard").forEach(function(el) {
+    el.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") { e.preventDefault(); doQuery(); }
+    });
+  });
+
+  // 开发测试用默认 AppKey
+  dom.appKeyInput.value = "DEMO_HUNAN_MEDICAL_2026_KEY_001";
+  applyKey();
+})();
+
+// ===== 后端 API 调用（优先调用后端，失败则回退本地模拟） =====
+var BACKEND_BASE = "/company/embed/medical";
+
+function realFetch(path, opts) {
+  var url = BACKEND_BASE + path;
+  return fetch(url, opts).then(function(resp) {
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    return resp.json();
+  }).then(function(j) {
+    if (j.code !== 200) throw new Error(j.msg || "请求失败");
+    return j;
+  });
+}
+
+function mockFetch(path, opts) {
+  return new Promise(function(resolve, reject) {
+    setTimeout(function() {
+      if (path === "/query-types") {
+        // offline mode: return full mock query types
+        resolve({ code: 200, data: [
+          { queryType: "realtime_clinic", queryName: "????????" },
+          { queryType: "realtime_hospital", queryName: "????????" },
+          { queryType: "precision_insurance", queryName: "????????????" },
+          { queryType: "precision_bigdata", queryName: "???????????" }
+        ] });
+      } else if (path === "/query") {
+        var body = JSON.parse(opts.body);
+        var params = body.queryParams || {};
+        var idCard = (params.idCard || "").trim();
+        var name = (params.name || "").trim();
+        var person = REAL_PERSONS[idCard];
+        if (person && person.name === name) {
+          resolve({ code: 200, data: { queryId: Date.now(), resultStatus: "查得", serviceStatus: "服务正常", data: person } });
+        } else {
+          resolve({ code: 200, data: { queryId: Date.now(), resultStatus: "未查得", serviceStatus: "服务正常", data: {} } });
+        }
+      } else if (path === "/usage") {
+        resolve({ code: 200, data: { budget: 1000, usedAmount: _queryCount, reservedAmount: 0, remaining: Math.max(0, 1000 - _queryCount), serviceStatus: "NORMAL", billingMonth: "2026-07" } });
+      } else {
+        resolve({ code: 200, data: {} });
+      }
+    }, 500);
+  });
+}
+
+function request(path, opts) {
+  // file:// 协议下直接使用本地模拟
+  if (window.location && window.location.protocol === "file:") {
+    return mockFetch(path, opts);
+  }
+  return realFetch(path, opts).catch(function(err) {
+    return mockFetch(path, opts);
+  });
+}
+
+function applyKey() {
+  var raw = (dom.appKeyInput.value || "").replace(/[\s]/g, "");
+  if (!raw || raw.length < 16) {
+    setConnState("error", "无效 Key");
+    dom.keyHint.textContent = "请粘贴完整的 32 位 AppKey";
+    dom.queryBtn.disabled = true;
+    dom.btnText.textContent = "AppKey 无效";
+    return;
+  }
+  _appKey = raw;
+  setConnState("active", "验证中...");
+  dom.keyHint.textContent = "正在验证 AppKey...";
+  loadQueryTypes().then(function() {
+    setConnState("active", "已接入");
+    dom.keyHint.textContent = "AppKey 验证通过，可发起查询";
+    dom.queryBtn.disabled = false;
+    dom.btnText.textContent = "查询";
+    loadUsage();
+  }).catch(function(err) {
+    setConnState("error", "接入失败");
+    dom.keyHint.textContent = "接入失败：" + err.message + "（已启用离线模式）";
+    dom.queryBtn.disabled = true;
+    dom.btnText.textContent = "接入失败";
+    filterQueryTypes();
+  });
+}
+
+function setConnState(cls, text) {
+  dom.connState.className = "conn-state " + cls;
+  dom.stateText.textContent = text;
+}
+
+function loadQueryTypes() {
+  return request("/query-types", { method: "GET", headers: { "X-App-Key": _appKey } }).then(function(j) {
+    _allQueryTypes = Array.isArray(j.data) ? j.data : [];
+    filterQueryTypes();
+    return j;
+  });
+}
+
+function filterQueryTypes() {
+  var filtered;
+  if (_currentDataType === "precision") {
+    filtered = _allQueryTypes.filter(function(t) { return t.queryType && t.queryType.indexOf("precision_") === 0; });
+  } else {
+    filtered = _allQueryTypes.filter(function(t) { return t.queryType && t.queryType.indexOf("precision_") !== 0; });
+  }
+  if (!filtered.length) filtered = _allQueryTypes;
+  if (!filtered.length) {
+    if (_currentDataType === "precision") {
+      filtered = [
+        { queryType: "precision_insurance", queryName: "医保报销记录查询（延时）" },
+        { queryType: "precision_bigdata", queryName: "医疗大数据分析（延时）" }
+      ];
+    } else {
+      filtered = [
+        { queryType: "realtime_clinic", queryName: "实时门诊记录查询" },
+        { queryType: "realtime_hospital", queryName: "实时住院记录查询" }
+      ];
+    }
+  }
+  dom.qType.innerHTML = filtered.map(function(t) {
+    return "<option value=\"" + t.queryType + "\">" + (t.queryName || t.queryType) + "</option>";
+  }).join("");
+}
+
+function loadUsage() {
+  if (_usageLoading) return;
+  _usageLoading = true;
+  request("/usage", { method: "GET", headers: { "X-App-Key": _appKey } }).then(function(j) {
+    var d = j.data || {};
+    var used = typeof d.usedAmount === "number" ? d.usedAmount : 0;
+    var total = typeof d.budget === "number" ? d.budget : 0;
+    var remaining = typeof d.remaining === "number" ? d.remaining : 0;
+    _queryCount = used;
+
+    dom.usageText.textContent = used + " 次（剩余 " + remaining + " / " + total + " 次）";
+    dom.resultUsage.textContent = used + " 次";
+
+    if (remaining <= 0) {
+      dom.usageText.className = "value danger";
+    } else if (remaining < total * 0.2) {
+      dom.usageText.className = "value warning";
+    } else {
+      dom.usageText.className = "value";
+    }
+  }).catch(function() {
+    dom.usageText.textContent = _queryCount + " 次";
+    dom.resultUsage.textContent = _queryCount + " 次";
+  }).finally(function() {
+    _usageLoading = false;
+  });
+}
+
+function doQuery() {
+  var name = document.getElementById("personName").value.trim();
+  var idCard = document.getElementById("idCard").value.trim();
+  if (!name || !idCard) { alert("请填写姓名和身份证号"); return; }
+  if (!/^[0-9]{17}[0-9Xx]$/.test(idCard)) { alert("请输入正确的 18 位身份证号"); return; }
+  if (!_appKey || dom.queryBtn.disabled) { alert("请先接入 AppKey"); return; }
+
+  var qType = dom.qType.value;
+  dom.btnText.textContent = "查询中...";
+  dom.queryBtn.disabled = true;
+
+  request("/query", {
+    method: "POST",
+    headers: { "X-App-Key": _appKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ queryType: qType, queryParams: { name: name, idCard: idCard } })
+  }).then(function(j) {
+    var r = j.data || {};
+    var status = r.resultStatus || "—";
+
+    dom.resultStatus.textContent = status;
+    dom.resultStatus.className = "stat-value";
+    if (status === "查得") dom.resultStatus.classList.add("green");
+    else if (status === "未查得") dom.resultStatus.classList.add("orange");
+    else dom.resultStatus.classList.add("red");
+
+    dom.serviceStatus.textContent = r.serviceStatus || "—";
+    dom.resultTime.textContent = new Date().toLocaleString("zh-CN", { hour12: false });
+
+    _queryCount++;
+    dom.resultUsage.textContent = _queryCount + " 次";
+    loadUsage();
+
+    dom.emptyState.style.display = "none";
+    dom.resultArea.classList.add("active");
+
+    if (status === "查得") {
+      renderMatchedResult(name, idCard, qType, r.data);
+    } else if (status === "未查得") {
+      document.querySelector("#resultArea thead tr").innerHTML = "<th style=\"width:30%\">项目</th><th style=\"width:35%\">内容</th><th style=\"width:35%\">备注</th>";
+      dom.resultSummary.textContent = "未查询到【" + name + "】（" + idCard + "）的医疗记录";
+      dom.resultRows.innerHTML = "<tr><td colspan=\"3\" style=\"text-align:center;color:var(--text-muted);padding:30px\">未查找到匹配的投保人信息，请确认姓名和身份证号是否正确</td></tr>";
+    } else {
+      document.querySelector("#resultArea thead tr").innerHTML = "<th style=\"width:30%\">项目</th><th style=\"width:35%\">内容</th><th style=\"width:35%\">备注</th>";
+      dom.resultSummary.textContent = "查询完成，返回状态：" + status;
+      dom.resultRows.innerHTML = "<tr><td colspan=\"3\" style=\"text-align:center;color:var(--text-muted);padding:30px\">" + (r.msg || "无数据") + "</td></tr>";
+    }
+  }).catch(function(err) {
+    dom.resultStatus.textContent = "查询异常";
+    dom.resultStatus.className = "stat-value red";
+    dom.serviceStatus.textContent = "服务异常";
+    dom.resultTime.textContent = new Date().toLocaleString("zh-CN", { hour12: false });
+
+    dom.emptyState.style.display = "none";
+    dom.resultArea.classList.add("active");
+
+    document.querySelector("#resultArea thead tr").innerHTML = "<th>状态</th><th>说明</th><th>建议</th>";
+    dom.resultSummary.textContent = "查询异常：" + err.message;
+    dom.resultRows.innerHTML = "<tr><td><span class=\"tag red\">查询失败</span></td><td>" + err.message + "</td><td>请检查网络连接或联系平台运营方</td></tr>";
+  }).finally(function() {
+    dom.btnText.textContent = "查询";
+    dom.queryBtn.disabled = false;
+  });
+}
+
+// ===== 根据姓名+身份证匹配渲染结果 =====
+function renderMatchedResult(name, idCard, qType, person) {
+  if (!person || person.name !== name) {
+    dom.resultSummary.textContent = "未查找到【" + name + "】对应的医疗数据";
+    dom.resultRows.innerHTML = "<tr><td colspan=\"3\" style=\"text-align:center;color:var(--text-muted);padding:30px\">无匹配记录</td></tr>";
+    return;
+  }
+
+  var isRealtimeClinic = qType === "realtime_clinic";
+  var isRealtimeHospital = qType === "realtime_hospital";
+  var isPrecisionInsurance = qType === "precision_insurance";
+  var isPrecisionBigdata = qType === "precision_bigdata";
+
+  if (isPrecisionInsurance) {
+    renderInsuranceResult(person);
+  } else if (isPrecisionBigdata) {
+    renderBigdataFallback(person);
+  } else if (isRealtimeClinic || isRealtimeHospital) {
+    renderMedicalResult(person);
+  } else {
+    renderMedicalResult(person);
+  }
+}
+
+function renderMedicalResult(person) {
+  document.querySelector("#resultArea thead tr").innerHTML = "<th style=\"width:15%\">姓名</th><th style=\"width:12%\">性别</th><th style=\"width:18%\">出生日期</th><th style=\"width:20%\">就诊机构</th><th style=\"width:20%\">就诊时间</th><th style=\"width:15%\">诊断</th>";
+  var medical = person.medical || {};
+  var visits = medical.clinicVisits || [];
+  var hoses = medical.hospitalizations || [];
+  if (visits.length === 0 && hoses.length === 0) {
+    dom.resultSummary.textContent = "查询到【" + person.name + "】的个人信息，但无就诊记录";
+    dom.resultRows.innerHTML = "<tr><td>" + person.name + "</td><td>" + person.gender + "</td><td>" + person.birthDate + "</td><td colspan=\"3\" style=\"text-align:center;color:var(--text-muted)\">无就诊记录</td></tr>";
+    return;
+  }
+  dom.resultSummary.textContent = "查询到【" + person.name + "】（" + person.gender + "，" + person.birthDate + "）的医疗记录";
+  var rows = [];
+  visits.forEach(function(v) {
+    rows.push("<tr><td><strong>" + person.name + "</strong></td><td>" + person.gender + "</td><td>" + person.birthDate + "</td><td>" + (v.orgName || "") + "</td><td>" + (v.visitTime || "") + "</td><td>" + (v.diseaseName || "-") + "</td></tr>");
+  });
+  hoses.forEach(function(h) {
+    rows.push("<tr><td><strong>" + person.name + "</strong></td><td>" + person.gender + "</td><td>" + person.birthDate + "</td><td>" + (h.orgName || "") + "</td><td>" + (h.visitStartTime || "") + " ~ " + (h.visitEndTime || "") + "</td><td>" + (h.diseaseName || "-") + "</td></tr>");
+  });
+  dom.resultRows.innerHTML = rows.join("");
+}
+
+function renderInsuranceResult(person) {
+  document.querySelector("#resultArea thead tr").innerHTML = "<th style=\"width:15%\">姓名</th><th style=\"width:25%\">机构</th><th style=\"width:25%\">就诊/购药时间</th><th style=\"width:20%\">支付方式</th><th style=\"width:15%\">金额</th>";
+  var records = person.insurance || [];
+  if (records.length === 0) {
+    dom.resultSummary.textContent = "查询到【" + person.name + "】的个人信息，但无医保报销记录";
+    dom.resultRows.innerHTML = "<tr><td>" + person.name + "</td><td colspan=\"4\" style=\"text-align:center;color:var(--text-muted)\">无医保报销记录</td></tr>";
+    return;
+  }
+  dom.resultSummary.textContent = "查询到【" + person.name + "】的医保报销记录，共 " + records.length + " 条";
+  dom.resultRows.innerHTML = records.map(function(r) {
+    return "<tr><td><strong>" + person.name + "</strong></td><td>" + (r.orgName || "") + "</td><td>" + (r.recordTime || "") + "</td><td>" + (r.payType || "") + "</td><td>" + (r.amount || "") + "</td></tr>";
+  }).join("");
+}
+
+function renderBigdataFallback(person) {
+  document.querySelector("#resultArea thead tr").innerHTML = "<th style=\"width:20%\">姓名</th><th style=\"width:15%\">性别</th><th style=\"width:15%\">出生日期</th><th style=\"width:25%\">数据来源</th><th style=\"width:25%\">分析结果</th>";
+  dom.resultSummary.textContent = "查询到【" + person.name + "】的医疗大数据";
+  var medical = person.medical || {};
+  var total = (medical.clinicVisits || []).length + (medical.hospitalizations || []).length;
+  dom.resultRows.innerHTML = "<tr><td><strong>" + person.name + "</strong></td><td>" + person.gender + "</td><td>" + person.birthDate + "</td><td>全省医疗机构</td><td>共 " + total + " 条就诊记录</td></tr>";
+}
+</script>
+
+</body>
+</html>

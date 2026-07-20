@@ -1,41 +1,41 @@
-# 数据源配置
+﻿# 鏁版嵁婧愰厤缃?
 spring:
     datasource:
         type: com.alibaba.druid.pool.DruidDataSource
         driverClassName: com.mysql.cj.jdbc.Driver
         druid:
-            # 主库数据源
+            # 涓诲簱鏁版嵁婧?
             master:
-                url: jdbc:mysql://39.109.117.232:3306/ry_vue?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+                url: jdbc:mysql://localhost:3306/ry_vue?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
                 username: root
-                password: x0DEpcMltzf8gkWk
+                password: root
                 #x0DEpcMltzf8gkWk
-            # 从库数据源
+            # 浠庡簱鏁版嵁婧?
             slave:
-                # 从数据源开关/默认关闭
+                # 浠庢暟鎹簮寮€鍏?榛樿鍏抽棴
                 enabled: false
                 url:
                 username:
                 password:
-            # 初始连接数
+            # 鍒濆杩炴帴鏁?
             initialSize: 5
-            # 最小连接池数量
+            # 鏈€灏忚繛鎺ユ睜鏁伴噺
             minIdle: 10
-            # 最大连接池数量
+            # 鏈€澶ц繛鎺ユ睜鏁伴噺
             maxActive: 20
-            # 配置获取连接等待超时的时间
+            # 閰嶇疆鑾峰彇杩炴帴绛夊緟瓒呮椂鐨勬椂闂?
             maxWait: 60000
-            # 配置连接超时时间
+            # 閰嶇疆杩炴帴瓒呮椂鏃堕棿
             connectTimeout: 30000
-            # 配置网络超时时间
+            # 閰嶇疆缃戠粶瓒呮椂鏃堕棿
             socketTimeout: 60000
-            # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+            # 閰嶇疆闂撮殧澶氫箙鎵嶈繘琛屼竴娆℃娴嬶紝妫€娴嬮渶瑕佸叧闂殑绌洪棽杩炴帴锛屽崟浣嶆槸姣
             timeBetweenEvictionRunsMillis: 60000
-            # 配置一个连接在池中最小生存的时间，单位是毫秒
+            # 閰嶇疆涓€涓繛鎺ュ湪姹犱腑鏈€灏忕敓瀛樼殑鏃堕棿锛屽崟浣嶆槸姣
             minEvictableIdleTimeMillis: 300000
-            # 配置一个连接在池中最大生存的时间，单位是毫秒
+            # 閰嶇疆涓€涓繛鎺ュ湪姹犱腑鏈€澶х敓瀛樼殑鏃堕棿锛屽崟浣嶆槸姣
             maxEvictableIdleTimeMillis: 900000
-            # 配置检测连接是否有效
+            # 閰嶇疆妫€娴嬭繛鎺ユ槸鍚︽湁鏁?
             validationQuery: SELECT 1 FROM DUAL
             testWhileIdle: true
             testOnBorrow: false
@@ -44,19 +44,20 @@ spring:
                 enabled: true
             statViewServlet:
                 enabled: true
-                # 设置白名单，不填则允许所有访问
+                # 璁剧疆鐧藉悕鍗曪紝涓嶅～鍒欏厑璁告墍鏈夎闂?
                 allow:
                 url-pattern: /druid/*
-                # 控制台管理用户名和密码
+                # 鎺у埗鍙扮鐞嗙敤鎴峰悕鍜屽瘑鐮?
                 login-username: ruoyi
                 login-password: 123456
             filter:
                 stat:
                     enabled: true
-                    # 慢SQL记录
+                    # 鎱QL璁板綍
                     log-slow-sql: true
                     slow-sql-millis: 1000
                     merge-sql: true
                 wall:
                     config:
                         multi-statement-allow: true
+

@@ -50,10 +50,7 @@ public class BizInsuranceCompany extends BaseEntity
     @Excel(name = "AppKey")
     private String appKey;
 
-    /** AppSecret */
-    private String appSecret;
-
-    /** 账户余额 */
+        /** 账户余额 */
     @Excel(name = "账户余额", cellType = ColumnType.NUMERIC)
     private BigDecimal balance;
 
@@ -108,8 +105,6 @@ public class BizInsuranceCompany extends BaseEntity
     public String getAppKey() { return appKey; }
     public void setAppKey(String appKey) { this.appKey = appKey; }
 
-    public String getAppSecret() { return appSecret; }
-    public void setAppSecret(String appSecret) { this.appSecret = appSecret; }
 
     public BigDecimal getBalance() { return balance; }
     public void setBalance(BigDecimal balance) { this.balance = balance; }

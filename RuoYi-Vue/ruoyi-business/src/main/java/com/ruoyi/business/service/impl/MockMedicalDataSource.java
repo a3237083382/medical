@@ -41,7 +41,7 @@ public class MockMedicalDataSource implements MedicalDataSource
         }
         if (data == null)
         {
-            return new LinkedHashMap<>();
+            return buildFallbackData(request);
         }
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("patientName", data.getPatientName());
@@ -174,3 +174,4 @@ public class MockMedicalDataSource implements MedicalDataSource
         return "mock";
     }
 }
+

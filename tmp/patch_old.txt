@@ -1,0 +1,6 @@
+﻿@@ public Map<String, Object> query(MedicalQueryRequest request)
+         }
+         if (data == null)
+         {
+             return new LinkedHashMap<>();
+         }

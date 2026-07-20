@@ -13,6 +13,8 @@ import com.ruoyi.business.domain.BizInsuranceCompany;
 import com.ruoyi.business.domain.medical.MedicalQueryRequest;
 import com.ruoyi.business.domain.medical.MedicalQueryResult;
 import com.ruoyi.business.service.IMedicalQueryService;
+import com.ruoyi.business.service.IBizInsuranceCompanyService;
+import com.ruoyi.business.service.IBizInsuranceCompanyService;
 import com.ruoyi.business.service.MedicalQueryException;
 import com.ruoyi.common.core.domain.AjaxResult;
 
@@ -21,10 +23,12 @@ import com.ruoyi.common.core.domain.AjaxResult;
 public class ApiMedicalQueryController
 {
     private final IMedicalQueryService medicalQueryService;
+    private final IBizInsuranceCompanyService companyService;
 
-    public ApiMedicalQueryController(IMedicalQueryService medicalQueryService)
+    public ApiMedicalQueryController(IMedicalQueryService medicalQueryService, IBizInsuranceCompanyService companyService)
     {
         this.medicalQueryService = medicalQueryService;
+        this.companyService = companyService;
     }
 
     @PostMapping("/query")
@@ -54,17 +58,17 @@ public class ApiMedicalQueryController
 
     private Long resolveCompanyId(HttpServletRequest request)
     {
-        Object companyId = request.getAttribute("companyId");
-        if (companyId instanceof Long value)
+        String appKey = request.getHeader("X-App-Key");
+        if (com.ruoyi.common.utils.StringUtils.isEmpty(appKey))
         {
-            return value;
+            return null;
         }
-        Object company = request.getAttribute("company");
-        if (company instanceof BizInsuranceCompany value)
+        BizInsuranceCompany company = companyService.selectBizInsuranceCompanyByAppKey(appKey.trim());
+        if (company == null || !"0".equals(company.getStatus()))
         {
-            return value.getId();
+            return null;
         }
-        return null;
+        return company.getId();
     }
 
     private String toString(Object value)

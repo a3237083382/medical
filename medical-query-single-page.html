@@ -1,513 +1,524 @@
-ï»¿<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>åŒ»ç–—æŸ¥è¯¢ä¿¡æ¯å¹³å°</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; min-height: 100vh;
-      color: #14213d; background: #eef4f8;
-      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
-      font-size: 14px;
-    }
-    button, input, select { font: inherit; }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ò½ÁÆ²éÑ¯ĞÅÏ¢Æ½Ì¨</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+html,body { height:100%; }
+body {
+  font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif;
+  font-size:14px;
+  color:#14213d;
+  background:#eef4f8;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:#cfd9e5; border-radius:4px; }
 
-    .page { min-height: 100vh; padding: 24px; }
-    .shell { max-width: 1160px; margin: 0 auto; }
+.page { min-height:100vh; padding:24px; }
+.shell { max-width:1160px; margin:0 auto; }
 
-    .header {
-      min-height: 76px; padding: 18px 22px;
-      display: flex; align-items: center; justify-content: space-between; gap: 18px;
-      background: #fff; border: 1px solid #d8e2ec; border-radius: 8px;
-      box-shadow: 0 18px 42px rgba(28,44,74,.08);
-    }
-    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-    .brand-icon {
-      width: 42px; height: 42px; border-radius: 8px;
-      display: grid; place-items: center;
-      color: #fff; background: #1957a6; font-size: 20px; font-weight: 900;
-    }
-    .brand-title { color: #0f1d35; font-size: 20px; font-weight: 800; }
-    .brand-subtitle { margin-top: 4px; color: #667085; font-size: 13px; }
+/* header */
+.header {
+  min-height:76px; padding:18px 22px;
+  display:flex; align-items:center; justify-content:space-between; gap:18px;
+  background:#fff; border:1px solid #d8e2ec; border-radius:8px;
+  box-shadow:0 18px 42px rgba(28,44,74,.08);
+}
+.brand { display:flex; align-items:center; gap:12px; min-width:0; }
+.brand-icon {
+  width:42px; height:42px; border-radius:8px;
+  display:grid; place-items:center;
+  color:#fff; background:#1957a6;
+  font-size:20px; font-weight:900; flex:0 0 auto;
+}
+.brand-title { color:#0f1d35; font-size:20px; font-weight:800; line-height:1.25; }
+.brand-subtitle { margin-top:4px; color:#667085; font-size:13px; }
 
-    .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .state {
-      min-height: 36px; padding: 0 14px; border: 1px solid #b9ddcc; border-radius: 999px;
-      display: inline-flex; align-items: center; gap: 8px;
-      color: #08734f; background: #eefaf5; white-space: nowrap; font-weight: 700;
-    }
-    .state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.state {
+  min-height:36px; padding:0 14px;
+  border:1px solid #b9ddcc; border-radius:999px;
+  display:inline-flex; align-items:center; gap:8px;
+  color:#08734f; background:#eefaf5;
+  white-space:nowrap; font-weight:700;
+}
+.state::before { content:""; width:8px; height:8px; border-radius:50%; background:currentColor; }
+.state.inactive { border-color:#d8e2ec; color:#667085; background:#f8fafc; }
+.state.error { border-color:#f5c6c6; color:#b54708; background:#fef4f4; }
 
-    .usage-badge {
-      min-height: 36px; padding: 0 14px; border: 1px solid #d8e2ec; border-radius: 999px;
-      display: inline-flex; align-items: center; gap: 8px;
-      background: #fff; white-space: nowrap; font-weight: 600;
-    }
-    .usage-badge .num { color: #1957a6; font-size: 18px; font-weight: 800; }
-    .usage-badge.warn { border-color: #f0c000; background: #fffbe6; }
-    .usage-badge.warn .num { color: #d48806; }
-    .usage-badge.danger { border-color: #ff4d4f; background: #fff2f0; }
-    .usage-badge.danger .num { color: #cf1322; }
+/* remaining count badge */
+.remaining-badge {
+  min-height:36px; padding:0 14px;
+  border:1px solid #d8e2ec; border-radius:999px;
+  display:inline-flex; align-items:center; gap:8px;
+  color:#344054; background:#f8fafc;
+  white-space:nowrap; font-weight:700; font-size:13px;
+}
+.remaining-badge .num { color:#1957a6; font-size:16px; font-weight:800; }
 
-    .main { margin-top: 18px; display: grid; grid-template-columns: 380px minmax(0,1fr); gap: 18px; align-items: start; }
-    .panel {
-      background: #fff; border: 1px solid #d8e2ec; border-radius: 8px;
-      box-shadow: 0 18px 42px rgba(28,44,74,.08); min-width: 0;
-    }
-    .panel-head { padding: 18px 20px 12px; border-bottom: 1px solid #e5edf5; }
-    .panel-head h2 { margin: 0; color: #0f1d35; font-size: 17px; }
-    .panel-head span { display: block; margin-top: 5px; color: #667085; font-size: 13px; }
+/* main */
+.main { margin-top:18px; display:grid; grid-template-columns:380px 1fr; gap:18px; align-items:start; }
 
-    .form { padding: 18px 20px 20px; display: grid; gap: 15px; }
-    .field { display: grid; gap: 7px; }
-    .field label { color: #344054; font-weight: 700; }
-    .field input, .field select {
-      width: 100%; height: 42px; border: 1px solid #cfd9e5; border-radius: 7px;
-      padding: 0 12px; color: #172033; background: #fff; outline: none;
-    }
-    .field input:focus, .field select:focus {
-      border-color: #1957a6; box-shadow: 0 0 0 3px rgba(25,87,166,.12);
-    }
-    .button-row { display: flex; gap: 10px; flex-wrap: wrap; }
-    .btn {
-      height: 42px; min-width: 108px; border: 0; border-radius: 7px;
-      padding: 0 18px; color: #fff; background: #1957a6; cursor: pointer; font-weight: 800;
-    }
-    .btn.secondary { color: #344054; background: #edf2f7; }
-    .hint { color: #667085; font-size: 12px; line-height: 1.6; }
+.panel {
+  background:#fff; border:1px solid #d8e2ec; border-radius:8px;
+  box-shadow:0 18px 42px rgba(28,44,74,.08); min-width:0;
+}
+.panel-head { padding:18px 20px 12px; border-bottom:1px solid #e5edf5; }
+.panel-head h2 { margin:0; color:#0f1d35; font-size:17px; }
+.panel-head .sub { display:block; margin-top:5px; color:#667085; font-size:13px; }
 
-    .result { padding: 18px 20px 20px; }
-    .empty {
-      min-height: 308px; border: 1px dashed #cfd9e5; border-radius: 8px;
-      display: grid; place-items: center; color: #667085; text-align: center; background: #f8fafc;
-    }
-    .empty strong { display: block; margin-bottom: 8px; color: #344054; font-size: 18px; }
-    .result-body { display: none; gap: 14px; }
-    .result-body.active { display: grid; }
+/* form */
+.form { padding:18px 20px 20px; display:grid; gap:15px; }
+.field { display:grid; gap:7px; }
+.field label { color:#344054; font-weight:700; font-size:13px; }
+.field input,.field select {
+  width:100%; height:42px;
+  border:1px solid #cfd9e5; border-radius:7px;
+  padding:0 12px; color:#172033; background:#fff;
+  outline:none; font-size:14px;
+}
+.field input:focus,.field select:focus { border-color:#1957a6; box-shadow:0 0 0 3px rgba(25,87,166,.12); }
 
-    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
-    .metric {
-      border: 1px solid #d8e2ec; border-radius: 8px; padding: 12px;
-      background: #f8fafc; text-align: center;
-    }
-    .metric .label { color: #667085; font-size: 12px; }
-    .metric .value { margin-top: 4px; color: #0f1d35; font-size: 18px; font-weight: 800; }
+/* data type toggle */
+.data-type-row { display:flex; gap:0; border:1px solid #cfd9e5; border-radius:7px; overflow:hidden; }
+.data-type-row button {
+  flex:1; height:40px; border:none;
+  font-size:13px; font-weight:700; cursor:pointer;
+  background:#fff; color:#667085; transition:all .15s;
+}
+.data-type-row button.active { background:#1957a6; color:#fff; }
+.data-type-row button:not(.active):hover { background:#f0f4f8; }
 
-    .result-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .result-table th, .result-table td {
-      padding: 10px 12px; border: 1px solid #e5edf5; text-align: left;
-    }
-    .result-table th { background: #f8fafc; color: #344054; font-weight: 700; }
+.button-row { display:flex; gap:10px; flex-wrap:wrap; }
+.btn {
+  height:42px; min-width:108px; border:0; border-radius:7px;
+  padding:0 18px; color:#fff; background:#1957a6;
+  cursor:pointer; font-weight:800; font-size:14px;
+  transition:opacity .15s;
+}
+.btn:hover { opacity:.85; }
+.btn:disabled { opacity:.35; cursor:not-allowed; }
+.btn.secondary { color:#344054; background:#edf2f7; }
+.btn.secondary:hover { opacity:1; background:#e2e9f2; }
 
-    .risk-tag {
-      display: inline-block; padding: 2px 10px; border-radius: 999px;
-      font-size: 12px; font-weight: 700;
-    }
-    .risk-high { background: #fee2e2; color: #991b1b; }
-    .risk-mid { background: #fef3c7; color: #92400e; }
-    .risk-low { background: #d1fae5; color: #065f46; }
+.hint { color:#667085; font-size:12px; line-height:1.6; }
 
-    @media (max-width: 720px) {
-      .main { grid-template-columns: 1fr; }
-      .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
-      .header { flex-direction: column; align-items: stretch; }
-      .header-right { justify-content: center; }
-    }
-  </style>
+/* result */
+.result { padding:18px 20px 20px; }
+
+.empty {
+  min-height:308px; border:1px dashed #cfd9e5; border-radius:8px;
+  display:grid; place-items:center;
+  color:#667085; text-align:center; background:#f8fafc;
+}
+.empty strong { display:block; margin-bottom:8px; color:#344054; font-size:18px; }
+
+.result-body { display:none; gap:14px; }
+.result-body.active { display:grid; }
+
+.metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.metric {
+  border:1px solid #d8e2ec; border-radius:8px; padding:12px; background:#fafcfe;
+}
+.metric span { display:block; font-size:12px; color:#667085; margin-bottom:4px; }
+.metric strong { font-size:15px; color:#14213d; }
+
+.summary {
+  border-left:4px solid #1957a6; border-radius:7px;
+  padding:10px 14px; font-size:13px; color:#344054; background:#f8fafc;
+}
+
+table { width:100%; border-collapse:collapse; font-size:13px; }
+thead th {
+  background:#f0f4f8; color:#344054; font-weight:700;
+  text-align:left; padding:10px 14px;
+  border-bottom:2px solid #d8e2ec; font-size:12px;
+}
+tbody td { padding:10px 14px; border-bottom:1px solid #e5edf5; color:#172033; }
+tbody tr:last-child td { border-bottom:0; }
+
+.result-body table td .tag-red { color:#fff; background:#e04f5f; }
+.result-body table td .tag-orange { color:#fff; background:#e8943a; }
+.result-body table td .tag-green { color:#fff; background:#2e9a6e; }
+
+</style>
 </head>
 <body>
 <div class="page">
   <div class="shell">
-
-    <!-- å¤´éƒ¨ -->
-    <header class="header">
+    <div class="header">
       <div class="brand">
-        <div class="brand-icon">åŒ»</div>
+        <div class="brand-icon">Ò½</div>
         <div>
-          <div class="brand-title">åŒ»ç–—æŸ¥è¯¢ä¿¡æ¯å¹³å°</div>
-          <div class="brand-subtitle">ä¿é™©å…¬å¸åµŒå…¥å¼æŸ¥è¯¢å…¥å£</div>
+          <div class="brand-title">Ò½ÁÆ²éÑ¯ĞÅÏ¢Æ½Ì¨</div>
+          <div class="brand-subtitle">ºşÄÏÊ¡Ò½ÁÆĞÅÏ¢ÊµÊ±²éÑ¯</div>
         </div>
       </div>
-      <div class="header-right">
-        <span class="usage-badge" id="usageBadge">
-          æœ¬æœˆå‰©ä½™ï¼š<span class="num" id="usageRemaining">--</span> æ¬¡
-        </span>
-        <span class="state" id="accessState">æœªæ¥å…¥</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="state inactive" id="connState">Î´½ÓÈë</div>
+        <div class="remaining-badge" id="remainingBadge" style="display:none">
+          ±¾ÔÂÊ£Óà <span class="num" id="remainingCount">-</span> ´Î
+        </div>
       </div>
-    </header>
+    </div>
 
-    <!-- ä¸»ä½“ -->
     <div class="main">
-      <!-- å·¦ä¾§ï¼šæŸ¥è¯¢è¡¨å• -->
+      <!-- ×ó²àÃæ°å -->
       <div class="panel">
         <div class="panel-head">
-          <h2>åŒ»ç–—ä¿¡æ¯æŸ¥è¯¢</h2>
-          <span id="keyHint">è¯·åœ¨ URL å‚æ•°ä¸­ä¼ å…¥ AppKey</span>
+          <h2>²éÑ¯ÉèÖÃ</h2>
+          <span class="sub">Õ³Ìù AppKey ½ÓÈëºó·¢Æğ²éÑ¯</span>
         </div>
         <div class="form">
           <div class="field">
-            <label>æŸ¥è¯¢æ¥å£</label>
-            <select id="queryType">
-              <option value="">è¯·å…ˆæ¥å…¥åé€‰æ‹©</option>
-            </select>
+            <label for="appKeyInput">AppKey</label>
+            <input id="appKeyInput" type="password" placeholder="ÇëÕ³Ìù±£ÏÕ¹«Ë¾ AppKey" autocomplete="off">
+            <button class="btn" id="applyKeyBtn" style="margin-top:4px;height:36px;min-width:0;font-size:13px">½ÓÈë</button>
           </div>
+
+          <hr style="border:none;border-top:1px solid #e5edf5">
+
+          <div class="data-type-row" id="dataTypeToggle">
+            <button data-type="realtime" class="active">ÊµÊ±Êı¾İ</button>
+            <button data-type="history">ÑÓÊ±¾«×¼Êı¾İ</button>
+          </div>
+
           <div class="field">
-            <label>æ‚£è€…å§“å</label>
-            <input type="text" id="personName" placeholder="è¯·è¾“å…¥æ‚£è€…å§“å" autocomplete="off">
+            <label for="queryType" id="queryTypeLabel">²éÑ¯ÀàĞÍ</label>
+            <select id="queryType"><option value="">ÇëÏÈ½ÓÈë AppKey</option></select>
           </div>
+
           <div class="field">
-            <label>èº«ä»½è¯å·</label>
-            <input type="text" id="idCard" placeholder="è¯·è¾“å…¥èº«ä»½è¯å·" maxlength="18" autocomplete="off">
+            <label for="personName">ĞÕÃû</label>
+            <input id="personName" placeholder="ÇëÊäÈë»¼ÕßĞÕÃû">
           </div>
+
+          <div class="field">
+            <label for="idCard">Éí·İÖ¤ºÅ</label>
+            <input id="idCard" placeholder="ÇëÊäÈë 18 Î»Éí·İÖ¤ºÅ" maxlength="18">
+          </div>
+
           <div class="button-row">
-            <button class="btn" id="queryBtn">æŸ¥è¯¢</button>
-            <button class="btn secondary" id="resetBtn">é‡ç½®</button>
+            <button class="btn" id="queryBtn" disabled>ÇëÏÈ½ÓÈë AppKey</button>
+            <button class="btn secondary" id="resetBtn" type="button">Çå¿Õ</button>
           </div>
-          <div class="hint" id="modeHint"></div>
+
+          <div class="hint" id="keyHint"></div>
         </div>
       </div>
 
-      <!-- å³ä¾§ï¼šæŸ¥è¯¢ç»“æœ -->
+      <!-- ÓÒ²à½á¹ûÃæ°å -->
       <div class="panel">
         <div class="panel-head">
-          <h2>æŸ¥è¯¢ç»“æœ</h2>
-          <span>æŸ¥è¯¢æ—¶é—´ï¼š<span id="resultTime">ç­‰å¾…æŸ¥è¯¢</span></span>
+          <h2>²éÑ¯½á¹û</h2>
         </div>
         <div class="result">
           <div class="empty" id="emptyResult">
             <div>
-              <strong>ç­‰å¾…æŸ¥è¯¢</strong>
-              <p>å¡«å†™å·¦ä¾§è¡¨å•åç‚¹å‡»"æŸ¥è¯¢"æŒ‰é’®</p>
+              <strong>µÈ´ı²éÑ¯</strong>
+              <span>½ÓÈë AppKey ºó£¬ÊäÈëĞÅÏ¢¼´¿É²éÑ¯</span>
             </div>
           </div>
+
           <div class="result-body" id="resultBody">
             <div class="metrics">
               <div class="metric">
-                <div class="label">æŸ¥è¯¢ç±»å‹</div>
-                <div class="value" id="resultType">-</div>
+                <span>½á¹û×´Ì¬</span>
+                <strong id="resultStatus">-</strong>
               </div>
               <div class="metric">
-                <div class="label">æ‚£è€…</div>
-                <div class="value" id="resultName">-</div>
+                <span>·şÎñ×´Ì¬</span>
+                <strong id="serviceStatus">-</strong>
               </div>
               <div class="metric">
-                <div class="label">ç»“æœ</div>
-                <div class="value" id="resultStatus">-</div>
-              </div>
-              <div class="metric">
-                <div class="label">å‰©ä½™æ¬¡æ•°</div>
-                <div class="value" id="resultRemaining">-</div>
+                <span>²éÑ¯Ê±¼ä</span>
+                <strong id="resultTime">-</strong>
               </div>
             </div>
-            <div id="resultSummary" style="color:#667085;font-size:13px;padding:4px 0;"></div>
-            <table class="result-table" id="resultTable">
-              <thead><tr><th>é¡¹ç›®</th><th>å†…å®¹</th><th>å¤‡æ³¨</th></tr></thead>
+
+            <div class="summary" id="resultSummary"></div>
+
+            <table id="resultTable">
+              <thead>
+                <tr>
+                  <th style="width:24%">ÀàĞÍ</th>
+                  <th style="width:34%">ÄÚÈİ</th>
+                  <th>±¸×¢</th>
+                </tr>
+              </thead>
               <tbody id="resultRows"></tbody>
             </table>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </div>
 
 <script>
-(function() {
-  'use strict';
+const API_BASE_URL = "http://localhost:8088";
 
-  // ===== DOM å¼•ç”¨ =====
-  var queryType = document.getElementById('queryType');
-  var personName = document.getElementById('personName');
-  var idCard = document.getElementById('idCard');
-  var queryBtn = document.getElementById('queryBtn');
-  var resetBtn = document.getElementById('resetBtn');
-  var emptyResult = document.getElementById('emptyResult');
-  var resultBody = document.getElementById('resultBody');
-  var resultTime = document.getElementById('resultTime');
-  var resultType = document.getElementById('resultType');
-  var resultName = document.getElementById('resultName');
-  var resultStatus = document.getElementById('resultStatus');
-  var resultRemaining = document.getElementById('resultRemaining');
-  var resultSummary = document.getElementById('resultSummary');
-  var resultRows = document.getElementById('resultRows');
-  var accessState = document.getElementById('accessState');
-  var keyHint = document.getElementById('keyHint');
-  var modeHint = document.getElementById('modeHint');
-  var usageRemaining = document.getElementById('usageRemaining');
-  var usageBadge = document.getElementById('usageBadge');
+// state
+let _allQueryTypes = [];
+let _appKey = '';
+let _dataType = 'realtime';
 
-  // ===== AppKey ä» URL è·å– =====
-  var appKey = '';
-  (function() {
-    var params = new URLSearchParams(window.location.search);
-    appKey = (params.get('appKey') || '').trim();
-  })();
+// dom
+const connState = document.getElementById('connState');
+const remainingBadge = document.getElementById('remainingBadge');
+const remainingCount = document.getElementById('remainingCount');
+const appKeyInput = document.getElementById('appKeyInput');
+const applyKeyBtn = document.getElementById('applyKeyBtn');
+const keyHint = document.getElementById('keyHint');
+const queryType = document.getElementById('queryType');
+const queryBtn = document.getElementById('queryBtn');
+const resetBtn = document.getElementById('resetBtn');
+const emptyResult = document.getElementById('emptyResult');
+const resultBody = document.getElementById('resultBody');
+const resultStatus = document.getElementById('resultStatus');
+const serviceStatus = document.getElementById('serviceStatus');
+const resultTime = document.getElementById('resultTime');
+const resultSummary = document.getElementById('resultSummary');
+const resultRows = document.getElementById('resultRows');
 
-  // ===== API åŸºç¡€è·¯å¾„ =====
-  // è‡ªåŠ¨æ£€æµ‹ï¼šfile:// åè®®ä¸‹ä½¿ç”¨ç»å¯¹è·¯å¾„ï¼Œå¦åˆ™ä½¿ç”¨ç›¸å¯¹è·¯å¾„
-  var API_BASE = window.location.protocol === 'file:'
-    ? 'http://localhost:8088'
-    : '';
+function init() {
+  const urlKey = new URLSearchParams(location.search).get('appKey') || '';
+  if (urlKey) { appKeyInput.value = urlKey; applyKey(); }
 
-  // ===== å·¥å…·å‡½æ•° =====
-  function maskAppKey(key) {
-    if (!key || key.length < 8) return key || '';
-    return key.slice(0, 4) + '****' + key.slice(-4);
-  }
-
-  function maskIdCard(value) {
-    if (!value || value.length < 8) return '****';
-    return value.slice(0, 4) + '**********' + value.slice(-4);
-  }
-
-  function maskName(value) {
-    if (!value) return '';
-    return value.length <= 1 ? '*' : value.slice(0, 1) + '*';
-  }
-
-  function authHeaders() {
-    var headers = {};
-    if (appKey) headers['X-App-Key'] = appKey;
-    return headers;
-  }
-
-  function request(path, options) {
-    options = options || {};
-    var headers = Object.assign({
-      'Content-Type': 'application/json'
-    }, options.headers || {}, authHeaders());
-
-    return fetch(API_BASE + path, Object.assign({}, options, { headers: headers }))
-      .then(function(response) {
-        return response.text().then(function(text) {
-          var json = {};
-          try { json = JSON.parse(text); } catch (e) {}
-          if (!response.ok) {
-            var err = new Error(json.msg || 'HTTP ' + response.status);
-            err.code = response.status;
-            throw err;
-          }
-          if (json.code && json.code !== 200) {
-            var err2 = new Error(json.msg || 'è¯·æ±‚å¤±è´¥');
-            err2.code = json.code;
-            throw err2;
-          }
-          return json;
-        });
-      });
-  }
-
-  function setLoading(loading) {
-    queryBtn.disabled = !!loading;
-    queryBtn.textContent = loading ? 'æŸ¥è¯¢ä¸­...' : 'æŸ¥è¯¢';
-  }
-
-  // ===== æ¥å…¥çŠ¶æ€ =====
-  function updateAccessState(state, msg) {
-    accessState.textContent = state;
-    if (state === 'å·²æ¥å…¥') {
-      accessState.style.color = '#08734f';
-      accessState.style.borderColor = '#b9ddcc';
-      accessState.style.background = '#eefaf5';
-    } else if (state === 'æ¥å…¥å¤±è´¥') {
-      accessState.style.color = '#991b1b';
-      accessState.style.borderColor = '#fecaca';
-      accessState.style.background = '#fee2e2';
-    } else {
-      accessState.style.color = '#92400e';
-      accessState.style.borderColor = '#fde68a';
-      accessState.style.background = '#fffbeb';
-    }
-    if (msg) keyHint.textContent = msg;
-  }
-
-  // ===== å‰©ä½™æ¬¡æ•°åˆ·æ–° =====
-  function refreshUsage() {
-    if (!appKey) {
-      usageRemaining.textContent = '--';
-      usageBadge.className = 'usage-badge';
-      return;
-    }
-    return request('/company/embed/medical/usage', { method: 'GET' })
-      .then(function(json) {
-        var data = json.data || {};
-        var remaining = data.remaining;
-        if (typeof remaining === 'number') {
-          usageRemaining.textContent = Math.floor(remaining);
-        } else {
-          usageRemaining.textContent = '--';
-        }
-        var status = data.serviceStatus || '';
-        usageBadge.className = 'usage-badge';
-        if (status === 'LIMIT_REACHED') {
-          usageBadge.classList.add('danger');
-        } else if ((data.usagePercent || 0) >= 80) {
-          usageBadge.classList.add('warn');
-        }
-        return data;
-      })
-      .catch(function() {
-        usageRemaining.textContent = '--';
-        usageBadge.className = 'usage-badge';
-      });
-  }
-
-  // ===== åŠ è½½æŸ¥è¯¢ç±»å‹ =====
-  function loadQueryTypes() {
-    if (!appKey) {
-      return Promise.reject(new Error('ç¼ºå°‘ AppKey'));
-    }
-
-    return request('/company/embed/medical/query-types', { method: 'GET' })
-      .then(function(json) {
-        var list = Array.isArray(json.data) ? json.data : [];
-        if (!list.length) {
-          throw new Error('æ²¡æœ‰å¯ç”¨çš„æŸ¥è¯¢æ¥å£');
-        }
-
-        queryType.innerHTML = '';
-        list.forEach(function(item) {
-          var opt = document.createElement('option');
-          opt.value = item.queryType;
-          opt.textContent = item.queryName;
-          queryType.appendChild(opt);
-        });
-
-        // åŠ è½½å®Œæˆååˆ·æ–°å‰©ä½™æ¬¡æ•°
-        refreshUsage();
-        updateAccessState('å·²æ¥å…¥', 'AppKey å·²é€šè¿‡æ ¡éªŒï¼ŒæŸ¥è¯¢æ¥å£å…± ' + list.length + ' ä¸ªã€‚å·²æ¥å…¥ï¼š' + maskAppKey(appKey));
-        return list;
-      });
-  }
-
-  // ===== æŸ¥è¯¢ä¸»é€»è¾‘ =====
-  function doQuery() {
-    var name = personName.value.trim();
-    var card = idCard.value.trim();
-    var qt = queryType.value;
-
-    if (!appKey) {
-      alert('è¯·å…ˆé€šè¿‡ URL å‚æ•° ?appKey= ä¼ å…¥æœ‰æ•ˆçš„ AppKey');
-      return;
-    }
-    if (!qt) {
-      alert('è¯·é€‰æ‹©æŸ¥è¯¢æ¥å£');
-      return;
-    }
-    if (!name || !card) {
-      alert('è¯·è¾“å…¥æ‚£è€…å§“åå’Œèº«ä»½è¯å·');
-      return;
-    }
-
-    setLoading(true);
-
-    request('/company/embed/medical/query', {
-      method: 'POST',
-      body: JSON.stringify({
-        queryType: qt,
-        queryParams: { name: name, idCard: card }
-      })
-    }).then(function(json) {
-      var result = json.data || {};
-      var rows = [];
-
-      // MedicalQueryResult ç»“æ„
-      if (result.data && result.data.records) {
-        rows = result.data.records;
-      } else if (result.records) {
-        rows = result.records;
-      }
-
-      showQueryResult(result, rows, name);
-
-      // æŸ¥è¯¢æˆåŠŸååˆ·æ–°å‰©ä½™æ¬¡æ•°
-      refreshUsage().then(function(usageData) {
-        if (usageData && typeof usageData.remaining === 'number') {
-          resultRemaining.textContent = Math.floor(usageData.remaining) + ' æ¬¡';
-        }
-      });
-    }).catch(function(error) {
-      alert('æŸ¥è¯¢å¤±è´¥ï¼š' + error.message);
-    }).finally(function() {
-      setLoading(false);
+  document.querySelectorAll('#dataTypeToggle button').forEach(function(b) {
+    b.addEventListener('click', function() {
+      document.querySelectorAll('#dataTypeToggle button').forEach(function(x) { x.classList.remove('active'); });
+      this.classList.add('active');
+      _dataType = this.dataset.type;
+      filterTypes();
     });
-  }
+  });
 
-  // ===== å±•ç¤ºç»“æœ =====
-  function showQueryResult(payload, rows, name) {
+  applyKeyBtn.addEventListener('click', applyKey);
+  queryBtn.addEventListener('click', doQuery);
+  resetBtn.addEventListener('click', resetForm);
+}
+
+function request(path, opts) {
+  var headers = Object.assign({ 'Content-Type': 'application/json' }, (opts && opts.headers) || {});
+  return fetch(API_BASE_URL + path, Object.assign({}, opts, { headers }))
+    .then(function(r) { return r.text().then(function(t) {
+      var j = {};
+      try { j = t ? JSON.parse(t) : {}; } catch(e) { throw new Error('·şÎñÆ÷·µ»Ø·Ç JSON Êı¾İ'); }
+      if (!r.ok || j.code !== 200) throw new Error(j.msg || 'ÇëÇóÊ§°Ü');
+      return j;
+    });});
+}
+
+function applyKey() {
+  var raw = (appKeyInput.value || '').replace(/[\s\u200B-\u200D\uFEFF]/g, '');
+  if (!raw || raw.length < 16) {
+    setConn('error', 'ÎŞĞ§ Key');
+    keyHint.textContent = 'ÇëÕ³ÌùÍêÕûµÄ 32 Î» AppKey';
+    queryBtn.disabled = true; queryBtn.textContent = 'AppKey ÎŞĞ§';
+    return;
+  }
+  _appKey = raw;
+  setConn('active', 'ÑéÖ¤ÖĞ¡­');
+  keyHint.textContent = 'ÕıÔÚÑéÖ¤ AppKey¡­';
+  loadTypes().then(function() {
+    setConn('active', 'ÒÑ½ÓÈë');
+    keyHint.textContent = 'AppKey ÑéÖ¤Í¨¹ı£¬¿É·¢Æğ²éÑ¯';
+    queryBtn.disabled = false; queryBtn.textContent = '²éÑ¯';
+    loadRemaining();
+  }).catch(function(err) {
+    setConn('error', '½ÓÈëÊ§°Ü');
+    keyHint.textContent = '½ÓÈëÊ§°Ü£º' + err.message;
+    queryBtn.disabled = true; queryBtn.textContent = '½ÓÈëÊ§°Ü';
+  });
+}
+
+function setConn(cls, text) {
+  connState.className = 'state ' + cls;
+  connState.textContent = text;
+}
+
+function authHeaders() { return { 'X-App-Key': _appKey }; }
+
+function loadTypes() {
+  return request('/company/embed/medical/query-types', { method:'GET', headers: authHeaders() })
+    .then(function(j) {
+      _allQueryTypes = Array.isArray(j.data) ? j.data : [];
+      filterTypes();
+    });
+}
+
+function loadRemaining() {
+  request('/company/embed/medical/usage', { method:'GET', headers: authHeaders() })
+    .then(function(j) {
+      var usage = j.data || {};
+      var remain = usage.remaining || 0;
+      remainingCount.textContent = Math.floor(Number(remain));
+      remainingBadge.style.display = 'inline-flex';
+    })
+    .catch(function() {
+      remainingBadge.style.display = 'none';
+    });
+}
+
+function filterTypes() {
+  if (_dataType === 'history') {
+    var filtered = _allQueryTypes.filter(function(t) { return t.queryType.indexOf('precision_') === 0; });
+    if (filtered.length) {
+      queryType.innerHTML = filtered.map(function(t) {
+        return '<option value="' + t.queryType + '">' + (t.queryName || t.queryType) + '</option>';
+      }).join('');
+    } else {
+      queryType.innerHTML = '<option value="precision_insurance">Ò½±£±¨Ïú¼ÇÂ¼²éÑ¯</option><option value="precision_bigdata">Ò½ÁÆ´óÊı¾İ²éÑ¯</option>';
+    }
+  } else {
+    var filtered = _allQueryTypes.filter(function(t) { return t.queryType.indexOf('precision_') !== 0; });
+    if (filtered.length) {
+      queryType.innerHTML = filtered.map(function(t) {
+        return '<option value="' + t.queryType + '">' + (t.queryName || t.queryType) + '</option>';
+      }).join('');
+    } else {
+      queryType.innerHTML = '<option value="medical_all">Ò½ÁÆ´óÊı¾İ</option><option value="medical_insurance">Ò½±£ĞÅÏ¢</option>';
+    }
+  }
+}
+
+function doQuery() {
+  var name = document.getElementById('personName').value.trim();
+  var idCard = document.getElementById('idCard').value.trim();
+  if (!name || !idCard) { alert('ÇëÌîĞ´ĞÕÃûºÍÉí·İÖ¤ºÅ'); return; }
+  if (!/^[0-9]{17}[0-9Xx]$/.test(idCard)) { alert('ÇëÊäÈëÕıÈ·µÄ 18 Î»Éí·İÖ¤ºÅ'); return; }
+  if (!_appKey || queryBtn.disabled) { alert('ÇëÏÈ½ÓÈë AppKey'); return; }
+
+  var qType = queryType.value;
+  queryBtn.disabled = true; queryBtn.textContent = '²éÑ¯ÖĞ¡­';
+  resultSummary.textContent = '';
+  resultRows.innerHTML = '';
+
+  request('/company/embed/medical/query', {
+    method: 'POST', headers: authHeaders(),
+    body: JSON.stringify({ queryType: qType, queryParams: { name: name, idCard: idCard } })
+  }).then(function(j) {
+    var r = j.data || {};
+    var payload = r.data || {};
+    resultStatus.textContent = r.resultStatus || '-';
+    serviceStatus.textContent = r.serviceStatus || '-';
+    resultTime.textContent = new Date().toLocaleString('zh-CN', { hour12: false });
     emptyResult.style.display = 'none';
     resultBody.classList.add('active');
-    resultTime.textContent = new Date().toLocaleString('zh-CN', { hour12: false });
 
-    var selectedOpt = queryType.options[queryType.selectedIndex];
-    resultType.textContent = selectedOpt ? selectedOpt.textContent : '-';
-    resultName.textContent = payload.patientName || maskName(name) || '-';
-    resultSummary.textContent = payload.summary || 'æŸ¥è¯¢å®Œæˆã€‚';
-
-    // æ ¹æ®æ˜¯å¦æœ‰æ•°æ®åˆ¤æ–­ç»“æœçŠ¶æ€
-    var hasData = rows && rows.length > 0;
-    resultStatus.textContent = hasData ? 'æŸ¥å¾—' : 'æœªæŸ¥å¾—';
-    resultStatus.style.color = hasData ? '#065f46' : '#991b1b';
-
-    // æ¸²æŸ“è¡¨æ ¼
-    resultRows.innerHTML = '';
-    if (hasData) {
-      rows.forEach(function(row) {
-        var tr = document.createElement('tr');
-        if (Array.isArray(row)) {
-          for (var i = 0; i < 3; i++) {
-            var td = document.createElement('td');
-            td.textContent = row[i] || '-';
-            tr.appendChild(td);
-          }
-        } else if (typeof row === 'object') {
-          tr.innerHTML = '<td>' + (row.name || '-') + '</td>' +
-                         '<td>' + (row.value || '-') + '</td>' +
-                         '<td>' + (row.remark || '-') + '</td>';
-        }
-        resultRows.appendChild(tr);
-      });
+    if (qType === 'precision_insurance') {
+      renderPrecisionInsurance(payload);
+    } else if (qType === 'precision_bigdata') {
+      renderPrecisionBigdata(payload);
+    } else if (qType === 'history_medical') {
+      renderHistory(payload);
     } else {
-      var tr = document.createElement('tr');
-      tr.innerHTML = '<td colspan="3" style="text-align:center;color:#999;">æœªæŸ¥è¯¢åˆ°åŒ¹é…æ•°æ®</td>';
-      resultRows.appendChild(tr);
+      renderRealtime(payload);
     }
+    loadRemaining();
+  }).catch(function(err) {
+    resultSummary.textContent = 'ÇëÇóÊ§°Ü: ' + (err.message || 'ÍøÂç´íÎó');
+    resultRows.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#b54708">Çë¼ì²éÍøÂç»òÁªÏµÆ½Ì¨ÔËÓª·½</td></tr>';
+    resultTime.textContent = new Date().toLocaleString('zh-CN', { hour12: false });
+    emptyResult.style.display = 'none';
+    resultBody.classList.add('active');
+  }).finally(function() {
+    queryBtn.disabled = false; queryBtn.textContent = '²éÑ¯';
+  });
+}
 
-    updateAccessState('å·²æ¥å…¥', 'æŸ¥è¯¢æˆåŠŸï¼ŒAppKey å·²é€šè¿‡æœåŠ¡å™¨æ ¡éªŒã€‚å½“å‰ä½¿ç”¨ï¼š' + maskAppKey(appKey));
+function renderRealtime(payload) {
+  var rows = Array.isArray(payload.records) ? payload.records : [];
+  resultSummary.textContent = payload.summary || '²éÑ¯Íê³É';
+  resultRows.innerHTML = rows.length
+    ? rows.map(function(r) { return '<tr><td>' + (r.name||'') + '</td><td>' + (r.value||'') + '</td><td>' + (r.remark||'') + '</td></tr>'; }).join('')
+    : '<tr><td colspan="3" style="text-align:center;color:#667085">ÔİÎŞÏêÏ¸Êı¾İ</td></tr>';
+}
+
+function renderHistory(payload) {
+  var visits = Array.isArray(payload.clinicVisits) ? payload.clinicVisits : [];
+  var hospitals = Array.isArray(payload.hospitalizations) ? payload.hospitalizations : [];
+  var bigdata = Array.isArray(payload.bigdataRecords) ? payload.bigdataRecords : [];
+  var total = visits.length + hospitals.length + bigdata.length;
+
+  if (total === 0) {
+    resultSummary.textContent = 'Î´²éÑ¯µ½¸Ã»¼ÕßµÄÑÓÊ±¾«×¼Êı¾İ';
+    resultRows.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#667085">ÎŞÊı¾İ¼ÇÂ¼</td></tr>';
+    return;
   }
 
-  // ===== é‡ç½® =====
-  resetBtn.addEventListener('click', function() {
-    personName.value = '';
-    idCard.value = '';
-    emptyResult.style.display = 'grid';
-    resultBody.classList.remove('active');
-    resultTime.textContent = 'ç­‰å¾…æŸ¥è¯¢';
+  var s = '²éÑ¯µ½¸Ã»¼ÕßµÄÏêÏ¸¼ÇÂ¼£º';
+  if (visits.length) s += '¾ÍÕï¼ÇÂ¼ ' + visits.length + ' Ìõ¡¢';
+  if (hospitals.length) s += '×¡ÔºĞÅÏ¢ ' + hospitals.length + ' Ìõ¡¢';
+  if (bigdata.length) s += '´óÊı¾İ ' + bigdata.length + ' Ìõ¡¢';
+  resultSummary.textContent = s.replace(/¡¢$/, '');
+
+  var rows = [];
+  visits.forEach(function(v) { rows.push(['¾ÍÕï¼ÇÂ¼', v.diseaseName || '-', (v.orgName||'') + ' ' + (v.visitTime||'')]); });
+  hospitals.forEach(function(h) { rows.push(['×¡ÔºĞÅÏ¢', h.orgName||'-', '×¡Ôº ' + (h.visitStartTime||'') + ' ~ ' + (h.visitEndTime||'') + ' ·ÑÓÃ£º' + (h.totalFee||'Î´¼ÇÂ¼') + 'Ôª']); });
+  bigdata.forEach(function(b) {
+    var j = '';
+    try { j = typeof b.dataJson === 'string' ? b.dataJson : JSON.stringify(b.dataJson||{}); } catch(e) {}
+    rows.push(['´óÊı¾İ(' + (b.dataCategory||'Í¨ÓÃ') + ')', b.patientName||'-', j.length > 80 ? j.substring(0,80) + '¡­' : j||'-']);
   });
+  resultRows.innerHTML = rows.map(function(r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td></tr>'; }).join('');
+}
 
-  // ===== äº‹ä»¶ç»‘å®š =====
-  queryBtn.addEventListener('click', doQuery);
+function resetForm() {
+  document.getElementById('personName').value = '';
+  document.getElementById('idCard').value = '';
+  emptyResult.style.display = 'grid';
+  resultBody.classList.remove('active');
+  resultTime.textContent = 'µÈ´ı²éÑ¯';
+}
 
-  // Enter é”®è§¦å‘æŸ¥è¯¢
-  idCard.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') doQuery();
-  });
+init();
 
-  // ===== åˆå§‹åŒ– =====
-  if (appKey) {
-    updateAccessState('éªŒè¯ä¸­', 'æ­£åœ¨æ ¡éªŒ AppKey å¹¶åŠ è½½æŸ¥è¯¢æ¥å£ã€‚å·²ç²˜è´´ï¼š' + maskAppKey(appKey));
-    loadQueryTypes().catch(function(error) {
-      updateAccessState('æ¥å…¥å¤±è´¥', 'æ¥å£åˆ—è¡¨åŠ è½½å¤±è´¥ï¼š' + error.message);
-    });
-  } else {
-    updateAccessState('æœªæ¥å…¥', 'è¯·åœ¨ URL ä¸­æ·»åŠ å‚æ•° ?appKey=ä½ çš„AppKeyï¼Œæˆ–è”ç³»ç®¡ç†å‘˜è·å–ã€‚');
-    queryType.innerHTML = '<option value="">è¯·å…ˆæ¥å…¥åé€‰æ‹©</option>';
+function renderPrecisionInsurance(payload) {
+  var visits = Array.isArray(payload.clinicVisits) ? payload.clinicVisits : [];
+  var hospitals = Array.isArray(payload.hospitalizations) ? payload.hospitalizations : [];
+  var allRecs = visits.concat(hospitals);
+  var thead = document.querySelector('#resultTable thead tr');
+  thead.innerHTML = '<th style="width:20%">Ò½ÁÆ»ú¹¹</th><th style="width:13%">¾ÍÕïÊ±¼ä</th><th style="width:10%">ÀàĞÍ</th><th style="width:25%">Õï¶Ï</th><th style="width:17%">±¸×¢</th>';
+  if (allRecs.length === 0) {
+    resultSummary.textContent = 'Î´²éÑ¯µ½¸Ã»¼ÕßµÄÒ½±£±¨Ïú¼ÇÂ¼';
+    resultRows.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#667085">ÎŞÒ½±£±¨Ïú¼ÇÂ¼</td></tr>';
+    return;
   }
+  resultSummary.textContent = '²éÑ¯µ½¸Ã»¼ÕßµÄÒ½±£±¨Ïú¼ÇÂ¼£¬¹² ' + allRecs.length + ' Ìõ';
+  var rows = [];
+  visits.forEach(function(v) { rows.push('<tr><td>' + (v.orgName || '') + '</td><td>' + (v.visitTime || '') + '</td><td>ÃÅÕï</td><td>' + (v.diseaseName || '-') + '</td><td>' + (v.doctorName || '') + '</td></tr>'); });
+  hospitals.forEach(function(h) { rows.push('<tr><td>' + (h.orgName || '') + '</td><td>' + (h.visitStartTime || '') + ' ~ ' + (h.visitEndTime || '') + '</td><td>×¡Ôº</td><td>' + (h.diseaseName || '-') + '</td><td>×¡Ôº ' + (h.days || '') + 'Ìì</td></tr>'); });
+  resultRows.innerHTML = rows.join('');
+}
 
-})();
+function renderPrecisionBigdata(payload) {
+  var bigdata = Array.isArray(payload.bigdataRecords) ? payload.bigdataRecords : [];
+  var thead = document.querySelector('#resultTable thead tr');
+  thead.innerHTML = '<th style="width:15%">Êı¾İÀ´Ô´</th><th style="width:15%">Êı¾İÀà±ğ</th><th style="width:35%">·ÖÎö½á¹û</th><th style="width:15%">·çÏÕµÈ¼¶</th><th style="width:20%">½¨Òé</th>';
+  if (bigdata.length === 0) {
+    resultSummary.textContent = 'Î´²éÑ¯µ½¸Ã»¼ÕßµÄÒ½ÁÆ´óÊı¾İ¼ÇÂ¼';
+    resultRows.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#667085">ÎŞ´óÊı¾İ¼ÇÂ¼</td></tr>';
+    return;
+  }
+  resultSummary.textContent = '¶àÔ´Ò½ÁÆÊı¾İ¾ÛºÏ·ÖÎöÍê³É£¬¹² ' + bigdata.length + ' ÏîÖ¸±ê';
+  resultRows.innerHTML = bigdata.map(function(b) {
+    var level = '-', suggestion = '';
+    try {
+      var meta = typeof b.dataJson === 'string' ? JSON.parse(b.dataJson) : (b.dataJson || {});
+      level = meta.level || '-';
+      suggestion = meta.suggestion || '';
+    } catch(e) {}
+    var lc = level === '¸ß' ? 'red' : level === 'ÖĞ' ? 'orange' : 'green';
+    return '<tr><td>' + (b.source || b.dataCategory || '') + '</td><td>' + (b.dataCategory || 'Í¨ÓÃ') + '</td><td>' + (b.value || '') + '</td><td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700;color:#fff;background:' + (lc === 'red' ? '#e04f5f' : lc === 'orange' ? '#e8943a' : '#2e9a6e') + '">' + level + '</span></td><td>' + suggestion + '</td></tr>';
+  }).join('');
+}
+
+
 </script>
 </body>
 </html>

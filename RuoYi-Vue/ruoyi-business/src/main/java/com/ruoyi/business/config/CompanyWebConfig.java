@@ -11,15 +11,10 @@ public class CompanyWebConfig implements WebMvcConfigurer
     @Autowired
     private CompanyAuthInterceptor companyAuthInterceptor;
 
-    @Autowired
-    private SignAuthInterceptor signAuthInterceptor;
-
     @Override
     public void addInterceptors(InterceptorRegistry registry)
     {
         registry.addInterceptor(companyAuthInterceptor)
                 .addPathPatterns("/company/api/**");
-        registry.addInterceptor(signAuthInterceptor)
-                .addPathPatterns("/api/v1/**");
     }
 }

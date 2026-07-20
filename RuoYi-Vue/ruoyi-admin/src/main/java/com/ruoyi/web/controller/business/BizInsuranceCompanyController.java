@@ -77,7 +77,6 @@ public class BizInsuranceCompanyController extends BaseController
                 row.setCompanyName(company.getCompanyName());
                 row.setCompanyCode(company.getCompanyCode());
                 row.setAppKey(company.getAppKey());
-                row.setAppSecret(company.getAppSecret());
                 list.add(row);
             }
         }

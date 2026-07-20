@@ -25,6 +25,7 @@ import com.ruoyi.business.service.IMedicalQueryService;
 import com.ruoyi.business.service.MedicalDataSource;
 import com.ruoyi.business.service.MedicalQueryException;
 import com.ruoyi.business.util.DesensitizeUtil;
+import com.ruoyi.business.service.IBizHistoryQueryService;
 
 @Service
 public class MedicalQueryServiceImpl implements IMedicalQueryService
@@ -35,11 +36,13 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
     private final MedicalDataSource medicalDataSource;
     private final BizCompanyQueryPriceMapper companyPriceMapper;
     private final BizMonthlyUsageMapper monthlyUsageMapper;
+    private final IBizHistoryQueryService historyQueryService;
 
     @Autowired
     public MedicalQueryServiceImpl(BizInsuranceCompanyMapper companyMapper, BizQueryPriceMapper priceMapper,
             BizQueryLogMapper queryLogMapper, MedicalDataSource medicalDataSource,
-            BizCompanyQueryPriceMapper companyPriceMapper, BizMonthlyUsageMapper monthlyUsageMapper)
+            BizCompanyQueryPriceMapper companyPriceMapper, BizMonthlyUsageMapper monthlyUsageMapper,
+            IBizHistoryQueryService historyQueryService)
     {
         this.companyMapper = companyMapper;
         this.priceMapper = priceMapper;
@@ -47,12 +50,13 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         this.medicalDataSource = medicalDataSource;
         this.companyPriceMapper = companyPriceMapper;
         this.monthlyUsageMapper = monthlyUsageMapper;
+        this.historyQueryService = historyQueryService;
     }
 
     public MedicalQueryServiceImpl(BizInsuranceCompanyMapper companyMapper, BizQueryPriceMapper priceMapper,
             BizQueryLogMapper queryLogMapper, MedicalDataSource medicalDataSource)
     {
-        this(companyMapper, priceMapper, queryLogMapper, medicalDataSource, null, null);
+        this(companyMapper, priceMapper, queryLogMapper, medicalDataSource, null, null, null);
     }
 
     @Override
@@ -81,19 +85,45 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         }
 
         Map<String, Object> data;
-        try
-        {
-            data = DesensitizeUtil.desensitize(medicalDataSource.query(request));
-        }
-        catch (RuntimeException e)
-        {
-            if (monthlyBudgetEnabled)
-            {
-                monthlyUsageMapper.releaseBudget(request.getCompanyId(), billingMonth, reserveAmount);
-            }
-            throw e;
-        }
 
+        // history_medical: 查询历史数据库（非实时数据）
+        if ("history_medical".equals(request.getQueryType()))
+        {
+            String name = request.getQueryParams() != null ? (String) request.getQueryParams().get("name") : null;
+            String idCard = request.getQueryParams() != null ? (String) request.getQueryParams().get("idCard") : null;
+            Map<String, Object> historyData = historyQueryService.queryByPerson(name, idCard);
+            if (historyData == null || historyData.isEmpty())
+            {
+                data = new java.util.LinkedHashMap<>();
+            }
+            else
+            {
+                data = historyData;
+            }
+        }
+        else
+        {
+            try
+            {
+                                Map<String, Object> sourceData = medicalDataSource.query(request);
+                if (historyQueryService != null)
+                {
+                                if (sourceData != null && !sourceData.isEmpty())
+                                {
+                                    historyQueryService.cacheQueryResult(request.getQueryType(), sourceData);
+                                }
+                }
+                data = DesensitizeUtil.desensitize(sourceData);
+            }
+            catch (RuntimeException e)
+            {
+                if (monthlyBudgetEnabled)
+                {
+                    monthlyUsageMapper.releaseBudget(request.getCompanyId(), billingMonth, reserveAmount);
+                }
+                throw e;
+            }
+        }
         String resultStatus = isNoResult(data) ? "NO_RESULT" : "HIT";
         BigDecimal actualFee = "NO_RESULT".equals(resultStatus) ? price.noResultFee : price.hitFee;
         if (monthlyBudgetEnabled)

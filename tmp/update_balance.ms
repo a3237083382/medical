@@ -1,0 +1,4 @@
+{"properties": {}, "id": "external_balance_query", "script": "import biz;\nreturn biz.getBalance(companyId);", "groupId": "external_group", "name": "外部余额查询", "createTime": 1778663247148, "updateTime": 1778663247148, "lock": null, "createBy": "system", "updateBy": null, "path": "/balance/query", "method": "GET", "parameters": [{"name": "companyId", "required": true, "value": "5"}], "options": [], "requestBody": null, "headers": [], "paths": [], "responseBody": null, "description": null, "requestBodyDefinition": null, "responseBodyDefinition": null}
+================================
+import biz;
+return biz.getBalance(companyId);
