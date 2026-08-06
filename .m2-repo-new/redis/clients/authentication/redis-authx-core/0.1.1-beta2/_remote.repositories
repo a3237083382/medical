@@ -1,4 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Mon Jul 20 15:38:53 CST 2026
+#Thu Aug 06 17:42:17 CST 2026
 redis-authx-core-0.1.1-beta2.pom>public=
 redis-authx-core-0.1.1-beta2.jar>public=
+redis-authx-core-0.1.1-beta2.jar>aliyunmaven=
+redis-authx-core-0.1.1-beta2.pom>aliyunmaven=

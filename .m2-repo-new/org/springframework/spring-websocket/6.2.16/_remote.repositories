@@ -1,4 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Mon Jul 20 15:40:24 CST 2026
+#Thu Aug 06 17:44:46 CST 2026
 spring-websocket-6.2.16.jar>public=
+spring-websocket-6.2.16.jar>aliyunmaven=
 spring-websocket-6.2.16.pom>public=
+spring-websocket-6.2.16.pom>aliyunmaven=

@@ -1,4 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Mon Jul 20 15:39:42 CST 2026
+#Thu Aug 06 17:44:32 CST 2026
 jna-platform-5.18.1.jar>public=
 jna-platform-5.18.1.pom>public=
+jna-platform-5.18.1.jar>aliyunmaven=
+jna-platform-5.18.1.pom>aliyunmaven=

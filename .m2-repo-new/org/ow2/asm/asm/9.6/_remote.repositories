@@ -1,4 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Mon Jul 20 15:39:04 CST 2026
+#Thu Aug 06 17:42:19 CST 2026
+asm-9.6.jar>aliyunmaven=
 asm-9.6.pom>public=
 asm-9.6.jar>public=
+asm-9.6.pom>aliyunmaven=

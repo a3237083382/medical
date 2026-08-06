@@ -1,4 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Mon Jul 20 15:39:04 CST 2026
-plexus-compiler-javac-2.15.0.jar>public=
+#Thu Aug 06 17:42:19 CST 2026
+plexus-compiler-javac-2.15.0.pom>aliyunmaven=
 plexus-compiler-javac-2.15.0.pom>public=
+plexus-compiler-javac-2.15.0.jar>public=
+plexus-compiler-javac-2.15.0.jar>aliyunmaven=

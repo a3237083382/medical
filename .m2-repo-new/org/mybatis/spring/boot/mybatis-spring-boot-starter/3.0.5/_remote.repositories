@@ -1,4 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Mon Jul 20 15:38:53 CST 2026
-mybatis-spring-boot-starter-3.0.5.jar>public=
+#Thu Aug 06 17:42:17 CST 2026
+mybatis-spring-boot-starter-3.0.5.pom>aliyunmaven=
+mybatis-spring-boot-starter-3.0.5.jar>aliyunmaven=
 mybatis-spring-boot-starter-3.0.5.pom>public=
+mybatis-spring-boot-starter-3.0.5.jar>public=

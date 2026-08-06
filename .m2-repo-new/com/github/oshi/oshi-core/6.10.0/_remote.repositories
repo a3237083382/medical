@@ -1,4 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Mon Jul 20 15:39:42 CST 2026
+#Thu Aug 06 17:44:31 CST 2026
 oshi-core-6.10.0.pom>public=
 oshi-core-6.10.0.jar>public=
+oshi-core-6.10.0.pom>aliyunmaven=
+oshi-core-6.10.0.jar>aliyunmaven=

@@ -1,3 +1,5 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Mon Jul 20 15:39:48 CST 2026
+#Thu Aug 06 17:41:47 CST 2026
+junit-jupiter-5.12.2.jar>aliyunmaven=
 junit-jupiter-5.12.2.pom>public=
+junit-jupiter-5.12.2.pom>aliyunmaven=
