@@ -58,6 +58,20 @@ export const constantRoutes = [
     component: () => import('@/views/error/401'),
     hidden: true
   },
+  {
+    path: '/business/company-logs',
+    component: Layout,
+    hidden: true,
+    permissions: ['business:company:list'],
+    children: [
+      {
+        path: 'index/:companyId(\\d+)',
+        component: () => import('@/views/business/company/logs'),
+        name: 'BusinessCompanyLogs',
+        meta: { title: '公司查询日志', activeMenu: '/business/company' }
+      }
+    ]
+  },
   // 保险公司门户路由
   {
     path: '/company/login',

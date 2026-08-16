@@ -60,6 +60,7 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="200">
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['business:company:edit']">修改</el-button>
+          <el-button link type="primary" icon="Tickets" @click="handleLogs(scope.row)" v-hasPermi="['business:company:list']">日志</el-button>
           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['business:company:remove']">删除</el-button>
         </template>
       </el-table-column>
@@ -214,6 +215,13 @@ function handleStatusChange(row) {
   }).then(() => {
     proxy.$modal.msgSuccess(text + "成功")
   }).catch(() => { row.status = row.status === "0" ? "1" : "0" })
+}
+
+function handleLogs(row) {
+  router.push({
+    path: `/business/company-logs/index/${row.id}`,
+    query: { companyName: row.companyName }
+  })
 }
 
 function handleExport() {
