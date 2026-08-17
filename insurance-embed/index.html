@@ -73,6 +73,21 @@
     .polling { display:none; margin-top:14px; padding:12px 14px; border-radius:8px; color:var(--orange); background:var(--orange-soft); font-size:12px; }
     .polling.show { display:block; }
     .footnote { margin-top:18px; color:var(--muted); font-size:12px; }
+    .mode-tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:4px; margin-bottom:18px; border:1px solid var(--line); border-radius:8px; background:#f8fafc; }
+    .mode-tab { min-height:34px; border:0; border-radius:6px; background:transparent; color:var(--muted); font-weight:600; }
+    .mode-tab.active { color:var(--blue); background:#fff; box-shadow:0 1px 3px rgba(15,35,65,.12); }
+    .mode-panel { display:none; }
+    .mode-panel.show { display:block; }
+    .file-name { margin:8px 0 12px; color:var(--muted); font-size:12px; overflow-wrap:anywhere; }
+    .batch-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .batch-actions .btn { flex:1 1 130px; }
+    .preview-summary { margin:12px 0; color:#475467; font-size:12px; }
+    .preview-wrap { max-height:260px; overflow:auto; border:1px solid var(--line); border-radius:8px; }
+    .preview-table { width:100%; border-collapse:collapse; min-width:430px; }
+    .preview-table th, .preview-table td { padding:8px; border-bottom:1px solid var(--line); text-align:left; font-size:12px; }
+    .preview-table th { position:sticky; top:0; color:#475467; background:#f8fafc; }
+    .preview-table input { width:100%; min-width:110px; height:30px; padding:0 7px; border:1px solid var(--line); border-radius:5px; }
+    .row-invalid { background:var(--red-soft); }
     @media (max-width:800px) { .page { height:auto; min-height:100vh; overflow:visible; } .topbar { padding:13px 16px; align-items:flex-start; } .top-actions { flex-wrap:wrap; justify-content:flex-end; } .main { padding:16px; } .workspace { height:auto; grid-template-columns:1fr; } .panel { height:auto; overflow:visible; } .result-shell { min-height:520px; } .result-meta { grid-template-columns:1fr 1fr; } }
     @media (max-width:480px) { .app-key-label { display:none; } .topbar { gap:8px; flex-wrap:wrap; } .top-actions { width:100%; justify-content:flex-end; } .result-meta { grid-template-columns:1fr; } .panel-head, .panel-body, .result-body { padding-left:16px; padding-right:16px; } }
   </style>
@@ -92,9 +107,20 @@
             <div class="field"><label for="appKey">AppKey</label><div class="key-row"><input id="appKey" type="password" autocomplete="off" placeholder="请输入保险公司 AppKey"><button class="btn" id="connectBtn" type="button">验证接入</button></div></div>
             <div class="hint" id="accessHint">AppKey 仅保存在当前页面内存中，刷新页面后需要重新验证。</div>
             <div class="divider"></div>
-            <div class="field"><label for="personName">姓名</label><input id="personName" type="text" maxlength="30" autocomplete="off" placeholder="请输入投保人姓名"></div>
-            <div class="field"><label for="idCard">身份证号</label><input id="idCard" type="text" maxlength="18" autocomplete="off" placeholder="请输入 18 位身份证号"></div>
-            <button class="btn btn-primary" id="submitBtn" type="button" disabled>提交精准延时查询</button>
+            <div class="mode-tabs"><button class="mode-tab active" id="singleModeBtn" type="button">单人查询</button><button class="mode-tab" id="batchModeBtn" type="button">批量查询</button></div>
+            <div class="mode-panel show" id="singlePanel">
+              <div class="field"><label for="personName">姓名</label><input id="personName" type="text" maxlength="30" autocomplete="off" placeholder="请输入投保人姓名"></div>
+              <div class="field"><label for="idCard">身份证号</label><input id="idCard" type="text" maxlength="18" autocomplete="off" placeholder="请输入 18 位身份证号"></div>
+              <button class="btn btn-primary" id="submitBtn" type="button" disabled>提交精准延时查询</button>
+            </div>
+            <div class="mode-panel" id="batchPanel">
+              <input id="batchFile" type="file" accept=".xls,.xlsx" hidden>
+              <button class="btn" id="chooseBatchBtn" type="button" disabled>选择 Excel 名单</button>
+              <div class="file-name" id="batchFileName">请选择包含“姓名”和“身份证号”列的 Excel 文件</div>
+              <div class="preview-summary" id="previewSummary"></div>
+              <div class="preview-wrap" id="previewWrap" hidden><table class="preview-table"><thead><tr><th>行号</th><th>姓名</th><th>身份证号</th><th>校验</th></tr></thead><tbody id="previewRows"></tbody></table></div>
+              <div class="batch-actions"><button class="btn" id="validateBatchBtn" type="button" disabled>重新校验</button><button class="btn btn-primary" id="submitBatchBtn" type="button" disabled>确认提交批次</button></div>
+            </div>
             <div class="footnote">同一公司相同姓名和身份证号存在未完成请求时，平台会复用原请求，不重复计费。</div>
           </div>
         </section>
@@ -116,6 +142,8 @@
       var API_BASE = (window.EMBEDDED_API_BASE || document.documentElement.dataset.apiBase || '').replace(/\/$/, '');
       var appKey = '';
       var requestNo = '';
+      var batchNo = '';
+      var batchRows = [];
       var pollTimer = null;
       var el = function (id) { return document.getElementById(id); };
       var statusLabels = { PENDING:'待处理', PROCESSING:'处理中', COMPLETED:'已完成', FAILED:'处理失败', CANCELLED:'已取消' };
@@ -141,19 +169,25 @@
         appKey = value; el('connectBtn').disabled = true; setAccess('', '验证中'); el('accessHint').textContent = '正在验证 AppKey…'; showNotice('');
         api('/company/embed/medical/access').then(function (data) {
           if (!data.capabilities || !data.capabilities.singleDelayed) throw new Error('当前公司未开通单人精准延时查询');
-          el('appKeyLabel').textContent = data.appKeyMasked || maskKey(value); el('accessHint').textContent = (data.companyName || '当前公司') + ' 已接入，可提交单人精准延时查询'; setAccess('active','已接入'); el('submitBtn').disabled = false;
-        }).catch(function (error) { appKey = ''; el('appKeyLabel').textContent = '未接入'; el('submitBtn').disabled = true; el('accessHint').textContent = error.message; setAccess('error','接入失败'); showNotice(error.message); }).finally(function () { el('connectBtn').disabled = false; });
+          el('appKeyLabel').textContent = data.appKeyMasked || maskKey(value); el('accessHint').textContent = (data.companyName || '当前公司') + ' 已接入'; setAccess('active','已接入'); el('submitBtn').disabled = false; el('chooseBatchBtn').disabled = false; loadLatestHistory();
+      }).catch(function (error) { appKey = ''; el('appKeyLabel').textContent = '未接入'; el('submitBtn').disabled = true; el('chooseBatchBtn').disabled = true; el('accessHint').textContent = error.message; setAccess('error','接入失败'); showNotice(error.message); }).finally(function () { el('connectBtn').disabled = false; });
       }
       function reset() { if (pollTimer) clearTimeout(pollTimer); pollTimer = null; appKey = ''; requestNo = ''; el('appKey').value = ''; el('appKeyLabel').textContent = '未接入'; el('submitBtn').disabled = true; el('accessHint').textContent = 'AppKey 仅保存在当前页面内存中，刷新页面后需要重新验证。'; setAccess('','待接入'); el('resultEmpty').style.display = ''; el('resultContent').classList.remove('show'); showNotice(''); }
       function validatePerson() { var name = el('personName').value.trim(); var id = el('idCard').value.trim().toUpperCase(); if (!name) return '请输入姓名'; if (!/^[0-9]{17}[0-9X]$/.test(id)) return '请输入正确的 18 位身份证号'; return ''; }
       function submit() { var invalid = validatePerson(); if (invalid) { showNotice(invalid); return; } showNotice(''); el('submitBtn').disabled = true; el('submitBtn').textContent = '提交中…'; api('/company/embed/medical/delayed/requests', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ name:el('personName').value.trim(), idCard:el('idCard').value.trim().toUpperCase() }) }).then(function (data) { requestNo = data.requestNo; renderStatus(data); poll(); }).catch(function (error) { showNotice(error.message); }).finally(function () { el('submitBtn').disabled = false; el('submitBtn').textContent = '提交精准延时查询'; }); }
+      function loadLatestHistory() { api('/company/embed/medical/history/requests').then(function (items) { if (!Array.isArray(items) || !items.length) return; var latest = items[0]; requestNo = latest.requestNo || ''; renderStatus(latest); if (latest.resultVisible || ['FAILED','CANCELLED'].indexOf(latest.processStatus) >= 0) renderResult(latest); else poll(); }).catch(function () { /* history loading must not block access */ }); }
+      function uploadBatch(file) { var form = new FormData(); form.append('file', file); return fetch(API_BASE + '/company/embed/medical/batches/import-preview', { method:'POST', headers:{ Accept:'application/json', 'X-App-Key':appKey }, body:form }).then(function (response) { return response.json().then(function (json) { if (!response.ok || json.code !== 200) throw new Error(json.msg || '名单解析失败'); return json.data; }); }); }
+      function renderBatchPreview(preview) { batchRows = (preview && preview.rows) || []; el('previewSummary').textContent = '共 ' + (preview.totalCount || 0) + ' 人，可提交 ' + (preview.validCount || 0) + ' 人，问题 ' + (preview.invalidCount || 0) + ' 人'; el('previewRows').innerHTML = batchRows.map(function (row, index) { var errors = (row.errors || []).join('；'); return '<tr class="' + (row.valid ? '' : 'row-invalid') + '"><td>' + escapeHtml(row.rowNo || index + 2) + '</td><td><input data-index="' + index + '" data-field="name" value="' + escapeHtml(row.name || '') + '"></td><td><input data-index="' + index + '" data-field="idCard" value="' + escapeHtml(row.idCard || '') + '"></td><td>' + escapeHtml(errors || '通过') + '</td></tr>'; }).join(''); el('previewWrap').hidden = !batchRows.length; el('validateBatchBtn').disabled = !batchRows.length; el('submitBatchBtn').disabled = !batchRows.length || (preview.invalidCount || 0) > 0; }
+      function validateBatch() { if (!batchRows.length) return Promise.resolve(null); var rows = batchRows.map(function (row) { return { rowNo:row.rowNo, originalName:row.originalName, originalIdCard:row.originalIdCard, name:row.name, idCard:row.idCard }; }); el('validateBatchBtn').disabled = true; return api('/company/embed/medical/batches/validate', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ rows:rows }) }).then(function (preview) { renderBatchPreview(preview); return preview; }).catch(function (error) { showNotice(error.message); throw error; }).finally(function () { el('validateBatchBtn').disabled = false; }); }
+      function submitBatch() { el('submitBatchBtn').disabled = true; validateBatch().then(function (preview) { if (!preview || preview.invalidCount > 0) { showNotice('请先修正名单中的问题'); return; } var rows = batchRows.map(function (row) { return { rowNo:row.rowNo, name:row.name, idCard:row.idCard }; }); return api('/company/embed/medical/batches', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ serviceMode:'DELAYED', queryType:'precision_delayed', rows:rows }) }).then(function (data) { batchNo = data.batchNo; el('resultEmpty').style.display = 'none'; el('resultContent').classList.add('show'); el('requestNo').textContent = batchNo || '-'; el('processStatus').innerHTML = '<span class="badge pending">待处理</span>'; el('resultStatus').textContent = '-'; el('resultSummary').textContent = '批次已提交，共 ' + rows.length + ' 人'; el('polling').classList.add('show'); showNotice(''); }); }).catch(function (error) { if (error && error.message) showNotice(error.message); }).finally(function () { el('submitBatchBtn').disabled = false; }); }
+      function switchMode(batch) { el('singleModeBtn').classList.toggle('active', !batch); el('batchModeBtn').classList.toggle('active', batch); el('singlePanel').classList.toggle('show', !batch); el('batchPanel').classList.toggle('show', batch); }
       function label(value, map) { return map[value] || value || '-'; }
       function renderStatus(data) { el('resultEmpty').style.display = 'none'; el('resultContent').classList.add('show'); el('requestNo').textContent = data.requestNo || requestNo || '-'; var tone = data.processStatus === 'COMPLETED' ? 'success' : data.processStatus === 'FAILED' || data.processStatus === 'CANCELLED' ? 'error' : 'pending'; el('processStatus').innerHTML = '<span class="badge ' + tone + '">' + label(data.processStatus,statusLabels) + '</span>'; el('resultStatus').textContent = label(data.resultStatus,resultLabels); el('resultSummary').textContent = data.reused ? '已找到相同人员的未完成请求，页面跟踪原请求。' : '请求已提交，等待平台人员处理。'; el('polling').classList.toggle('show', data.processStatus === 'PENDING' || data.processStatus === 'PROCESSING'); }
       function poll() { if (!requestNo) return; api('/company/embed/medical/requests/' + encodeURIComponent(requestNo)).then(function (data) { renderStatus(data); if (data.resultVisible || ['FAILED','CANCELLED'].indexOf(data.processStatus) >= 0) renderResult(data); else pollTimer = setTimeout(poll,5000); }).catch(function (error) { showNotice(error.message); pollTimer = setTimeout(poll,8000); }); }
       function renderResult(data) { el('polling').classList.remove('show'); el('resultSummary').textContent = data.resultSummary || (data.resultStatus === 'NO_RESULT' ? '未查得该投保人的医疗数据。' : data.resultStatus === 'HINT_ONLY' ? '平台已返回结果提示。' : data.resultStatus === 'FAILED' ? '处理失败，平台未收取本次费用。' : '查询结果已上传，可查看明细。'); var values = data.data || {}; var records = Array.isArray(values.records) ? values.records : [values]; var schema = Array.isArray(data.columnSchema) ? data.columnSchema : []; if (!schema.length && values && typeof values === 'object') schema = Object.keys(records[0] || {}).filter(function (key) { return key !== 'records'; }).map(function (key) { return { field:key,label:key }; }); if (!schema.length || (records.length === 1 && !Object.keys(records[0] || {}).length)) { el('resultTableWrap').hidden = true; return; } el('resultHead').innerHTML = '<tr>' + schema.map(function (column) { return '<th>' + escapeHtml(column.label || column.field || column.key) + '</th>'; }).join('') + '</tr>'; el('resultRows').innerHTML = records.map(function (record) { return '<tr>' + schema.map(function (column) { var key = column.field || column.key || column.name; return '<td>' + escapeHtml(formatValue(record[key])) + '</td>'; }).join('') + '</tr>'; }).join(''); el('resultTableWrap').hidden = false; }
       function formatValue(value) { if (value === null || value === undefined || value === '') return '-'; return typeof value === 'object' ? JSON.stringify(value) : String(value); }
       function escapeHtml(value) { return String(value).replace(/[&<>"']/g, function (character) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[character]; }); }
-      el('connectBtn').addEventListener('click',connect); el('resetBtn').addEventListener('click',reset); el('submitBtn').addEventListener('click',submit); el('idCard').addEventListener('input',function () { this.value = this.value.toUpperCase(); }); [el('personName'),el('idCard')].forEach(function (field) { field.addEventListener('keydown',function (event) { if (event.key === 'Enter' && !el('submitBtn').disabled) submit(); }); });
+      el('connectBtn').addEventListener('click',connect); el('resetBtn').addEventListener('click',reset); el('submitBtn').addEventListener('click',submit); el('singleModeBtn').addEventListener('click',function () { switchMode(false); }); el('batchModeBtn').addEventListener('click',function () { switchMode(true); }); el('chooseBatchBtn').addEventListener('click',function () { el('batchFile').click(); }); el('batchFile').addEventListener('change',function () { var file = this.files && this.files[0]; if (!file) return; el('batchFileName').textContent = file.name; uploadBatch(file).then(renderBatchPreview).catch(function (error) { showNotice(error.message); }); }); el('validateBatchBtn').addEventListener('click',validateBatch); el('submitBatchBtn').addEventListener('click',submitBatch); el('previewRows').addEventListener('input',function (event) { var input = event.target; if (!input.dataset || input.dataset.index === undefined) return; batchRows[Number(input.dataset.index)][input.dataset.field] = input.value; }); el('idCard').addEventListener('input',function () { this.value = this.value.toUpperCase(); }); [el('personName'),el('idCard')].forEach(function (field) { field.addEventListener('keydown',function (event) { if (event.key === 'Enter' && !el('submitBtn').disabled) submit(); }); });
     }());
   </script>
 </body>

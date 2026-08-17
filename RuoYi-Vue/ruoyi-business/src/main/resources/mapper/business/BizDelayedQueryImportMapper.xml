@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BizDelayedQueryImportMapper">
+
+    <insert id="insertBizDelayedQueryImport" parameterType="com.ruoyi.business.domain.BizDelayedQueryImport" useGeneratedKeys="true" keyProperty="id">
+        insert into biz_delayed_query_import (
+            request_id, file_name, file_size, total_rows, success_rows, failed_rows,
+            status, error_msg, create_by, create_time
+        ) values (
+            #{requestId}, #{fileName}, #{fileSize}, #{totalRows}, #{successRows}, #{failedRows},
+            #{status}, #{errorMsg}, #{createBy}, sysdate()
+        )
+    </insert>
+</mapper>

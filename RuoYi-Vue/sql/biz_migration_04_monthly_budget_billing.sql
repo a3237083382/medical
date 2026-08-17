@@ -40,6 +40,22 @@ CREATE TABLE biz_monthly_usage (
   UNIQUE KEY uk_company_month (company_id, billing_month)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='月度额度使用表';
 
+SET @usage_status_missing = (
+  SELECT COUNT(1) = 0
+  FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'biz_monthly_usage'
+    AND COLUMN_NAME = 'status'
+);
+SET @usage_status_sql = IF(
+  @usage_status_missing,
+  'ALTER TABLE biz_monthly_usage ADD COLUMN status char(1) NOT NULL DEFAULT ''0'' COMMENT ''状态 0正常 1冻结'' AFTER reserved_amount',
+  'SELECT 1'
+);
+PREPARE usage_status_stmt FROM @usage_status_sql;
+EXECUTE usage_status_stmt;
+DEALLOCATE PREPARE usage_status_stmt;
+
 CREATE TABLE biz_monthly_bill (
   id bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   company_id bigint NOT NULL COMMENT '保险公司ID',

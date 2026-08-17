@@ -23,6 +23,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 import com.ruoyi.business.domain.BizInsuranceCompany;
+import com.ruoyi.business.domain.BizDelayedQueryRequest;
+import com.ruoyi.business.domain.BizDelayedQueryResult;
 import com.ruoyi.business.domain.BizCompanyQueryPrice;
 import com.ruoyi.business.domain.BizMonthlyUsage;
 import com.ruoyi.business.domain.BizQueryPrice;
@@ -30,6 +32,7 @@ import com.ruoyi.business.domain.medical.MedicalQueryRequest;
 import com.ruoyi.business.domain.medical.MedicalQueryResult;
 import com.ruoyi.business.domain.medical.MedicalQueryBatchValidationCommand;
 import com.ruoyi.business.domain.medical.MedicalQueryBatchSubmission;
+import com.ruoyi.business.domain.medical.MedicalQueryBatchRow;
 import com.ruoyi.business.mapper.BizCompanyQueryPriceMapper;
 import com.ruoyi.business.mapper.BizMonthlyUsageMapper;
 import com.ruoyi.business.service.IBizQueryPriceService;
@@ -39,6 +42,7 @@ import com.ruoyi.business.service.IMedicalQueryBatchService;
 import com.ruoyi.business.service.IMedicalQueryBatchSubmissionService;
 import com.ruoyi.business.service.IMedicalQueryBatchCancellationService;
 import com.ruoyi.business.service.IDelayedMedicalQueryExportService;
+import com.ruoyi.business.service.IBizDelayedQueryService;
 import com.ruoyi.business.service.MedicalQueryException;
 import com.ruoyi.business.domain.medical.MedicalQueryExportFile;
 import com.ruoyi.common.annotation.Anonymous;
@@ -57,6 +61,7 @@ public class CompanyEmbedMedicalQueryController
     private final IBizQueryPriceService priceService;
     private final IMedicalQueryService medicalQueryService;
     private final IDelayedMedicalQueryService delayedMedicalQueryService;
+    private IBizDelayedQueryService bizDelayedQueryService;
     private final IMedicalQueryBatchService medicalQueryBatchService;
     private final IMedicalQueryBatchSubmissionService medicalQueryBatchSubmissionService;
     private final IMedicalQueryBatchCancellationService medicalQueryBatchCancellationService;
@@ -74,6 +79,7 @@ public class CompanyEmbedMedicalQueryController
         this.priceService = priceService;
         this.medicalQueryService = medicalQueryService;
         this.delayedMedicalQueryService = delayedMedicalQueryService;
+        this.bizDelayedQueryService = null;
         this.medicalQueryBatchService = medicalQueryBatchService;
         this.medicalQueryBatchSubmissionService = medicalQueryBatchSubmissionService;
         this.medicalQueryBatchCancellationService = medicalQueryBatchCancellationService;
@@ -89,12 +95,27 @@ public class CompanyEmbedMedicalQueryController
             BizCompanyQueryPriceMapper companyPriceMapper,
             IMedicalQueryBatchSubmissionService medicalQueryBatchSubmissionService,
             IMedicalQueryBatchCancellationService medicalQueryBatchCancellationService,
-            IDelayedMedicalQueryExportService delayedMedicalQueryExportService)
+            IDelayedMedicalQueryExportService delayedMedicalQueryExportService,
+            IBizDelayedQueryService bizDelayedQueryService)
     {
         this(priceService, medicalQueryService, delayedMedicalQueryService, medicalQueryBatchService,
                 monthlyUsageMapper, companyPriceMapper, medicalQueryBatchSubmissionService,
                 medicalQueryBatchCancellationService);
         this.delayedMedicalQueryExportService = delayedMedicalQueryExportService;
+        this.bizDelayedQueryService = bizDelayedQueryService;
+    }
+
+    public CompanyEmbedMedicalQueryController(IBizQueryPriceService priceService,
+            IMedicalQueryService medicalQueryService, IDelayedMedicalQueryService delayedMedicalQueryService,
+            IMedicalQueryBatchService medicalQueryBatchService, BizMonthlyUsageMapper monthlyUsageMapper,
+            BizCompanyQueryPriceMapper companyPriceMapper,
+            IMedicalQueryBatchSubmissionService medicalQueryBatchSubmissionService,
+            IMedicalQueryBatchCancellationService medicalQueryBatchCancellationService,
+            IDelayedMedicalQueryExportService delayedMedicalQueryExportService)
+    {
+        this(priceService, medicalQueryService, delayedMedicalQueryService, medicalQueryBatchService,
+                monthlyUsageMapper, companyPriceMapper, medicalQueryBatchSubmissionService,
+                medicalQueryBatchCancellationService, delayedMedicalQueryExportService, null);
     }
 
     @PostMapping(value = "/batches/import-preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -111,6 +132,10 @@ public class CompanyEmbedMedicalQueryController
         catch (MedicalQueryException e)
         {
             return queryError(e);
+        }
+        catch (IllegalArgumentException e)
+        {
+            return AjaxResult.error(400, e.getMessage());
         }
     }
 
@@ -142,12 +167,42 @@ public class CompanyEmbedMedicalQueryController
         }
         try
         {
+            if (bizDelayedQueryService != null)
+            {
+                if (command == null)
+                {
+                    throw new IllegalArgumentException("名单不能为空");
+                }
+                var preview = medicalQueryBatchService.validate(command.getRows());
+                if (preview.getInvalidCount() > 0)
+                {
+                    throw new IllegalArgumentException("名单中存在无效或重复记录");
+                }
+                List<BizDelayedQueryRequest> requests = new ArrayList<>();
+                for (MedicalQueryBatchRow row : preview.getRows())
+                {
+                    BizDelayedQueryRequest item = new BizDelayedQueryRequest();
+                    item.setPatientName(row.getName());
+                    item.setIdCard(row.getIdCard());
+                    requests.add(item);
+                }
+                List<BizDelayedQueryRequest> submitted = bizDelayedQueryService.submitBatch(company.getId(),
+                        company.getCompanyName(), requests, request.getRemoteAddr());
+                Map<String, Object> result = new LinkedHashMap<>();
+                result.put("batchNo", submitted.isEmpty() ? null : submitted.get(0).getBatchNo());
+                result.put("items", submitted);
+                return AjaxResult.success(result);
+            }
             return AjaxResult.success(medicalQueryBatchSubmissionService.submit(company.getId(), command,
                     request.getRemoteAddr()));
         }
         catch (MedicalQueryException e)
         {
             return queryError(e);
+        }
+        catch (IllegalArgumentException e)
+        {
+            return AjaxResult.error(400, e.getMessage());
         }
     }
 
@@ -161,6 +216,39 @@ public class CompanyEmbedMedicalQueryController
         }
         try
         {
+            if (bizDelayedQueryService != null)
+            {
+                BizDelayedQueryRequest filter = new BizDelayedQueryRequest();
+                filter.setCompanyId(company.getId());
+                filter.setBatchNo(batchNo);
+                List<BizDelayedQueryRequest> items = bizDelayedQueryService.selectList(filter);
+                Map<String, Object> progress = new LinkedHashMap<>();
+                int completed = 0;
+                int processing = 0;
+                int pending = 0;
+                int failed = 0;
+                int cancelled = 0;
+                for (BizDelayedQueryRequest item : items)
+                {
+                    String status = item.getQueryStatus();
+                    if ("QUERIED".equals(status)) completed++;
+                    else if ("PROCESSING".equals(status)) processing++;
+                    else if ("CANCELLED".equals(status)) cancelled++;
+                    else if ("FAILED".equals(status)) failed++;
+                    else pending++;
+                }
+                progress.put("batchNo", batchNo);
+                progress.put("totalCount", items.size());
+                progress.put("completedCount", completed);
+                progress.put("processingCount", processing);
+                progress.put("pendingCount", pending);
+                progress.put("failedCount", failed);
+                progress.put("cancelledCount", cancelled);
+                progress.put("batchStatus", items.isEmpty() ? "NOT_FOUND"
+                        : completed + failed + cancelled == items.size() ? "COMPLETED" : "PROCESSING");
+                progress.put("items", items);
+                return AjaxResult.success(progress);
+            }
             return AjaxResult.success(medicalQueryBatchCancellationService.getProgress(company.getId(), batchNo));
         }
         catch (MedicalQueryException e)
@@ -179,6 +267,10 @@ public class CompanyEmbedMedicalQueryController
         }
         try
         {
+            if (bizDelayedQueryService != null)
+            {
+                return AjaxResult.success(bizDelayedQueryService.cancelBatch(company.getId(), batchNo));
+            }
             return AjaxResult.success(medicalQueryBatchCancellationService.cancelBatch(company.getId(), batchNo));
         }
         catch (MedicalQueryException e)
@@ -197,6 +289,10 @@ public class CompanyEmbedMedicalQueryController
         }
         try
         {
+            if (bizDelayedQueryService != null)
+            {
+                return AjaxResult.success(bizDelayedQueryService.cancelItem(company.getId(), itemId));
+            }
             return AjaxResult.success(medicalQueryBatchCancellationService.cancelItem(company.getId(), itemId));
         }
         catch (MedicalQueryException e)
@@ -215,6 +311,12 @@ public class CompanyEmbedMedicalQueryController
         }
         try
         {
+            if (bizDelayedQueryService != null)
+            {
+                return AjaxResult.success(toEmbedResponse(bizDelayedQueryService.submit(company.getId(),
+                        company.getCompanyName(), toString(body.get("name")), toString(body.get("idCard")),
+                        request.getRemoteAddr())));
+            }
             return AjaxResult.success(delayedMedicalQueryService.submit(company.getId(), toString(body.get("name")),
                     toString(body.get("idCard")), request.getRemoteAddr()));
         }
@@ -234,6 +336,11 @@ public class CompanyEmbedMedicalQueryController
         }
         try
         {
+            if (bizDelayedQueryService != null)
+            {
+                BizDelayedQueryRequest detail = findBizRequest(company.getId(), requestNo);
+                return detail == null ? AjaxResult.error(404, "请求不存在") : AjaxResult.success(toEmbedResponse(detail));
+            }
             return AjaxResult.success(delayedMedicalQueryService.getRequest(company.getId(), requestNo));
         }
         catch (MedicalQueryException e)
@@ -255,6 +362,22 @@ public class CompanyEmbedMedicalQueryController
         }
         try
         {
+            if (bizDelayedQueryService != null)
+            {
+                BizDelayedQueryRequest filter = new BizDelayedQueryRequest();
+                filter.setCompanyId(company.getId());
+                if (requestNo != null) filter.setRequestNo(requestNo);
+                if (name != null) filter.setPatientName(name);
+                if (processStatus != null && "COMPLETED".equals(processStatus)) filter.setQueryStatus("QUERIED");
+                if (resultStatus != null) filter.setResultStatus(resultStatus);
+                List<Map<String, Object>> history = new ArrayList<>();
+                for (BizDelayedQueryRequest item : bizDelayedQueryService.selectList(filter))
+                {
+                    BizDelayedQueryRequest detail = bizDelayedQueryService.selectCompanyDetail(item.getId(), company.getId());
+                    history.add(toEmbedResponse(detail == null ? item : detail));
+                }
+                return AjaxResult.success(history);
+            }
             return AjaxResult.success(delayedMedicalQueryService.listHistory(company.getId(), requestNo, name,
                     processStatus, resultStatus, beginTime, endTime));
         }
@@ -608,6 +731,45 @@ public class CompanyEmbedMedicalQueryController
             return value.substring(0, 2) + "****" + value.substring(value.length() - 2);
         }
         return value.substring(0, 4) + "****" + value.substring(value.length() - 4);
+    }
+
+    private BizDelayedQueryRequest findBizRequest(Long companyId, String requestNo)
+    {
+        BizDelayedQueryRequest filter = new BizDelayedQueryRequest();
+        filter.setCompanyId(companyId);
+        filter.setRequestNo(requestNo);
+        List<BizDelayedQueryRequest> requests = bizDelayedQueryService.selectList(filter);
+        if (requests == null || requests.isEmpty())
+        {
+            return null;
+        }
+        BizDelayedQueryRequest detail = requests.get(0);
+        return bizDelayedQueryService.selectCompanyDetail(detail.getId(), companyId);
+    }
+
+    private Map<String, Object> toEmbedResponse(BizDelayedQueryRequest request)
+    {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("requestNo", request.getRequestNo());
+        response.put("processStatus", "QUERIED".equals(request.getQueryStatus()) ? "COMPLETED" : request.getQueryStatus());
+        response.put("resultStatus", request.getResultStatus());
+        response.put("resultSummary", request.getResultMessage());
+        response.put("resultVisible", "UPLOADED".equals(request.getUploadStatus()));
+        if ("UPLOADED".equals(request.getUploadStatus()))
+        {
+            Map<String, Object> data = new LinkedHashMap<>();
+            List<Map<String, Object>> records = new ArrayList<>();
+            for (BizDelayedQueryResult result : request.getResults())
+            {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("rowNo", result.getRowNo());
+                row.put("rawJson", result.getRawJson());
+                records.add(row);
+            }
+            data.put("records", records);
+            response.put("data", data);
+        }
+        return response;
     }
 
     private AjaxResult invalidAppKey()

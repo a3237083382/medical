@@ -8,65 +8,51 @@ export function listDelayedQuery(query) {
   })
 }
 
-export function listDelayedQueryBatch(query) {
-  return request({
-    url: '/business/delayed-query/batches/list',
-    method: 'get',
-    params: query
-  })
-}
-
-export function getDelayedQueryBatch(id) {
-  return request({
-    url: `/business/delayed-query/batches/${id}`,
-    method: 'get'
-  })
-}
-
 export function getDelayedQuery(id) {
   return request({
-    url: `/business/delayed-query/${id}`,
+    url: '/business/delayed-query/' + id,
     method: 'get'
   })
 }
 
-export function startDelayedQuery(id) {
+export function saveDelayedQuery(id, data) {
   return request({
-    url: `/business/delayed-query/${id}/start`,
-    method: 'post'
-  })
-}
-
-export function importDelayedResult(id, file) {
-  const data = new FormData()
-  data.append('file', file)
-  return request({
-    url: `/business/delayed-query/${id}/result/import-preview`,
+    url: '/business/delayed-query/' + id + '/save',
     method: 'post',
-    data
-  })
-}
-
-export function saveDelayedDraft(id, data) {
-  return request({
-    url: `/business/delayed-query/${id}/result/draft`,
-    method: 'put',
     data
   })
 }
 
 export function completeDelayedQuery(id, data) {
   return request({
-    url: `/business/delayed-query/${id}/complete`,
+    url: '/business/delayed-query/' + id + '/complete',
     method: 'post',
     data
   })
 }
 
-export function updateDelayedResult(id, data) {
+export function updateDelayedQueryResult(id, data) {
   return request({
-    url: `/business/delayed-query/${id}/result`,
+    url: '/business/delayed-query/' + id + '/result',
     method: 'put',
     data
+  })
+}
+
+export function importDelayedQueryExcel(id, file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request({
+    url: '/business/delayed-query/' + id + '/import',
+    method: 'post',
+    headers: { 'Content-Type': 'multipart/form-data', repeatSubmit: false },
+    data: formData
+  })
+}
+
+export function getCompanyDelayedLogs(companyId) {
+  return request({
+    url: '/business/delayed-query/company/' + companyId + '/logs',
+    method: 'get'
   })
 }

@@ -76,6 +76,22 @@ export function queryMedical(data) {
   })
 }
 
+export function submitDelayedQuery(data) {
+  return request({
+    url: '/company/api/delayed-query/submit',
+    method: 'post',
+    data
+  })
+}
+
+export function submitDelayedQueryBatch(data) {
+  return request({
+    url: '/company/api/delayed-query/submit-batch',
+    method: 'post',
+    data
+  })
+}
+
 export function listFeeFlows(query) {
   return request({
     url: '/company/api/fee-flow/list',

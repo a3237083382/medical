@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BizDelayedQueryRequestMapper">
+
+    <resultMap type="com.ruoyi.business.domain.BizDelayedQueryRequest" id="BizDelayedQueryRequestResult">
+        <result property="id" column="id"/>
+        <result property="requestNo" column="request_no"/>
+        <result property="batchNo" column="batch_no"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyNameSnapshot" column="company_name_snapshot"/>
+        <result property="patientName" column="patient_name"/>
+        <result property="idCard" column="id_card"/>
+        <result property="queryType" column="query_type"/>
+        <result property="queryStatus" column="query_status"/>
+        <result property="uploadStatus" column="upload_status"/>
+        <result property="resultStatus" column="result_status"/>
+        <result property="resultMessage" column="result_message"/>
+        <result property="submitTime" column="submit_time"/>
+        <result property="requestIp" column="request_ip"/>
+        <result property="handlerId" column="handler_id"/>
+        <result property="handlerName" column="handler_name"/>
+        <result property="handledTime" column="handled_time"/>
+        <result property="uploadedTime" column="uploaded_time"/>
+        <result property="fee" column="fee"/>
+        <result property="reservedFee" column="reserved_fee"/>
+        <result property="billingMonth" column="billing_month"/>
+        <result property="chargedFlag" column="charged_flag"/>
+        <result property="priceConfigId" column="price_config_id"/>
+        <result property="modifyBy" column="modify_by"/>
+        <result property="modifyTime" column="modify_time"/>
+        <result property="modifyReason" column="modify_reason"/>
+        <result property="remark" column="remark"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectVo">
+        select id, request_no, batch_no, company_id, company_name_snapshot, patient_name, id_card,
+               query_type, query_status, upload_status, result_status, result_message,
+               submit_time, request_ip, handler_id, handler_name, handled_time, uploaded_time,
+               fee, reserved_fee, billing_month, charged_flag, price_config_id, modify_by, modify_time,
+               modify_reason, remark, create_by, create_time, update_by, update_time
+        from biz_delayed_query_request
+    </sql>
+
+    <select id="selectBizDelayedQueryRequestById" parameterType="Long" resultMap="BizDelayedQueryRequestResult">
+        <include refid="selectVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectPendingDuplicate" resultMap="BizDelayedQueryRequestResult">
+        <include refid="selectVo"/>
+        where company_id = #{companyId}
+          and patient_name = #{patientName}
+          and id_card = #{idCard}
+          and (query_status = 'PENDING' or upload_status = 'NOT_UPLOADED')
+        order by submit_time desc
+        limit 1
+    </select>
+
+    <select id="selectBizDelayedQueryRequestList" parameterType="com.ruoyi.business.domain.BizDelayedQueryRequest" resultMap="BizDelayedQueryRequestResult">
+        <include refid="selectVo"/>
+        <where>
+            <if test="companyId != null">and company_id = #{companyId}</if>
+            <if test="requestNo != null and requestNo != ''">and request_no = #{requestNo}</if>
+            <if test="batchNo != null and batchNo != ''">and batch_no = #{batchNo}</if>
+            <if test="companyNameSnapshot != null and companyNameSnapshot != ''">and company_name_snapshot like concat('%', #{companyNameSnapshot}, '%')</if>
+            <if test="patientName != null and patientName != ''">and patient_name like concat('%', #{patientName}, '%')</if>
+            <if test="idCard != null and idCard != ''">and id_card like concat('%', #{idCard}, '%')</if>
+            <if test="queryStatus != null and queryStatus != ''">and query_status = #{queryStatus}</if>
+            <if test="uploadStatus != null and uploadStatus != ''">and upload_status = #{uploadStatus}</if>
+            <if test="resultStatus != null and resultStatus != ''">and result_status = #{resultStatus}</if>
+            <if test="params.beginTime != null and params.beginTime != ''">and submit_time &gt;= #{params.beginTime}</if>
+            <if test="params.endTime != null and params.endTime != ''">and submit_time &lt;= #{params.endTime}</if>
+        </where>
+        order by submit_time desc, id desc
+    </select>
+
+    <insert id="insertBizDelayedQueryRequest" parameterType="com.ruoyi.business.domain.BizDelayedQueryRequest" useGeneratedKeys="true" keyProperty="id">
+        insert into biz_delayed_query_request (
+            request_no, batch_no, company_id, company_name_snapshot, patient_name, id_card, query_type,
+            query_status, upload_status, result_status, result_message, submit_time, request_ip,
+            handler_id, handler_name, handled_time, uploaded_time, fee, billing_month, charged_flag,
+            price_config_id, modify_by, modify_time, modify_reason, remark, create_by, create_time, reserved_fee
+        ) values (
+            #{requestNo}, #{batchNo}, #{companyId}, #{companyNameSnapshot}, #{patientName}, #{idCard}, #{queryType},
+            #{queryStatus}, #{uploadStatus}, #{resultStatus}, #{resultMessage}, sysdate(), #{requestIp},
+            #{handlerId}, #{handlerName}, #{handledTime}, #{uploadedTime}, #{fee}, #{billingMonth}, #{chargedFlag},
+            #{priceConfigId}, #{modifyBy}, #{modifyTime}, #{modifyReason}, #{remark}, #{createBy}, sysdate(), #{reservedFee}
+        )
+    </insert>
+
+    <update id="updateBizDelayedQueryRequest" parameterType="com.ruoyi.business.domain.BizDelayedQueryRequest">
+        update biz_delayed_query_request
+        <set>
+            <if test="queryStatus != null">query_status = #{queryStatus},</if>
+            <if test="uploadStatus != null">upload_status = #{uploadStatus},</if>
+            <if test="resultStatus != null">result_status = #{resultStatus},</if>
+            <if test="resultMessage != null">result_message = #{resultMessage},</if>
+            <if test="handlerId != null">handler_id = #{handlerId},</if>
+            <if test="handlerName != null">handler_name = #{handlerName},</if>
+            <if test="handledTime != null">handled_time = #{handledTime},</if>
+            <if test="uploadedTime != null">uploaded_time = #{uploadedTime},</if>
+            <if test="fee != null">fee = #{fee},</if>
+            <if test="reservedFee != null">reserved_fee = #{reservedFee},</if>
+            <if test="billingMonth != null">billing_month = #{billingMonth},</if>
+            <if test="chargedFlag != null">charged_flag = #{chargedFlag},</if>
+            <if test="priceConfigId != null">price_config_id = #{priceConfigId},</if>
+            <if test="modifyBy != null">modify_by = #{modifyBy},</if>
+            <if test="modifyTime != null">modify_time = #{modifyTime},</if>
+            <if test="modifyReason != null">modify_reason = #{modifyReason},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+</mapper>
