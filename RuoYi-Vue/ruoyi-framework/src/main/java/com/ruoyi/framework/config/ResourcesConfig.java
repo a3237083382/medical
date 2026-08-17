@@ -1,11 +1,15 @@
 package com.ruoyi.framework.config;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.CacheControl;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -23,8 +27,13 @@ import com.ruoyi.framework.interceptor.RepeatSubmitInterceptor;
 @Configuration
 public class ResourcesConfig implements WebMvcConfigurer
 {
+    private static final String COMPANY_EMBED_PATH = "/company/embed/medical";
+
     @Autowired
     private RepeatSubmitInterceptor repeatSubmitInterceptor;
+
+    @Value("${embedded.cors.allowed-origin-patterns:http://localhost:[*],http://127.0.0.1:[*]}")
+    private String embeddedAllowedOriginPatterns;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry)
@@ -54,19 +63,42 @@ public class ResourcesConfig implements WebMvcConfigurer
     @Bean
     public CorsFilter corsFilter()
     {
-        CorsConfiguration config = new CorsConfiguration();
+        CorsConfiguration defaultConfig = new CorsConfiguration();
         // 设置访问源地址
-        config.addAllowedOriginPattern("*");
+        defaultConfig.addAllowedOriginPattern("*");
         // 设置访问源请求头
-        config.addAllowedHeader("*");
+        defaultConfig.addAllowedHeader("*");
         // 设置访问源请求方法
-        config.addAllowedMethod("*");
+        defaultConfig.addAllowedMethod("*");
         // 有效期 1800秒
-        config.setMaxAge(1800L);
-        // 添加映射路径，拦截一切请求
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        // 返回新的CorsFilter
+        defaultConfig.setMaxAge(1800L);
+
+        CorsConfiguration embeddedConfig = new CorsConfiguration();
+        embeddedConfig.setAllowedOriginPatterns(parseOriginPatterns(embeddedAllowedOriginPatterns));
+        embeddedConfig.setAllowedHeaders(Arrays.asList("X-App-Key", "Content-Type", "Accept"));
+        embeddedConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "OPTIONS"));
+        embeddedConfig.setExposedHeaders(List.of("Content-Disposition"));
+        embeddedConfig.setAllowCredentials(false);
+        embeddedConfig.setMaxAge(1800L);
+
+        UrlBasedCorsConfigurationSource defaultSource = new UrlBasedCorsConfigurationSource();
+        defaultSource.registerCorsConfiguration("/**", defaultConfig);
+        CorsConfigurationSource source = request -> isCompanyEmbedRequest(request.getRequestURI(), request.getContextPath())
+                ? embeddedConfig : defaultSource.getCorsConfiguration(request);
         return new CorsFilter(source);
+    }
+
+    private List<String> parseOriginPatterns(String value)
+    {
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(pattern -> !pattern.isEmpty())
+                .toList();
+    }
+
+    private boolean isCompanyEmbedRequest(String requestUri, String contextPath)
+    {
+        String path = requestUri.substring(contextPath.length());
+        return path.equals(COMPANY_EMBED_PATH) || path.startsWith(COMPANY_EMBED_PATH + "/");
     }
 }

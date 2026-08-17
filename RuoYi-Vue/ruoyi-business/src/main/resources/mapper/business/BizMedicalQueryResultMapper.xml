@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BizMedicalQueryResultMapper">
+
+    <resultMap id="BizMedicalQueryResultResult" type="com.ruoyi.business.domain.BizMedicalQueryResult">
+        <id property="id" column="id"/>
+        <result property="requestId" column="request_id"/>
+        <result property="resultSource" column="result_source"/>
+        <result property="columnSchema" column="column_schema"/>
+        <result property="resultData" column="result_data"/>
+        <result property="resultSummary" column="result_summary"/>
+        <result property="version" column="version"/>
+        <result property="uploadedBy" column="uploaded_by"/>
+        <result property="uploadedTime" column="uploaded_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateReason" column="update_reason"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <insert id="insertBizMedicalQueryResult" parameterType="com.ruoyi.business.domain.BizMedicalQueryResult"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into biz_medical_query_result (
+            request_id, result_source, column_schema, result_data, result_summary, version,
+            uploaded_by, uploaded_time, update_by, update_time, update_reason, create_time
+        ) values (
+            #{requestId}, #{resultSource}, #{columnSchema}, #{resultData}, #{resultSummary}, #{version},
+            #{uploadedBy}, #{uploadedTime}, #{updateBy}, #{updateTime}, #{updateReason}, sysdate()
+        )
+    </insert>
+
+    <select id="selectByRequestId" parameterType="Long" resultMap="BizMedicalQueryResultResult">
+        select *
+        from biz_medical_query_result
+        where request_id = #{requestId}
+        limit 1
+    </select>
+
+    <update id="updateDraft" parameterType="com.ruoyi.business.domain.BizMedicalQueryResult">
+        update biz_medical_query_result
+        set result_source = #{resultSource},
+            column_schema = #{columnSchema},
+            result_data = #{resultData},
+            result_summary = #{resultSummary},
+            version = version + 1,
+            update_by = #{updateBy},
+            update_time = sysdate(),
+            update_reason = #{updateReason}
+        where request_id = #{requestId}
+          and uploaded_time is null
+    </update>
+
+    <update id="uploadResult" parameterType="com.ruoyi.business.domain.BizMedicalQueryResult">
+        update biz_medical_query_result
+        set result_source = #{resultSource},
+            column_schema = #{columnSchema},
+            result_data = #{resultData},
+            result_summary = #{resultSummary},
+            version = version + 1,
+            uploaded_by = #{uploadedBy},
+            uploaded_time = #{uploadedTime},
+            update_by = #{updateBy},
+            update_time = sysdate(),
+            update_reason = #{updateReason}
+        where request_id = #{requestId}
+          and uploaded_time is null
+    </update>
+
+    <update id="updateUploadedResult" parameterType="com.ruoyi.business.domain.BizMedicalQueryResult">
+        update biz_medical_query_result
+        set column_schema = #{columnSchema},
+            result_data = #{resultData},
+            result_summary = #{resultSummary},
+            version = version + 1,
+            update_by = #{updateBy},
+            update_time = sysdate(),
+            update_reason = #{updateReason}
+        where request_id = #{requestId}
+          and uploaded_time is not null
+    </update>
+</mapper>

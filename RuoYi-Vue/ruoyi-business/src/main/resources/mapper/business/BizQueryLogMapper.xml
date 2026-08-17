@@ -6,6 +6,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <resultMap type="com.ruoyi.business.domain.BizQueryLog" id="BizQueryLogResult">
         <result property="id" column="id"/>
+        <result property="requestNo" column="request_no"/>
+        <result property="batchNo" column="batch_no"/>
+        <result property="serviceMode" column="service_mode"/>
+        <result property="entryType" column="entry_type"/>
         <result property="companyId" column="company_id"/>
         <result property="companyName" column="company_name"/>
         <result property="queryType" column="query_type"/>
@@ -23,7 +27,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectVo">
-        select l.id, l.company_id, c.company_name, l.query_type,
+        select l.id, l.request_no, l.batch_no, l.service_mode, l.entry_type,
+               l.company_id, c.company_name, l.query_type,
                cast(l.query_params as char) as query_params, l.fee,
                l.billing_month, l.result_status, l.fee_snapshot, l.price_config_id,
                l.settlement_id, l.status, l.request_time, l.request_ip, l.remark
@@ -62,10 +67,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <insert id="insertBizQueryLog" parameterType="com.ruoyi.business.domain.BizQueryLog" useGeneratedKeys="true" keyProperty="id">
         insert into biz_query_log (
+            request_no, batch_no, service_mode, entry_type,
             company_id, query_type, query_params, fee, billing_month, result_status,
             fee_snapshot, price_config_id, settlement_id,
             status, request_time, request_ip, remark
         ) values (
+            #{requestNo}, #{batchNo}, #{serviceMode}, #{entryType},
             #{companyId}, #{queryType}, #{queryParams}, #{fee}, #{billingMonth}, #{resultStatus},
             #{feeSnapshot}, #{priceConfigId}, #{settlementId},
             #{status}, sysdate(), #{requestIp}, #{remark}

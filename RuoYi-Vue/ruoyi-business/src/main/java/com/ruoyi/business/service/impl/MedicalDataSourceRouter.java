@@ -51,6 +51,13 @@ public class MedicalDataSourceRouter implements MedicalDataSource
         return "router";
     }
 
+    @Override
+    public String sourceCode(MedicalQueryRequest request)
+    {
+        MedicalDataSource source = selectSource(request == null ? null : request.getQueryType());
+        return source == null ? sourceCode() : source.sourceCode(request);
+    }
+
     MedicalDataSource selectSource(String queryType)
     {
         String sourceCode = properties.getRoutes().getOrDefault(queryType, properties.getDefaultSource());

@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BizMedicalQueryBatchMapper">
+    <resultMap id="BatchResult" type="com.ruoyi.business.domain.BizMedicalQueryBatch">
+        <id property="id" column="id"/>
+        <result property="batchNo" column="batch_no"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="serviceMode" column="service_mode"/>
+        <result property="queryType" column="query_type"/>
+        <result property="batchStatus" column="batch_status"/>
+        <result property="totalCount" column="total_count"/>
+        <result property="pendingCount" column="pending_count"/>
+        <result property="processingCount" column="processing_count"/>
+        <result property="completedCount" column="completed_count"/>
+        <result property="hitCount" column="hit_count"/>
+        <result property="noResultCount" column="no_result_count"/>
+        <result property="failedCount" column="failed_count"/>
+        <result property="cancelledCount" column="cancelled_count"/>
+        <result property="totalFee" column="total_fee"/>
+        <result property="createTime" column="create_time"/>
+        <result property="completeTime" column="complete_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <resultMap id="BatchItemResult" type="com.ruoyi.business.domain.BizMedicalQueryBatchItem">
+        <id property="id" column="id"/>
+        <result property="batchId" column="batch_id"/>
+        <result property="requestId" column="request_id"/>
+        <result property="requestNo" column="request_no"/>
+        <result property="rowNo" column="row_no"/>
+        <result property="reusedFlag" column="reused_flag"/>
+        <result property="itemStatus" column="item_status"/>
+        <result property="patientName" column="patient_name"/>
+        <result property="idCard" column="id_card"/>
+        <result property="processStatus" column="process_status"/>
+        <result property="uploadStatus" column="upload_status"/>
+        <result property="resultStatus" column="result_status"/>
+        <result property="feeSnapshot" column="fee_snapshot"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <resultMap id="ItemStateResult" type="com.ruoyi.business.domain.medical.MedicalQueryBatchItemState">
+        <id property="itemId" column="item_id"/>
+        <result property="batchId" column="batch_id"/>
+        <result property="batchNo" column="batch_no"/>
+        <result property="requestId" column="request_id"/>
+        <result property="requestNo" column="request_no"/>
+        <result property="entryType" column="entry_type"/>
+        <result property="reusedFlag" column="reused_flag"/>
+        <result property="itemStatus" column="item_status"/>
+        <result property="processStatus" column="process_status"/>
+        <result property="uploadStatus" column="upload_status"/>
+        <result property="reservedFee" column="reserved_fee"/>
+        <result property="billingMonth" column="billing_month"/>
+    </resultMap>
+
+    <resultMap id="BatchProgressResult" type="com.ruoyi.business.domain.medical.MedicalQueryBatchProgress">
+        <id property="batchId" column="batch_id"/>
+        <result property="batchNo" column="batch_no"/>
+        <result property="serviceMode" column="service_mode"/>
+        <result property="batchStatus" column="batch_status"/>
+        <result property="totalCount" column="total_count"/>
+        <result property="pendingCount" column="pending_count"/>
+        <result property="processingCount" column="processing_count"/>
+        <result property="completedCount" column="completed_count"/>
+        <result property="hitCount" column="hit_count"/>
+        <result property="noResultCount" column="no_result_count"/>
+        <result property="failedCount" column="failed_count"/>
+        <result property="cancelledCount" column="cancelled_count"/>
+        <result property="cancellableCount" column="cancellable_count"/>
+        <result property="totalFee" column="total_fee"/>
+        <result property="submittedTime" column="create_time"/>
+    </resultMap>
+    <insert id="insertBizMedicalQueryBatch" parameterType="com.ruoyi.business.domain.BizMedicalQueryBatch"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into biz_medical_query_batch (
+            batch_no, company_id, service_mode, query_type, batch_status,
+            total_count, pending_count, processing_count, completed_count, hit_count,
+            no_result_count, failed_count, cancelled_count, total_fee, request_ip,
+            create_time, complete_time, update_time
+        ) values (
+            #{batchNo}, #{companyId}, #{serviceMode}, #{queryType}, #{batchStatus},
+            #{totalCount}, #{pendingCount}, #{processingCount}, 0, 0,
+            0, 0, 0, #{totalFee}, #{requestIp}, sysdate(), null, sysdate()
+        )
+    </insert>
+
+    <insert id="insertBizMedicalQueryBatchItem" parameterType="com.ruoyi.business.domain.BizMedicalQueryBatchItem">
+        insert into biz_medical_query_batch_item (
+            batch_id, request_id, row_no, reused_flag, item_status, create_time, update_time
+        ) values (
+            #{batchId}, #{requestId}, #{rowNo}, #{reusedFlag}, #{itemStatus}, sysdate(), sysdate()
+        )
+    </insert>
+
+    <sql id="DelayedBatchSummarySelect">
+        select aggregate.*,
+               case
+                   when aggregate.cancelled_count = aggregate.total_count then 'CANCELLED'
+                   when aggregate.completed_count + aggregate.failed_count + aggregate.cancelled_count = aggregate.total_count
+                        and aggregate.failed_count > 0 and aggregate.completed_count > 0 then 'PARTIAL_FAILED'
+                   when aggregate.completed_count + aggregate.failed_count + aggregate.cancelled_count = aggregate.total_count
+                        and aggregate.failed_count > 0 then 'FAILED'
+                   when aggregate.completed_count + aggregate.failed_count + aggregate.cancelled_count = aggregate.total_count
+                        and aggregate.cancelled_count > 0 then 'PARTIAL_CANCELLED'
+                   when aggregate.completed_count + aggregate.failed_count = aggregate.total_count then 'COMPLETED'
+                   when aggregate.processing_count > 0 or aggregate.completed_count > 0 or aggregate.failed_count > 0
+                        then 'PROCESSING'
+                   else 'PENDING'
+               end as batch_status
+        from (
+            select b.id, b.batch_no, b.company_id, c.company_name, b.service_mode, b.query_type,
+                   count(i.id) as total_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.process_status = 'PENDING'), 0) as pending_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.process_status = 'PROCESSING'), 0) as processing_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.process_status = 'COMPLETED'), 0) as completed_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.result_status = 'HIT'), 0) as hit_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.result_status in ('NO_RESULT', 'HINT_ONLY')), 0) as no_result_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.process_status = 'FAILED'), 0) as failed_count,
+                   coalesce(sum(i.item_status = 'CANCELLED' or r.process_status = 'CANCELLED'), 0) as cancelled_count,
+                   coalesce(sum(case when i.item_status = 'ACTIVE' and i.reused_flag = '0'
+                                     then r.fee_snapshot else 0 end), 0.00) as total_fee,
+                   b.create_time, b.complete_time, b.update_time
+            from biz_medical_query_batch b
+            left join biz_insurance_company c on c.id = b.company_id
+            left join biz_medical_query_batch_item i on i.batch_id = b.id
+            left join biz_medical_query_request r on r.id = i.request_id
+            where b.service_mode = 'DELAYED'
+            group by b.id, b.batch_no, b.company_id, c.company_name, b.service_mode, b.query_type,
+                     b.create_time, b.complete_time, b.update_time
+        ) aggregate
+    </sql>
+
+    <select id="selectDelayedBatchList" parameterType="com.ruoyi.business.domain.BizMedicalQueryBatch"
+            resultMap="BatchResult">
+        select summary.*
+        from (<include refid="DelayedBatchSummarySelect"/>) summary
+        <where>
+            <if test="batchNo != null and batchNo != ''">summary.batch_no like concat('%', #{batchNo}, '%')</if>
+            <if test="companyName != null and companyName != ''">and summary.company_name like concat('%', #{companyName}, '%')</if>
+            <if test="batchStatus != null and batchStatus != ''">and summary.batch_status = #{batchStatus}</if>
+            <if test="params.beginTime != null and params.beginTime != ''">and summary.create_time &gt;= #{params.beginTime}</if>
+            <if test="params.endTime != null and params.endTime != ''">and summary.create_time &lt;= #{params.endTime}</if>
+        </where>
+        order by summary.create_time desc, summary.id desc
+    </select>
+
+    <select id="selectDelayedBatchById" parameterType="Long" resultMap="BatchResult">
+        select summary.*
+        from (<include refid="DelayedBatchSummarySelect"/>) summary
+        where summary.id = #{id}
+    </select>
+
+    <select id="selectDelayedBatchItems" parameterType="Long" resultMap="BatchItemResult">
+        select i.id, i.batch_id, i.request_id, r.request_no, i.row_no, i.reused_flag, i.item_status,
+               r.patient_name, r.id_card,
+               case when i.item_status = 'CANCELLED' then 'CANCELLED' else r.process_status end as process_status,
+               r.upload_status,
+               case when i.item_status = 'CANCELLED' then 'CANCELLED' else r.result_status end as result_status,
+               case when i.item_status = 'ACTIVE' then r.fee_snapshot else 0.00 end as fee_snapshot,
+               i.create_time, i.update_time
+        from biz_medical_query_batch_item i
+        inner join biz_medical_query_request r on r.id = i.request_id
+        where i.batch_id = #{batchId}
+        order by i.row_no, i.id
+    </select>
+
+    <select id="selectCompanyBatchByNoForUpdate" resultMap="BatchResult">
+        select *
+        from biz_medical_query_batch
+        where company_id = #{companyId}
+          and batch_no = #{batchNo}
+        for update
+    </select>
+
+    <select id="selectCompanyBatchByNo" resultMap="BatchResult">
+        select *
+        from biz_medical_query_batch
+        where company_id = #{companyId}
+          and batch_no = #{batchNo}
+          and service_mode = 'DELAYED'
+    </select>
+
+    <select id="selectBatchItemsForUpdate" resultMap="ItemStateResult">
+        select i.id as item_id, i.batch_id, b.batch_no, i.request_id, i.reused_flag, i.item_status,
+               r.request_no, r.entry_type, r.process_status, r.upload_status,
+               r.reserved_fee, r.billing_month
+        from biz_medical_query_batch_item i
+        inner join biz_medical_query_batch b on b.id = i.batch_id
+        inner join biz_medical_query_request r on r.id = i.request_id
+        where i.batch_id = #{batchId}
+        order by i.row_no
+        for update
+    </select>
+
+    <select id="selectCompanyBatchItemForUpdate" resultMap="ItemStateResult">
+        select i.id as item_id, i.batch_id, b.batch_no, i.request_id, i.reused_flag, i.item_status,
+               r.request_no, r.entry_type, r.process_status, r.upload_status,
+               r.reserved_fee, r.billing_month
+        from biz_medical_query_batch_item i
+        inner join biz_medical_query_batch b on b.id = i.batch_id
+        inner join biz_medical_query_request r on r.id = i.request_id
+        where b.company_id = #{companyId}
+          and i.id = #{itemId}
+        for update
+    </select>
+
+    <update id="cancelBatchItem">
+        update biz_medical_query_batch_item
+        set item_status = 'CANCELLED',
+            update_time = sysdate()
+        where id = #{itemId}
+          and item_status = 'ACTIVE'
+    </update>
+
+    <select id="countActiveItemsByRequestId" resultType="int">
+        select count(*)
+        from biz_medical_query_batch_item
+        where request_id = #{requestId}
+          and item_status = 'ACTIVE'
+    </select>
+
+    <update id="cancelPendingRequest">
+        update biz_medical_query_request
+        set process_status = 'CANCELLED',
+            result_status = 'CANCELLED',
+            fee_snapshot = 0.00,
+            version = version + 1,
+            update_time = sysdate()
+        where id = #{requestId}
+          and service_mode = 'DELAYED'
+          and process_status = 'PENDING'
+          and upload_status = 'NOT_UPLOADED'
+    </update>
+
+    <select id="selectCompanyBatchProgress" resultMap="BatchProgressResult">
+        select summary.*,
+               case
+                   when summary.cancelled_count = summary.total_count then 'CANCELLED'
+                   when summary.completed_count + summary.failed_count + summary.cancelled_count = summary.total_count
+                        and summary.failed_count > 0 and summary.completed_count > 0 then 'PARTIAL_FAILED'
+                   when summary.completed_count + summary.failed_count + summary.cancelled_count = summary.total_count
+                        and summary.failed_count > 0 then 'FAILED'
+                   when summary.completed_count + summary.failed_count + summary.cancelled_count = summary.total_count
+                        and summary.cancelled_count > 0 then 'PARTIAL_CANCELLED'
+                   when summary.completed_count + summary.failed_count = summary.total_count then 'COMPLETED'
+                   when summary.processing_count > 0 or summary.completed_count > 0 or summary.failed_count > 0
+                        then 'PROCESSING'
+                   else 'PENDING'
+               end as batch_status
+        from (
+            select b.id as batch_id, b.batch_no, b.service_mode,
+                   count(i.id) as total_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.process_status = 'PENDING'), 0) as pending_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.process_status = 'PROCESSING'), 0) as processing_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.process_status = 'COMPLETED'), 0) as completed_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.result_status = 'HIT'), 0) as hit_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.result_status in ('NO_RESULT', 'HINT_ONLY')), 0) as no_result_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.process_status = 'FAILED'), 0) as failed_count,
+                   coalesce(sum(i.item_status = 'CANCELLED' or r.process_status = 'CANCELLED'), 0) as cancelled_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.process_status = 'PENDING'
+                                and r.upload_status = 'NOT_UPLOADED'), 0) as cancellable_count,
+                   coalesce(sum(case when i.item_status = 'ACTIVE' and i.reused_flag = '0'
+                                     then r.fee_snapshot else 0 end), 0.00) as total_fee
+            from biz_medical_query_batch b
+            left join biz_medical_query_batch_item i on i.batch_id = b.id
+            left join biz_medical_query_request r on r.id = i.request_id
+            where b.company_id = #{companyId}
+              and b.batch_no = #{batchNo}
+            group by b.id, b.batch_no, b.service_mode
+        ) summary
+    </select>
+
+    <select id="selectCompanyBatchHistory" resultMap="BatchProgressResult">
+        select summary.*,
+               case
+                   when summary.cancelled_count = summary.total_count then 'CANCELLED'
+                   when summary.completed_count + summary.failed_count + summary.cancelled_count = summary.total_count
+                        and summary.failed_count > 0 and summary.completed_count > 0 then 'PARTIAL_FAILED'
+                   when summary.completed_count + summary.failed_count + summary.cancelled_count = summary.total_count
+                        and summary.failed_count > 0 then 'FAILED'
+                   when summary.completed_count + summary.failed_count + summary.cancelled_count = summary.total_count
+                        and summary.cancelled_count > 0 then 'PARTIAL_CANCELLED'
+                   when summary.completed_count + summary.failed_count = summary.total_count then 'COMPLETED'
+                   when summary.processing_count > 0 or summary.completed_count > 0 or summary.failed_count > 0
+                        then 'PROCESSING'
+                   else 'PENDING'
+               end as batch_status
+        from (
+            select b.id as batch_id, b.batch_no, b.service_mode, b.create_time,
+                   count(i.id) as total_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.process_status = 'PENDING'), 0) as pending_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.process_status = 'PROCESSING'), 0) as processing_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.process_status = 'COMPLETED'), 0) as completed_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.result_status = 'HIT'), 0) as hit_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.result_status in ('NO_RESULT', 'HINT_ONLY')), 0) as no_result_count,
+                   coalesce(sum(i.item_status = 'ACTIVE' and r.process_status = 'FAILED'), 0) as failed_count,
+                   coalesce(sum(i.item_status = 'CANCELLED' or r.process_status = 'CANCELLED'), 0) as cancelled_count,
+                   coalesce(sum(case when i.item_status = 'ACTIVE' and i.reused_flag = '0'
+                                     then r.fee_snapshot else 0 end), 0.00) as total_fee
+            from biz_medical_query_batch b
+            left join biz_medical_query_batch_item i on i.batch_id = b.id
+            left join biz_medical_query_request r on r.id = i.request_id
+            where b.company_id = #{companyId}
+              and b.service_mode = 'DELAYED'
+            group by b.id, b.batch_no, b.service_mode, b.create_time
+        ) summary
+        order by summary.create_time desc, summary.batch_id desc
+        limit 100
+    </select>
+
+    <update id="updateBatchSummary" parameterType="com.ruoyi.business.domain.medical.MedicalQueryBatchProgress">
+        update biz_medical_query_batch
+        set batch_status = #{batchStatus},
+            total_count = #{totalCount},
+            pending_count = #{pendingCount},
+            processing_count = #{processingCount},
+            completed_count = #{completedCount},
+            hit_count = #{hitCount},
+            no_result_count = #{noResultCount},
+            failed_count = #{failedCount},
+            cancelled_count = #{cancelledCount},
+            total_fee = #{totalFee},
+            complete_time = case when #{batchStatus} in
+                ('COMPLETED', 'FAILED', 'PARTIAL_FAILED')
+                then coalesce(complete_time, sysdate()) else null end,
+            update_time = sysdate()
+        where id = #{batchId}
+    </update>
+</mapper>

@@ -170,3 +170,8 @@ medical:
       enabled: false
       query-url:
       timeout-millis: 5000
+
+# 保险公司独立嵌入页面跨域白名单。生产环境使用逗号分隔的实际部署来源覆盖此环境变量。
+embedded:
+  cors:
+    allowed-origin-patterns: "${EMBEDDED_CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:[*],http://127.0.0.1:[*]}"

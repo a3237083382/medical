@@ -41,6 +41,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where id = #{id}
     </select>
 
+    <select id="selectBizInsuranceCompanyByIdForUpdate" parameterType="Long" resultMap="BizInsuranceCompanyResult">
+        <include refid="selectBizInsuranceCompanyVo"/>
+        where id = #{id}
+        for update
+    </select>
+
     <select id="selectBizInsuranceCompanyByAppKey" parameterType="String" resultMap="BizInsuranceCompanyResult">
         <include refid="selectBizInsuranceCompanyVo"/>
         where app_key = #{appKey}
@@ -68,7 +74,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="username != null and username != ''">username,</if>
             <if test="password != null and password != ''">password,</if>
             <if test="appKey != null and appKey != ''">app_key,</if>
-            <if test="appSecret != null and appSecret != ''">app_secret,</if>
             <if test="balance != null">balance,</if>
             <if test="billingCycleDays != null">billing_cycle_days,</if>
             <if test="monthlyBudget != null">monthly_budget,</if>
@@ -85,7 +90,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="username != null and username != ''">#{username},</if>
             <if test="password != null and password != ''">#{password},</if>
             <if test="appKey != null and appKey != ''">#{appKey},</if>
-            <if test="appSecret != null and appSecret != ''">#{appSecret},</if>
             <if test="balance != null">#{balance},</if>
             <if test="billingCycleDays != null">#{billingCycleDays},</if>
             <if test="monthlyBudget != null">#{monthlyBudget},</if>
@@ -134,7 +138,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="username != null and username != ''">username = #{username},</if>
             <if test="password != null and password != ''">password = #{password},</if>
             <if test="appKey != null and appKey != ''">app_key = #{appKey},</if>
-            <if test="appSecret != null and appSecret != ''">app_secret = #{appSecret},</if>
             <if test="balance != null">balance = #{balance},</if>
             <if test="billingCycleDays != null">billing_cycle_days = #{billingCycleDays},</if>
             <if test="monthlyBudget != null">monthly_budget = #{monthlyBudget},</if>

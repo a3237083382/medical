@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.business.mapper.BizMedicalQueryRequestMapper">
+
+    <resultMap id="BizMedicalQueryRequestResult" type="com.ruoyi.business.domain.BizMedicalQueryRequest">
+        <id property="id" column="id"/>
+        <result property="requestNo" column="request_no"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="entryType" column="entry_type"/>
+        <result property="serviceMode" column="service_mode"/>
+        <result property="queryType" column="query_type"/>
+        <result property="patientName" column="patient_name"/>
+        <result property="idCard" column="id_card"/>
+        <result property="processStatus" column="process_status"/>
+        <result property="uploadStatus" column="upload_status"/>
+        <result property="resultStatus" column="result_status"/>
+        <result property="viewStatus" column="view_status"/>
+        <result property="priceConfigId" column="price_config_id"/>
+        <result property="reservedFee" column="reserved_fee"/>
+        <result property="feeSnapshot" column="fee_snapshot"/>
+        <result property="billingMonth" column="billing_month"/>
+        <result property="queryLogId" column="query_log_id"/>
+        <result property="requestIp" column="request_ip"/>
+        <result property="processStartTime" column="process_start_time"/>
+        <result property="completeTime" column="complete_time"/>
+        <result property="version" column="version"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <insert id="insertBizMedicalQueryRequest" parameterType="com.ruoyi.business.domain.BizMedicalQueryRequest"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into biz_medical_query_request (
+            request_no, company_id, entry_type, service_mode, query_type,
+            patient_name, id_card, process_status, upload_status, result_status, view_status,
+            price_config_id, reserved_fee, fee_snapshot, billing_month, query_log_id,
+            request_ip, version, create_time, update_time
+        ) values (
+            #{requestNo}, #{companyId}, #{entryType}, #{serviceMode}, #{queryType},
+            #{patientName}, #{idCard}, #{processStatus}, #{uploadStatus}, #{resultStatus}, #{viewStatus},
+            #{priceConfigId}, #{reservedFee}, #{feeSnapshot}, #{billingMonth}, #{queryLogId},
+            #{requestIp}, #{version}, sysdate(), sysdate()
+        )
+    </insert>
+
+    <select id="selectReusableDelayedRequest" resultMap="BizMedicalQueryRequestResult">
+        select *
+        from biz_medical_query_request
+        where company_id = #{companyId}
+          and service_mode = 'DELAYED'
+          and patient_name = #{patientName}
+          and id_card = #{idCard}
+          and process_status in ('PENDING', 'PROCESSING')
+          and upload_status = 'NOT_UPLOADED'
+        order by id asc
+        limit 1
+    </select>
+
+    <select id="selectCompanyRequestByNo" resultMap="BizMedicalQueryRequestResult">
+        select *
+        from biz_medical_query_request
+        where company_id = #{companyId}
+          and request_no = #{requestNo}
+        limit 1
+    </select>
+
+    <select id="selectCompanyDelayedHistory" parameterType="com.ruoyi.business.domain.BizMedicalQueryRequest"
+            resultMap="BizMedicalQueryRequestResult">
+        select r.*, c.company_name
+        from biz_medical_query_request r
+        left join biz_insurance_company c on c.id = r.company_id
+        <where>
+            r.company_id = #{companyId}
+            and r.service_mode = 'DELAYED'
+            <if test="requestNo != null and requestNo != ''">and r.request_no like concat('%', #{requestNo}, '%')</if>
+            <if test="patientName != null and patientName != ''">and r.patient_name like concat('%', #{patientName}, '%')</if>
+            <if test="processStatus != null and processStatus != ''">and r.process_status = #{processStatus}</if>
+            <if test="resultStatus != null and resultStatus != ''">and r.result_status = #{resultStatus}</if>
+            <if test="params.beginTime != null and params.beginTime != ''">and r.create_time &gt;= #{params.beginTime}</if>
+            <if test="params.endTime != null and params.endTime != ''">and r.create_time &lt;= #{params.endTime}</if>
+        </where>
+        order by r.create_time desc, r.id desc
+        limit 100
+    </select>
+
+    <select id="countCompanyUnreadDelayedResults" resultType="int">
+        select count(*)
+        from biz_medical_query_request
+        where company_id = #{companyId}
+          and service_mode = 'DELAYED'
+          and process_status = 'COMPLETED'
+          and upload_status = 'UPLOADED'
+          and view_status = 'UNREAD'
+    </select>
+
+    <update id="markCompanyDelayedRequestRead">
+        update biz_medical_query_request
+        set view_status = 'READ', update_time = sysdate()
+        where company_id = #{companyId}
+          and request_no = #{requestNo}
+          and service_mode = 'DELAYED'
+          and process_status = 'COMPLETED'
+          and upload_status = 'UPLOADED'
+          and view_status = 'UNREAD'
+    </update>
+
+    <select id="selectDelayedRequestList" parameterType="com.ruoyi.business.domain.BizMedicalQueryRequest"
+            resultMap="BizMedicalQueryRequestResult">
+        select r.*, c.company_name
+        from biz_medical_query_request r
+        left join biz_insurance_company c on c.id = r.company_id
+        <where>
+            r.service_mode = 'DELAYED'
+            <if test="requestNo != null and requestNo != ''">and r.request_no like concat('%', #{requestNo}, '%')</if>
+            <if test="companyName != null and companyName != ''">and c.company_name like concat('%', #{companyName}, '%')</if>
+            <if test="patientName != null and patientName != ''">and r.patient_name like concat('%', #{patientName}, '%')</if>
+            <if test="idCard != null and idCard != ''">and r.id_card like concat('%', #{idCard}, '%')</if>
+            <if test="processStatus != null and processStatus != ''">and r.process_status = #{processStatus}</if>
+            <if test="uploadStatus != null and uploadStatus != ''">and r.upload_status = #{uploadStatus}</if>
+            <if test="resultStatus != null and resultStatus != ''">and r.result_status = #{resultStatus}</if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                and r.create_time &gt;= #{params.beginTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                and r.create_time &lt;= #{params.endTime}
+            </if>
+        </where>
+        order by r.create_time desc, r.id desc
+    </select>
+
+    <select id="selectDelayedRequestById" parameterType="Long" resultMap="BizMedicalQueryRequestResult">
+        select r.*, c.company_name
+        from biz_medical_query_request r
+        left join biz_insurance_company c on c.id = r.company_id
+        where r.id = #{id}
+          and r.service_mode = 'DELAYED'
+    </select>
+
+    <select id="selectDelayedRequestByIdForUpdate" parameterType="Long" resultMap="BizMedicalQueryRequestResult">
+        select *
+        from biz_medical_query_request
+        where id = #{id}
+          and service_mode = 'DELAYED'
+        for update
+    </select>
+
+    <update id="markDelayedProcessing">
+        update biz_medical_query_request
+        set process_status = 'PROCESSING',
+            process_start_time = sysdate(),
+            version = version + 1,
+            update_time = sysdate()
+        where id = #{id}
+          and service_mode = 'DELAYED'
+          and process_status = 'PENDING'
+          and upload_status = 'NOT_UPLOADED'
+    </update>
+
+    <update id="completeDelayedRequest">
+        update biz_medical_query_request
+        set process_status = 'COMPLETED',
+            upload_status = 'UPLOADED',
+            result_status = #{resultStatus},
+            view_status = 'UNREAD',
+            fee_snapshot = #{feeSnapshot},
+            query_log_id = #{queryLogId},
+            complete_time = sysdate(),
+            version = version + 1,
+            update_time = sysdate()
+        where id = #{id}
+          and service_mode = 'DELAYED'
+          and process_status = 'PROCESSING'
+          and upload_status = 'NOT_UPLOADED'
+    </update>
+
+    <update id="markProcessing">
+        update biz_medical_query_request
+        set process_status = 'PROCESSING',
+            process_start_time = sysdate(),
+            version = version + 1,
+            update_time = sysdate()
+        where id = #{id}
+          and process_status = 'PENDING'
+          and upload_status = 'NOT_UPLOADED'
+    </update>
+
+    <update id="finishRequest">
+        update biz_medical_query_request
+        set process_status = #{processStatus},
+            upload_status = #{uploadStatus},
+            result_status = #{resultStatus},
+            fee_snapshot = #{feeSnapshot},
+            query_log_id = #{queryLogId},
+            complete_time = sysdate(),
+            version = version + 1,
+            update_time = sysdate()
+        where id = #{id}
+          and process_status = 'PROCESSING'
+    </update>
+</mapper>

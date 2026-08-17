@@ -11,6 +11,8 @@ public interface BizInsuranceCompanyMapper
 {
     public BizInsuranceCompany selectBizInsuranceCompanyById(Long id);
 
+    public BizInsuranceCompany selectBizInsuranceCompanyByIdForUpdate(Long id);
+
     public BizInsuranceCompany selectBizInsuranceCompanyByAppKey(String appKey);
 
     public BizInsuranceCompany selectBizInsuranceCompanyByUsername(String username);

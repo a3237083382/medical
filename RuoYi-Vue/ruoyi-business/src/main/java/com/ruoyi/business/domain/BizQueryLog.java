@@ -15,6 +15,14 @@ public class BizQueryLog extends BaseEntity
 
     private Long id;
 
+    private String requestNo;
+
+    private String batchNo;
+
+    private String serviceMode;
+
+    private String entryType;
+
     private Long companyId;
 
     private String companyName;
@@ -48,6 +56,18 @@ public class BizQueryLog extends BaseEntity
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public String getRequestNo() { return requestNo; }
+    public void setRequestNo(String requestNo) { this.requestNo = requestNo; }
+
+    public String getBatchNo() { return batchNo; }
+    public void setBatchNo(String batchNo) { this.batchNo = batchNo; }
+
+    public String getServiceMode() { return serviceMode; }
+    public void setServiceMode(String serviceMode) { this.serviceMode = serviceMode; }
+
+    public String getEntryType() { return entryType; }
+    public void setEntryType(String entryType) { this.entryType = entryType; }
 
     public Long getCompanyId() { return companyId; }
     public void setCompanyId(Long companyId) { this.companyId = companyId; }

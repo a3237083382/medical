@@ -14,4 +14,9 @@ public interface MedicalDataSource
     {
         return "mock";
     }
+
+    default String sourceCode(MedicalQueryRequest request)
+    {
+        return sourceCode();
+    }
 }

@@ -187,6 +187,7 @@ public class BillingSettlementServiceTest
         }
 
         @Override public BizInsuranceCompany selectBizInsuranceCompanyById(Long id) { return company; }
+        @Override public BizInsuranceCompany selectBizInsuranceCompanyByIdForUpdate(Long id) { return company; }
         @Override public BizInsuranceCompany selectBizInsuranceCompanyByAppKey(String appKey) { return null; }
         @Override public BizInsuranceCompany selectBizInsuranceCompanyByUsername(String username) { return null; }
         @Override public int updateBizInsuranceCompanyLoginInfo(BizInsuranceCompany company) { return 0; }

@@ -9,9 +9,11 @@ public class MedicalQueryResult
     private String code = "0";
     private String msg = "success";
     private Long queryId;
+    private String requestNo;
+    private String processStatus;
+    private String uploadStatus;
     private String resultStatus;
     private String serviceStatus;
-    @JsonIgnore
     private BigDecimal fee;
     @JsonIgnore
     private BigDecimal balanceAfter;
@@ -45,6 +47,36 @@ public class MedicalQueryResult
     public void setQueryId(Long queryId)
     {
         this.queryId = queryId;
+    }
+
+    public String getRequestNo()
+    {
+        return requestNo;
+    }
+
+    public void setRequestNo(String requestNo)
+    {
+        this.requestNo = requestNo;
+    }
+
+    public String getProcessStatus()
+    {
+        return processStatus;
+    }
+
+    public void setProcessStatus(String processStatus)
+    {
+        this.processStatus = processStatus;
+    }
+
+    public String getUploadStatus()
+    {
+        return uploadStatus;
+    }
+
+    public void setUploadStatus(String uploadStatus)
+    {
+        this.uploadStatus = uploadStatus;
     }
 
     public String getResultStatus()
