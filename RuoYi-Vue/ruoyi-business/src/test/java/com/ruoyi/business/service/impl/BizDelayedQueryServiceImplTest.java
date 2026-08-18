@@ -1,17 +1,28 @@
 package com.ruoyi.business.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockMultipartFile;
 
+import com.alibaba.fastjson2.JSON;
 import com.ruoyi.business.domain.BizCompanyQueryPrice;
 import com.ruoyi.business.domain.BizDelayedQueryRequest;
 import com.ruoyi.business.domain.BizDelayedQueryResult;
@@ -39,9 +50,149 @@ public class BizDelayedQueryServiceImplTest
 
         assertEquals("PENDING", submitted.getQueryStatus());
         assertEquals("NOT_UPLOADED", submitted.getUploadStatus());
+        assertEquals("MEDICAL", submitted.getQueryType());
         assertEquals(new BigDecimal("20.00"), submitted.getReservedFee());
         assertEquals(new BigDecimal("20.00"), monthlyUsageMapper.reservedAmount);
         assertTrue(queryLogMapper.logs.isEmpty());
+    }
+
+    @Test
+    public void submitPersistsSelectedBigDataQueryType()
+    {
+        FakeRequestMapper requestMapper = new FakeRequestMapper(null);
+        BizDelayedQueryServiceImpl service = service(requestMapper, new FakeResultMapper(),
+                new FakeQueryLogMapper(), new FakeMonthlyUsageMapper());
+
+        BizDelayedQueryRequest submitted = service.submit(10L, "测试保险公司", "李四",
+                "430102199202021234", "BIG_DATA", "127.0.0.1");
+
+        assertEquals("BIG_DATA", submitted.getQueryType());
+    }
+
+    @Test
+    public void submitDoesNotReusePendingRequestFromAnotherQueryType()
+    {
+        BizDelayedQueryRequest existing = pendingRequest();
+        FakeRequestMapper requestMapper = new FakeRequestMapper(existing);
+        BizDelayedQueryServiceImpl service = service(requestMapper, new FakeResultMapper(),
+                new FakeQueryLogMapper(), new FakeMonthlyUsageMapper());
+
+        BizDelayedQueryRequest submitted = service.submit(10L, "测试保险公司", existing.getPatientName(),
+                existing.getIdCard(), "BIG_DATA", "127.0.0.1");
+
+        assertEquals("BIG_DATA", submitted.getQueryType());
+        assertEquals(1, requestMapper.insertedRequests.size());
+    }
+
+    @Test
+    public void submitRejectsUnsupportedQueryType()
+    {
+        BizDelayedQueryServiceImpl service = service(new FakeRequestMapper(null), new FakeResultMapper(),
+                new FakeQueryLogMapper(), new FakeMonthlyUsageMapper());
+
+        assertThrows(IllegalArgumentException.class, () -> service.submit(10L, "测试保险公司", "李四",
+                "430102199202021234", "UNKNOWN", "127.0.0.1"));
+    }
+
+    @Test
+    public void importMedicalTemplateMapsOnlyRequiredColumnsAndDerivesValues() throws Exception
+    {
+        BizDelayedQueryRequest request = pendingRequest();
+        FakeResultMapper resultMapper = new FakeResultMapper();
+        BizDelayedQueryServiceImpl service = service(new FakeRequestMapper(request), resultMapper,
+                new FakeQueryLogMapper(), new FakeMonthlyUsageMapper());
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("人员就诊记录");
+        Row header = sheet.createRow(0);
+        String[] headers = { "定点医药机构名称", "就诊时间", "病种名称", "有效标志", "险种类型", "结束时间", "备注" };
+        for (int i = 0; i < headers.length; i++) header.createCell(i).setCellValue(headers[i]);
+        Row outpatient = sheet.createRow(1);
+        String[] values = { "测试医院", "2026-08-01 09:00:00", "普通门诊复查", "有效", "职工医保", "2026-08-03 10:00:00", "不应输出" };
+        for (int i = 0; i < values.length; i++) outpatient.createCell(i).setCellValue(values[i]);
+        Row footer = sheet.createRow(2);
+        footer.createCell(4).setCellValue("*");
+        footer.createCell(6).setCellValue("说明行不应导入");
+
+        service.importExcel(1L, workbookFile("医保结果.xlsx", workbook), "operator");
+
+        assertEquals(1, resultMapper.rows.size());
+        Map<String, Object> mapped = JSON.parseObject(resultMapper.rows.get(0).getRawJson(), LinkedHashMap.class);
+        assertEquals(List.of("定点医药机构名称", "就诊时间", "就诊类型", "诊断结果", "是否报销", "结束时间"),
+                new ArrayList<>(mapped.keySet()));
+        assertEquals("门诊", mapped.get("就诊类型"));
+        assertEquals("普通门诊复查", mapped.get("诊断结果"));
+        assertEquals("是", mapped.get("是否报销"));
+        assertFalse(mapped.containsKey("险种类型"));
+        assertFalse(mapped.containsKey("备注"));
+    }
+
+    @Test
+    public void importMedicalTemplateUsesDatesAndLeavesUnknownDerivedValueBlank() throws Exception
+    {
+        BizDelayedQueryRequest request = pendingRequest();
+        FakeResultMapper resultMapper = new FakeResultMapper();
+        BizDelayedQueryServiceImpl service = service(new FakeRequestMapper(request), resultMapper,
+                new FakeQueryLogMapper(), new FakeMonthlyUsageMapper());
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("人员就诊记录");
+        Row header = sheet.createRow(0);
+        String[] headers = { "定点医药机构名称", "就诊时间", "病种名称", "有效标志", "险种类型", "结束时间" };
+        for (int i = 0; i < headers.length; i++) header.createCell(i).setCellValue(headers[i]);
+        Row inpatient = sheet.createRow(1);
+        String[] inpatientValues = { "测试医院", "2026/8/1", "肺炎", "无效", "居民医保", "2026/8/3" };
+        for (int i = 0; i < inpatientValues.length; i++) inpatient.createCell(i).setCellValue(inpatientValues[i]);
+        Row unknown = sheet.createRow(2);
+        String[] unknownValues = { "测试医院", "2026/8/5", "复查", "", "居民医保", "" };
+        for (int i = 0; i < unknownValues.length; i++) unknown.createCell(i).setCellValue(unknownValues[i]);
+
+        service.importExcel(1L, workbookFile("医保结果.xlsx", workbook), "operator");
+
+        Map<String, Object> first = JSON.parseObject(resultMapper.rows.get(0).getRawJson(), LinkedHashMap.class);
+        Map<String, Object> second = JSON.parseObject(resultMapper.rows.get(1).getRawJson(), LinkedHashMap.class);
+        assertEquals("住院", first.get("就诊类型"));
+        assertEquals("否", first.get("是否报销"));
+        assertEquals("", second.get("就诊类型"));
+        assertEquals("", second.get("是否报销"));
+    }
+
+    @Test
+    public void importBigDataTemplateKeepsOriginalColumnsAndValues() throws Exception
+    {
+        BizDelayedQueryRequest request = pendingRequest();
+        request.setQueryType("BIG_DATA");
+        FakeResultMapper resultMapper = new FakeResultMapper();
+        BizDelayedQueryServiceImpl service = service(new FakeRequestMapper(request), resultMapper,
+                new FakeQueryLogMapper(), new FakeMonthlyUsageMapper());
+        Workbook workbook = new HSSFWorkbook();
+        Sheet sheet = workbook.createSheet("就诊排查");
+        sheet.createRow(0).createCell(0).setCellValue("大数据排查");
+        Row header = sheet.createRow(1);
+        String[] headers = { "姓名", "性别", "身份证号码", "就诊医院", "日期", "门诊/住院/体检", "医嘱", "诊断" };
+        for (int i = 0; i < headers.length; i++) header.createCell(i).setCellValue(headers[i]);
+        Row inpatient = sheet.createRow(2);
+        String[] inpatientValues = { "张三", "男", "430102199001011234", "测试医院", "2026.08.01-2026.08.05", "住院", "注意休息", "肺炎" };
+        for (int i = 0; i < inpatientValues.length; i++) inpatient.createCell(i).setCellValue(inpatientValues[i]);
+        Row outpatient = sheet.createRow(3);
+        String[] outpatientValues = { "张三", "男", "430102199001011234", "测试医院", "2026.08.10", "眼科门诊", "", "结膜炎" };
+        for (int i = 0; i < outpatientValues.length; i++) outpatient.createCell(i).setCellValue(outpatientValues[i]);
+
+        service.importExcel(1L, workbookFile("大数据结果.xls", workbook), "operator");
+
+        assertEquals(2, resultMapper.rows.size());
+        Map<String, Object> mapped = JSON.parseObject(resultMapper.rows.get(0).getRawJson(), LinkedHashMap.class);
+        assertEquals(List.of(headers), new ArrayList<>(mapped.keySet()));
+        assertEquals("张三", mapped.get("姓名"));
+        assertEquals("男", mapped.get("性别"));
+        assertEquals("430102199001011234", mapped.get("身份证号码"));
+        assertEquals("测试医院", mapped.get("就诊医院"));
+        assertEquals("2026.08.01-2026.08.05", mapped.get("日期"));
+        assertEquals("住院", mapped.get("门诊/住院/体检"));
+        assertEquals("注意休息", mapped.get("医嘱"));
+        assertEquals("肺炎", mapped.get("诊断"));
+
+        Map<String, Object> singleDate = JSON.parseObject(resultMapper.rows.get(1).getRawJson(), LinkedHashMap.class);
+        assertEquals("2026.08.10", singleDate.get("日期"));
+        assertEquals("眼科门诊", singleDate.get("门诊/住院/体检"));
     }
 
     @Test
@@ -93,6 +244,68 @@ public class BizDelayedQueryServiceImplTest
         assertEquals(existing.getRequestNo(), submitted.get(0).getRequestNo());
         assertEquals(1, requestMapper.insertedRequests.size());
         assertEquals(new BigDecimal("20.00"), monthlyUsageMapper.reservedAmount);
+    }
+
+    @Test
+    public void cancelPendingRequestKeepsRecordButClearsResultAndReleasesBudget()
+    {
+        BizDelayedQueryRequest request = pendingRequest();
+        request.setReservedFee(new BigDecimal("20.00"));
+        request.setBillingMonth("2026-08");
+        request.setResultStatus("HIT");
+        request.setResultMessage("草稿");
+        request.setHandlerName("operator");
+        FakeRequestMapper requestMapper = new FakeRequestMapper(request);
+        FakeResultMapper resultMapper = new FakeResultMapper();
+        resultMapper.rows.add(row("{\"医院\":\"测试医院\"}"));
+        FakeMonthlyUsageMapper monthlyUsageMapper = new FakeMonthlyUsageMapper();
+        monthlyUsageMapper.reservedAmount = new BigDecimal("20.00");
+        BizDelayedQueryServiceImpl service = service(requestMapper, resultMapper,
+                new FakeQueryLogMapper(), monthlyUsageMapper);
+
+        Map<String, Object> result = service.cancelItem(10L, 1L);
+
+        assertEquals(true, result.get("cancelled"));
+        assertEquals("CANCELLED", request.getQueryStatus());
+        assertEquals("NOT_UPLOADED", request.getUploadStatus());
+        assertNull(request.getResultStatus());
+        assertNull(request.getResultMessage());
+        assertNull(request.getHandlerName());
+        assertNull(request.getFee());
+        assertEquals(BigDecimal.ZERO, request.getReservedFee());
+        assertTrue(resultMapper.rows.isEmpty());
+        assertEquals(0, monthlyUsageMapper.reservedAmount.compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    public void cancelUploadedRequestIsRejectedAndKeepsResult()
+    {
+        BizDelayedQueryRequest request = completedRequest();
+        FakeRequestMapper requestMapper = new FakeRequestMapper(request);
+        FakeResultMapper resultMapper = new FakeResultMapper();
+        resultMapper.rows.add(row("{\"医院\":\"测试医院\"}"));
+        BizDelayedQueryServiceImpl service = service(requestMapper, resultMapper,
+                new FakeQueryLogMapper(), new FakeMonthlyUsageMapper());
+
+        assertThrows(IllegalStateException.class, () -> service.cancelItem(10L, 1L));
+        assertEquals("QUERIED", request.getQueryStatus());
+        assertEquals(1, resultMapper.rows.size());
+    }
+
+    @Test
+    public void cancelledRequestCannotBeCompletedFromAStaleAdminWindow()
+    {
+        BizDelayedQueryRequest request = pendingRequest();
+        request.setQueryStatus("CANCELLED");
+        FakeResultMapper resultMapper = new FakeResultMapper();
+        BizDelayedQueryServiceImpl service = service(new FakeRequestMapper(request), resultMapper,
+                new FakeQueryLogMapper(), new FakeMonthlyUsageMapper());
+
+        assertThrows(IllegalStateException.class, () -> service.saveDraft(1L,
+                List.of(row("{\"医院\":\"测试医院\"}")), "HIT", null, "operator"));
+        assertThrows(IllegalStateException.class, () -> service.complete(1L,
+                List.of(row("{\"医院\":\"测试医院\"}")), "HIT", null, "operator"));
+        assertTrue(resultMapper.rows.isEmpty());
     }
 
 
@@ -244,6 +457,7 @@ public class BizDelayedQueryServiceImplTest
         request.setCompanyNameSnapshot("测试保险公司");
         request.setPatientName("张三");
         request.setIdCard("430102199001011234");
+        request.setQueryType("MEDICAL");
         request.setQueryStatus("PENDING");
         request.setUploadStatus("NOT_UPLOADED");
         request.setSubmitTime(new Date());
@@ -274,6 +488,50 @@ public class BizDelayedQueryServiceImplTest
         return result;
     }
 
+    @Test
+    public void coverageRowAloneCannotSatisfyHitResultValidation()
+    {
+        BizDelayedQueryServiceImpl service = service(new FakeRequestMapper(pendingRequest()), new FakeResultMapper(),
+                new FakeQueryLogMapper(), new FakeMonthlyUsageMapper());
+        BizDelayedQueryResult coverage = row("{\"__recordType\":\"INSURANCE_COVERAGE\",\"参保状态\":\"正常\"}");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.complete(1L, List.of(coverage), "HIT", "已查询到明细", "operator"));
+    }
+
+    @Test
+    public void reimportMedicalExcelPreservesSavedCoverageRows() throws Exception
+    {
+        BizDelayedQueryRequest request = pendingRequest();
+        FakeResultMapper resultMapper = new FakeResultMapper();
+        resultMapper.rows.add(row("{\"__recordType\":\"INSURANCE_COVERAGE\",\"参保状态\":\"正常参保\"}"));
+        BizDelayedQueryServiceImpl service = service(new FakeRequestMapper(request), resultMapper,
+                new FakeQueryLogMapper(), new FakeMonthlyUsageMapper());
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("人员就诊记录");
+        Row header = sheet.createRow(0);
+        String[] headers = { "定点医药机构名称", "就诊时间", "病种名称", "有效标志", "险种类型", "结束时间" };
+        for (int i = 0; i < headers.length; i++) header.createCell(i).setCellValue(headers[i]);
+        Row data = sheet.createRow(1);
+        String[] values = { "测试医院", "2026-08-01", "肺炎", "有效", "职工医保", "2026-08-03" };
+        for (int i = 0; i < values.length; i++) data.createCell(i).setCellValue(values[i]);
+
+        service.importExcel(1L, workbookFile("医保结果.xlsx", workbook), "operator");
+
+        assertEquals(2, resultMapper.rows.size());
+        assertTrue(resultMapper.rows.stream().anyMatch(result -> result.getRawJson().contains("INSURANCE_COVERAGE")));
+        assertTrue(resultMapper.rows.stream().anyMatch(result -> result.getRawJson().contains("测试医院")));
+    }
+
+    private static MockMultipartFile workbookFile(String filename, Workbook workbook) throws Exception
+    {
+        try (workbook; ByteArrayOutputStream output = new ByteArrayOutputStream())
+        {
+            workbook.write(output);
+            return new MockMultipartFile("file", filename, "application/octet-stream", output.toByteArray());
+        }
+    }
+
     private static class FakeRequestMapper implements BizDelayedQueryRequestMapper
     {
         private BizDelayedQueryRequest request;
@@ -285,15 +543,16 @@ public class BizDelayedQueryServiceImplTest
         }
 
         @Override public BizDelayedQueryRequest selectBizDelayedQueryRequestById(Long id) { return request; }
-        @Override public BizDelayedQueryRequest selectPendingDuplicate(Long companyId, String patientName, String idCard)
+        @Override public BizDelayedQueryRequest selectPendingDuplicate(Long companyId, String patientName, String idCard,
+                String queryType)
         {
-            if (matchesPending(request, companyId, patientName, idCard))
+            if (matchesPending(request, companyId, patientName, idCard, queryType))
             {
                 return request;
             }
             for (BizDelayedQueryRequest item : insertedRequests)
             {
-                if (matchesPending(item, companyId, patientName, idCard))
+                if (matchesPending(item, companyId, patientName, idCard, queryType))
                 {
                     return item;
                 }
@@ -301,6 +560,15 @@ public class BizDelayedQueryServiceImplTest
             return null;
         }
         @Override public List<BizDelayedQueryRequest> selectBizDelayedQueryRequestList(BizDelayedQueryRequest filter) { return List.of(request); }
+        @Override public int countPendingRequests()
+        {
+            int count = request != null && "PENDING".equals(request.getQueryStatus())
+                    && "NOT_UPLOADED".equals(request.getUploadStatus()) ? 1 : 0;
+            return count + (int) insertedRequests.stream()
+                    .filter(item -> item != request && "PENDING".equals(item.getQueryStatus())
+                            && "NOT_UPLOADED".equals(item.getUploadStatus()))
+                    .count();
+        }
         @Override public int insertBizDelayedQueryRequest(BizDelayedQueryRequest request)
         {
             request.setId((long) insertedRequests.size() + 1);
@@ -309,13 +577,40 @@ public class BizDelayedQueryServiceImplTest
             return 1;
         }
         @Override public int updateBizDelayedQueryRequest(BizDelayedQueryRequest request) { copy(request, this.request); return 1; }
+        @Override public int cancelPendingRequest(Long id, Long companyId)
+        {
+            if (request == null || !id.equals(request.getId()) || !companyId.equals(request.getCompanyId())
+                    || !"PENDING".equals(request.getQueryStatus())
+                    || !"NOT_UPLOADED".equals(request.getUploadStatus()))
+            {
+                return 0;
+            }
+            request.setQueryStatus("CANCELLED");
+            request.setResultStatus(null);
+            request.setResultMessage(null);
+            request.setHandlerId(null);
+            request.setHandlerName(null);
+            request.setHandledTime(null);
+            request.setUploadedTime(null);
+            request.setFee(null);
+            request.setReservedFee(BigDecimal.ZERO);
+            request.setBillingMonth(null);
+            request.setChargedFlag("0");
+            request.setPriceConfigId(null);
+            request.setModifyBy(null);
+            request.setModifyTime(null);
+            request.setModifyReason(null);
+            return 1;
+        }
 
-        private boolean matchesPending(BizDelayedQueryRequest item, Long companyId, String patientName, String idCard)
+        private boolean matchesPending(BizDelayedQueryRequest item, Long companyId, String patientName, String idCard,
+                String queryType)
         {
             return item != null
                     && companyId.equals(item.getCompanyId())
-                    && patientName.equals(item.getPatientName())
-                    && idCard.equals(item.getIdCard())
+                && patientName.equals(item.getPatientName())
+                && idCard.equals(item.getIdCard())
+                && queryType.equals(item.getQueryType())
                     && ("PENDING".equals(item.getQueryStatus()) || "NOT_UPLOADED".equals(item.getUploadStatus()));
         }
 

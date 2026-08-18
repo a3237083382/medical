@@ -55,25 +55,48 @@
     .empty-copy { margin-top:4px; font-size:12px; }
     .result-content { display:none; }
     .result-content.show { display:block; }
-    .result-meta { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; padding:18px 22px; background:#fbfcfe; border-bottom:1px solid var(--line); }
-    .meta-label { color:var(--muted); font-size:11px; }
-    .meta-value { margin-top:3px; font-weight:700; overflow-wrap:anywhere; }
+    .result-filters { display:grid; grid-template-columns:1fr 1.35fr 1fr 1fr 1.1fr 1.1fr auto; gap:12px; align-items:end; padding:18px 22px; background:#fbfcfe; border-bottom:1px solid var(--line); }
+    .filter-field { min-width:0; }
+    .filter-field label { display:block; margin-bottom:6px; color:#475467; font-size:12px; font-weight:600; }
+    .filter-field input, .filter-field select { width:100%; height:38px; padding:0 10px; border:1px solid var(--line); border-radius:7px; color:var(--text); background:#fff; outline:none; }
+    .filter-field input:focus, .filter-field select:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+    .filter-actions { display:flex; gap:8px; }
+    .filter-actions .btn { min-height:38px; white-space:nowrap; }
     .badge { display:inline-flex; align-items:center; min-height:24px; padding:0 8px; border-radius:999px; font-size:11px; font-weight:700; }
     .badge.pending { color:var(--orange); background:var(--orange-soft); }
     .badge.success { color:var(--green); background:var(--green-soft); }
     .badge.error { color:var(--red); background:var(--red-soft); }
     .result-body { padding:20px 22px; }
+    .result-toolbar { display:none; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:20px; margin-bottom:16px; }
+    .result-toolbar.show { display:flex; }
+    .result-toolbar.show { display:grid; }
+    .result-person { min-width:0; display:flex; justify-content:center; gap:24px; color:#475467; font-size:13px; }
+    .result-person strong { color:#1d2939; font-weight:700; }
+    .result-detail-title { font-weight:700; color:#344054; text-align:right; white-space:nowrap; }
+    .btn-view { min-height:30px; padding:0 12px; border:1px solid #bfd0f4; border-radius:6px; color:var(--blue); background:var(--blue-soft); font-weight:600; }
+    .btn-view:hover { border-color:var(--blue); background:#e3edff; }
+    .result-action { display:flex; align-items:center; gap:10px; min-height:30px; }
+    .btn-cancel { min-height:30px; padding:0 12px; border:1px solid #f3b7b1; border-radius:6px; color:#b42318; background:#fff5f4; font-weight:600; }
+    .btn-cancel:hover { border-color:#d92d20; background:#fee4e2; }
+    .btn-cancel:disabled { cursor:not-allowed; opacity:.55; }
     .result-summary { margin:0 0 16px; color:#475467; }
+    .summary-count { color:var(--red); font-weight:800; }
+    .pending-text { color:var(--orange); font-weight:700; }
     .result-table-wrap { overflow:auto; border:1px solid var(--line); border-radius:8px; }
     .result-table { width:100%; border-collapse:collapse; min-width:500px; }
-    .result-table th, .result-table td { padding:11px 13px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; overflow-wrap:anywhere; }
+    .result-table th, .result-table td { padding:11px 13px; border-right:1px solid #c5d0df; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; overflow-wrap:anywhere; }
+    .result-table th:last-child, .result-table td:last-child { border-right:0; }
     .result-table th { color:#475467; background:#f8fafc; font-size:12px; font-weight:700; }
     .result-table td { font-size:13px; }
     .result-table tr:last-child td { border-bottom:0; }
+    .coverage-result { margin-top:22px; }
+    .coverage-result h3 { margin:0 0 10px; color:#344054; font-size:14px; }
     .polling { display:none; margin-top:14px; padding:12px 14px; border-radius:8px; color:var(--orange); background:var(--orange-soft); font-size:12px; }
     .polling.show { display:block; }
     .footnote { margin-top:18px; color:var(--muted); font-size:12px; }
-    .mode-tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:4px; margin-bottom:18px; border:1px solid var(--line); border-radius:8px; background:#f8fafc; }
+    .selection-step { margin-bottom:16px; }
+    .selector-label { margin-bottom:6px; color:#475467; font-size:12px; font-weight:600; }
+    .mode-tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:4px; border:1px solid var(--line); border-radius:8px; background:#f8fafc; }
     .mode-tab { min-height:34px; border:0; border-radius:6px; background:transparent; color:var(--muted); font-weight:600; }
     .mode-tab.active { color:var(--blue); background:#fff; box-shadow:0 1px 3px rgba(15,35,65,.12); }
     .mode-panel { display:none; }
@@ -88,26 +111,29 @@
     .preview-table th { position:sticky; top:0; color:#475467; background:#f8fafc; }
     .preview-table input { width:100%; min-width:110px; height:30px; padding:0 7px; border:1px solid var(--line); border-radius:5px; }
     .row-invalid { background:var(--red-soft); }
-    @media (max-width:800px) { .page { height:auto; min-height:100vh; overflow:visible; } .topbar { padding:13px 16px; align-items:flex-start; } .top-actions { flex-wrap:wrap; justify-content:flex-end; } .main { padding:16px; } .workspace { height:auto; grid-template-columns:1fr; } .panel { height:auto; overflow:visible; } .result-shell { min-height:520px; } .result-meta { grid-template-columns:1fr 1fr; } }
-    @media (max-width:480px) { .app-key-label { display:none; } .topbar { gap:8px; flex-wrap:wrap; } .top-actions { width:100%; justify-content:flex-end; } .result-meta { grid-template-columns:1fr; } .panel-head, .panel-body, .result-body { padding-left:16px; padding-right:16px; } }
+    @media (max-width:1100px) { .result-filters { grid-template-columns:repeat(3,minmax(0,1fr)); } .filter-actions { align-self:end; } }
+    @media (max-width:800px) { .page { height:auto; min-height:100vh; overflow:visible; } .topbar { padding:13px 16px; align-items:flex-start; } .top-actions { flex-wrap:wrap; justify-content:flex-end; } .main { padding:16px; } .workspace { width:100%; min-width:0; height:auto; grid-template-columns:minmax(0,1fr); } .panel { width:100%; min-width:0; height:auto; overflow:visible; } .result-shell { min-height:520px; } .result-filters { grid-template-columns:1fr 1fr; } .result-toolbar.show { width:100%; min-width:0; grid-template-columns:auto minmax(0,1fr); } .result-person { min-width:0; grid-column:1 / -1; grid-row:2; justify-content:flex-start; flex-wrap:wrap; } .result-detail-title { min-width:0; white-space:normal; overflow-wrap:anywhere; } }
+    @media (max-width:480px) { .app-key-label { display:none; } .topbar { gap:8px; flex-wrap:wrap; } .top-actions { width:100%; justify-content:flex-end; } .result-filters { grid-template-columns:1fr; padding-left:16px; padding-right:16px; } .filter-actions .btn { flex:1; } .panel-head, .panel-body, .result-body { padding-left:16px; padding-right:16px; } .result-toolbar.show { grid-template-columns:1fr; } .result-detail-title { grid-row:2; text-align:left; } .result-person { grid-row:3; gap:8px 16px; } }
   </style>
 </head>
 <body>
   <div class="page">
     <header class="topbar">
-      <div class="brand"><div class="brand-mark">医</div><div><div class="brand-title">湖南省医疗数据查询平台</div><div class="brand-sub">保险公司嵌入式服务 · 单人精准延时查询</div></div></div>
+      <div class="brand"><div class="brand-mark">医</div><div><div class="brand-title">湖南省医疗数据查询平台</div><div class="brand-sub">保险公司嵌入式医疗数据查询服务</div></div></div>
       <div class="top-actions"><span class="app-key-label" id="appKeyLabel">未接入</span><span class="status" id="accessStatus"><span class="dot"></span><span id="accessText">待接入</span></span><button class="btn-link" id="resetBtn" type="button">重新接入</button></div>
     </header>
     <main class="main">
       <div class="notice" id="notice" role="alert"></div>
       <div class="workspace">
         <section class="panel">
-          <div class="panel-head"><div><h1 class="panel-title">精准延时查询</h1><p class="panel-desc">提交后由平台人员处理，完成后可查看结果</p></div></div>
+          <div class="panel-head"><div><h1 class="panel-title" id="queryPanelTitle">精准延时查询</h1><p class="panel-desc" id="queryPanelDesc">提交后由平台人员处理，完成后可查看结果</p></div></div>
           <div class="panel-body">
             <div class="field"><label for="appKey">AppKey</label><div class="key-row"><input id="appKey" type="password" autocomplete="off" placeholder="请输入保险公司 AppKey"><button class="btn" id="connectBtn" type="button">验证接入</button></div></div>
             <div class="hint" id="accessHint">AppKey 仅保存在当前页面内存中，刷新页面后需要重新验证。</div>
             <div class="divider"></div>
-            <div class="mode-tabs"><button class="mode-tab active" id="singleModeBtn" type="button">单人查询</button><button class="mode-tab" id="batchModeBtn" type="button">批量查询</button></div>
+            <div class="selection-step"><div class="selector-label">查询方式</div><div class="mode-tabs"><button class="mode-tab active" id="delayedTimingBtn" type="button">延时精准查询</button><button class="mode-tab" id="realtimeTimingBtn" type="button">实时查询</button></div></div>
+            <div class="selection-step"><div class="selector-label">数据类型</div><div class="mode-tabs"><button class="mode-tab active" id="medicalQueryBtn" type="button">医保查询</button><button class="mode-tab" id="bigDataQueryBtn" type="button">大数据查询</button></div></div>
+            <div class="selection-step"><div class="selector-label">查询对象</div><div class="mode-tabs"><button class="mode-tab active" id="singleModeBtn" type="button">单人查询</button><button class="mode-tab" id="batchModeBtn" type="button">批量查询</button></div></div>
             <div class="mode-panel show" id="singlePanel">
               <div class="field"><label for="personName">姓名</label><input id="personName" type="text" maxlength="30" autocomplete="off" placeholder="请输入投保人姓名"></div>
               <div class="field"><label for="idCard">身份证号</label><input id="idCard" type="text" maxlength="18" autocomplete="off" placeholder="请输入 18 位身份证号"></div>
@@ -128,8 +154,8 @@
           <div class="panel-head"><div><h2 class="panel-title">查询结果</h2><p class="panel-desc">提交请求后，这里会显示处理状态</p></div></div>
           <div class="result-empty" id="resultEmpty"><div><div class="empty-icon">⌕</div><div class="empty-title">暂无查询记录</div><div class="empty-copy">验证 AppKey 后填写人员信息即可提交</div></div></div>
           <div class="result-content" id="resultContent">
-            <div class="result-meta"><div><div class="meta-label">请求编号</div><div class="meta-value" id="requestNo">-</div></div><div><div class="meta-label">处理状态</div><div class="meta-value" id="processStatus">-</div></div><div><div class="meta-label">结果状态</div><div class="meta-value" id="resultStatus">-</div></div></div>
-            <div class="result-body"><p class="result-summary" id="resultSummary">-</p><div class="polling" id="polling">平台人员正在处理，页面会自动刷新状态。</div><div class="result-table-wrap" id="resultTableWrap" hidden><table class="result-table"><thead id="resultHead"></thead><tbody id="resultRows"></tbody></table></div></div>
+            <div class="result-filters"><div class="filter-field"><label for="resultFilterName">姓名</label><input id="resultFilterName" type="text" placeholder="请输入姓名"></div><div class="filter-field"><label for="resultFilterIdCard">身份证号</label><input id="resultFilterIdCard" type="text" placeholder="请输入身份证号"></div><div class="filter-field"><label for="resultFilterType">查询类型</label><select id="resultFilterType"><option value="">全部</option><option value="MEDICAL">医保查询</option><option value="BIG_DATA">大数据查询</option></select></div><div class="filter-field"><label for="resultFilterStatus">处理状态</label><select id="resultFilterStatus"><option value="">全部</option><option value="PENDING">待处理</option><option value="COMPLETED">已完成</option><option value="CANCELLED">已取消</option></select></div><div class="filter-field"><label for="resultFilterBegin">提交开始日期</label><input id="resultFilterBegin" type="date"></div><div class="filter-field"><label for="resultFilterEnd">提交结束日期</label><input id="resultFilterEnd" type="date"></div><div class="filter-actions"><button class="btn btn-primary" id="resultFilterBtn" type="button">查询</button><button class="btn" id="resultFilterResetBtn" type="button">重置</button></div></div>
+            <div class="result-body"><div class="result-toolbar" id="resultToolbar"><button class="btn" id="backToResultsBtn" type="button">返回查询结果</button><div class="result-person"><span>姓名：<strong id="resultPersonName">-</strong></span><span>身份证号：<strong id="resultPersonIdCard">-</strong></span></div><span class="result-detail-title" id="resultDetailTitle"></span></div><p class="result-summary" id="resultSummary">-</p><div class="result-table-wrap" id="resultTableWrap" hidden><table class="result-table"><thead id="resultHead"></thead><tbody id="resultRows"></tbody></table></div><div class="coverage-result" id="coverageResult" hidden><h3>参保信息</h3><div class="result-table-wrap"><table class="result-table"><thead id="coverageHead"></thead><tbody id="coverageRows"></tbody></table></div></div></div>
           </div>
         </section>
       </div>
@@ -144,7 +170,12 @@
       var requestNo = '';
       var batchNo = '';
       var batchRows = [];
+      var batchInvalidCount = 0;
+      var latestRequests = [];
+      var selectedResultRequestNo = '';
       var pollTimer = null;
+      var timingMode = 'DELAYED';
+      var dataQueryType = 'MEDICAL';
       var el = function (id) { return document.getElementById(id); };
       var statusLabels = { PENDING:'待处理', PROCESSING:'处理中', COMPLETED:'已完成', FAILED:'处理失败', CANCELLED:'已取消' };
       var resultLabels = { HIT:'查得', NO_RESULT:'未查得', HINT_ONLY:'提示', FAILED:'失败' };
@@ -163,31 +194,116 @@
       function setAccess(state, text) { el('accessStatus').className = 'status ' + (state || ''); el('accessText').textContent = text; }
       function showNotice(message) { el('notice').textContent = message || ''; el('notice').classList.toggle('show', !!message); }
       function maskKey(key) { return key.length > 8 ? key.slice(0,4) + '****' + key.slice(-4) : '****'; }
+      function refreshActionState() {
+        var delayedReady = !!appKey && timingMode === 'DELAYED';
+        el('submitBtn').disabled = !delayedReady;
+        el('chooseBatchBtn').disabled = !delayedReady;
+        el('validateBatchBtn').disabled = !delayedReady || !batchRows.length;
+        el('submitBatchBtn').disabled = !delayedReady || !batchRows.length || batchInvalidCount > 0;
+        el('submitBtn').textContent = timingMode === 'REALTIME' ? '实时查询待接入' : '提交精准延时查询';
+        el('queryPanelTitle').textContent = timingMode === 'REALTIME' ? '实时查询' : '精准延时查询';
+        el('queryPanelDesc').textContent = timingMode === 'REALTIME' ? '实时查询界面已开放，服务接口将在后续接入' : '提交后由平台人员处理，完成后可查看结果';
+      }
       function connect() {
         var value = el('appKey').value.trim();
         if (!value) { showNotice('请输入 AppKey'); return; }
         appKey = value; el('connectBtn').disabled = true; setAccess('', '验证中'); el('accessHint').textContent = '正在验证 AppKey…'; showNotice('');
         api('/company/embed/medical/access').then(function (data) {
           if (!data.capabilities || !data.capabilities.singleDelayed) throw new Error('当前公司未开通单人精准延时查询');
-          el('appKeyLabel').textContent = data.appKeyMasked || maskKey(value); el('accessHint').textContent = (data.companyName || '当前公司') + ' 已接入'; setAccess('active','已接入'); el('submitBtn').disabled = false; el('chooseBatchBtn').disabled = false; loadLatestHistory();
-      }).catch(function (error) { appKey = ''; el('appKeyLabel').textContent = '未接入'; el('submitBtn').disabled = true; el('chooseBatchBtn').disabled = true; el('accessHint').textContent = error.message; setAccess('error','接入失败'); showNotice(error.message); }).finally(function () { el('connectBtn').disabled = false; });
+          el('appKeyLabel').textContent = data.appKeyMasked || maskKey(value); el('accessHint').textContent = (data.companyName || '当前公司') + ' 已接入'; setAccess('active','已接入'); refreshActionState(); pollHistory();
+      }).catch(function (error) { appKey = ''; el('appKeyLabel').textContent = '未接入'; el('accessHint').textContent = error.message; setAccess('error','接入失败'); showNotice(error.message); refreshActionState(); }).finally(function () { el('connectBtn').disabled = false; });
       }
-      function reset() { if (pollTimer) clearTimeout(pollTimer); pollTimer = null; appKey = ''; requestNo = ''; el('appKey').value = ''; el('appKeyLabel').textContent = '未接入'; el('submitBtn').disabled = true; el('accessHint').textContent = 'AppKey 仅保存在当前页面内存中，刷新页面后需要重新验证。'; setAccess('','待接入'); el('resultEmpty').style.display = ''; el('resultContent').classList.remove('show'); showNotice(''); }
+      function reset() { if (pollTimer) clearTimeout(pollTimer); pollTimer = null; appKey = ''; requestNo = ''; batchNo = ''; latestRequests = []; selectedResultRequestNo = ''; el('appKey').value = ''; el('appKeyLabel').textContent = '未接入'; el('accessHint').textContent = 'AppKey 仅保存在当前页面内存中，刷新页面后需要重新验证。'; setAccess('','待接入'); el('resultEmpty').style.display = ''; el('resultContent').classList.remove('show'); el('resultToolbar').classList.remove('show'); showNotice(''); refreshActionState(); }
       function validatePerson() { var name = el('personName').value.trim(); var id = el('idCard').value.trim().toUpperCase(); if (!name) return '请输入姓名'; if (!/^[0-9]{17}[0-9X]$/.test(id)) return '请输入正确的 18 位身份证号'; return ''; }
-      function submit() { var invalid = validatePerson(); if (invalid) { showNotice(invalid); return; } showNotice(''); el('submitBtn').disabled = true; el('submitBtn').textContent = '提交中…'; api('/company/embed/medical/delayed/requests', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ name:el('personName').value.trim(), idCard:el('idCard').value.trim().toUpperCase() }) }).then(function (data) { requestNo = data.requestNo; renderStatus(data); poll(); }).catch(function (error) { showNotice(error.message); }).finally(function () { el('submitBtn').disabled = false; el('submitBtn').textContent = '提交精准延时查询'; }); }
-      function loadLatestHistory() { api('/company/embed/medical/history/requests').then(function (items) { if (!Array.isArray(items) || !items.length) return; var latest = items[0]; requestNo = latest.requestNo || ''; renderStatus(latest); if (latest.resultVisible || ['FAILED','CANCELLED'].indexOf(latest.processStatus) >= 0) renderResult(latest); else poll(); }).catch(function () { /* history loading must not block access */ }); }
+      function submit() { if (timingMode !== 'DELAYED') return; var invalid = validatePerson(); if (invalid) { showNotice(invalid); return; } showNotice(''); el('submitBtn').disabled = true; el('submitBtn').textContent = '提交中…'; api('/company/embed/medical/delayed/requests', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ name:el('personName').value.trim(), idCard:el('idCard').value.trim().toUpperCase(), queryType:dataQueryType }) }).then(function (data) { requestNo = data.requestNo || ''; showNotice(''); pollHistory(); }).catch(function (error) { showNotice(error.message); }).finally(refreshActionState); }
+      function pollHistory() {
+        if (!appKey) return;
+        if (pollTimer) clearTimeout(pollTimer);
+        api('/company/embed/medical/history/requests').then(function (items) {
+          latestRequests = Array.isArray(items) ? items : [];
+          if (selectedResultRequestNo) renderSelectedResult(); else renderUnifiedResults();
+        }).catch(function (error) {
+          showNotice(error.message);
+        }).finally(function () {
+          if (appKey) pollTimer = setTimeout(pollHistory,5000);
+        });
+      }
       function uploadBatch(file) { var form = new FormData(); form.append('file', file); return fetch(API_BASE + '/company/embed/medical/batches/import-preview', { method:'POST', headers:{ Accept:'application/json', 'X-App-Key':appKey }, body:form }).then(function (response) { return response.json().then(function (json) { if (!response.ok || json.code !== 200) throw new Error(json.msg || '名单解析失败'); return json.data; }); }); }
-      function renderBatchPreview(preview) { batchRows = (preview && preview.rows) || []; el('previewSummary').textContent = '共 ' + (preview.totalCount || 0) + ' 人，可提交 ' + (preview.validCount || 0) + ' 人，问题 ' + (preview.invalidCount || 0) + ' 人'; el('previewRows').innerHTML = batchRows.map(function (row, index) { var errors = (row.errors || []).join('；'); return '<tr class="' + (row.valid ? '' : 'row-invalid') + '"><td>' + escapeHtml(row.rowNo || index + 2) + '</td><td><input data-index="' + index + '" data-field="name" value="' + escapeHtml(row.name || '') + '"></td><td><input data-index="' + index + '" data-field="idCard" value="' + escapeHtml(row.idCard || '') + '"></td><td>' + escapeHtml(errors || '通过') + '</td></tr>'; }).join(''); el('previewWrap').hidden = !batchRows.length; el('validateBatchBtn').disabled = !batchRows.length; el('submitBatchBtn').disabled = !batchRows.length || (preview.invalidCount || 0) > 0; }
-      function validateBatch() { if (!batchRows.length) return Promise.resolve(null); var rows = batchRows.map(function (row) { return { rowNo:row.rowNo, originalName:row.originalName, originalIdCard:row.originalIdCard, name:row.name, idCard:row.idCard }; }); el('validateBatchBtn').disabled = true; return api('/company/embed/medical/batches/validate', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ rows:rows }) }).then(function (preview) { renderBatchPreview(preview); return preview; }).catch(function (error) { showNotice(error.message); throw error; }).finally(function () { el('validateBatchBtn').disabled = false; }); }
-      function submitBatch() { el('submitBatchBtn').disabled = true; validateBatch().then(function (preview) { if (!preview || preview.invalidCount > 0) { showNotice('请先修正名单中的问题'); return; } var rows = batchRows.map(function (row) { return { rowNo:row.rowNo, name:row.name, idCard:row.idCard }; }); return api('/company/embed/medical/batches', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ serviceMode:'DELAYED', queryType:'precision_delayed', rows:rows }) }).then(function (data) { batchNo = data.batchNo; el('resultEmpty').style.display = 'none'; el('resultContent').classList.add('show'); el('requestNo').textContent = batchNo || '-'; el('processStatus').innerHTML = '<span class="badge pending">待处理</span>'; el('resultStatus').textContent = '-'; el('resultSummary').textContent = '批次已提交，共 ' + rows.length + ' 人'; el('polling').classList.add('show'); showNotice(''); }); }).catch(function (error) { if (error && error.message) showNotice(error.message); }).finally(function () { el('submitBatchBtn').disabled = false; }); }
+      function renderBatchPreview(preview) { batchRows = (preview && preview.rows) || []; batchInvalidCount = (preview && preview.invalidCount) || 0; el('previewSummary').textContent = '共 ' + (preview.totalCount || 0) + ' 人，可提交 ' + (preview.validCount || 0) + ' 人，问题 ' + batchInvalidCount + ' 人'; el('previewRows').innerHTML = batchRows.map(function (row, index) { var errors = (row.errors || []).join('；'); return '<tr class="' + (row.valid ? '' : 'row-invalid') + '"><td>' + escapeHtml(row.rowNo || index + 2) + '</td><td><input data-index="' + index + '" data-field="name" value="' + escapeHtml(row.name || '') + '"></td><td><input data-index="' + index + '" data-field="idCard" value="' + escapeHtml(row.idCard || '') + '"></td><td>' + escapeHtml(errors || '通过') + '</td></tr>'; }).join(''); el('previewWrap').hidden = !batchRows.length; refreshActionState(); }
+      function validateBatch() { if (timingMode !== 'DELAYED' || !batchRows.length) return Promise.resolve(null); var rows = batchRows.map(function (row) { return { rowNo:row.rowNo, originalName:row.originalName, originalIdCard:row.originalIdCard, name:row.name, idCard:row.idCard }; }); el('validateBatchBtn').disabled = true; return api('/company/embed/medical/batches/validate', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ rows:rows }) }).then(function (preview) { renderBatchPreview(preview); return preview; }).catch(function (error) { showNotice(error.message); throw error; }).finally(refreshActionState); }
+      function submitBatch() { if (timingMode !== 'DELAYED') return; el('submitBatchBtn').disabled = true; validateBatch().then(function (preview) { if (!preview || preview.invalidCount > 0) { showNotice('请先修正名单中的问题'); return; } var rows = batchRows.map(function (row) { return { rowNo:row.rowNo, name:row.name, idCard:row.idCard }; }); return api('/company/embed/medical/batches', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ serviceMode:'DELAYED', queryType:dataQueryType, rows:rows }) }).then(function (data) { batchNo = data.batchNo || ''; showNotice(''); pollHistory(); }); }).catch(function (error) { if (error && error.message) showNotice(error.message); }).finally(refreshActionState); }
+      function renderUnifiedResults() {
+        var visibleItems = latestRequests.filter(function (item) { return item.resultVisible === true; });
+        var pendingCount = latestRequests.filter(function (item) { return item.processStatus === 'PENDING' || item.processStatus === 'PROCESSING'; }).length;
+        var filteredItems = filterResultItems(latestRequests);
+        selectedResultRequestNo = '';
+        el('resultToolbar').classList.remove('show');
+        el('coverageResult').hidden = true;
+        el('resultEmpty').style.display = latestRequests.length ? 'none' : '';
+        el('resultContent').classList.toggle('show', !!latestRequests.length);
+        if (!latestRequests.length) return;
+        el('resultSummary').innerHTML = '已收到 <span class="summary-count">' + visibleItems.length + '</span> 人的查询结果，余下 <span class="summary-count">' + pendingCount + '</span> 人待处理。';
+        el('resultHead').innerHTML = '<tr><th>姓名</th><th>身份证号</th><th>提交时间</th><th>处理时间</th><th>延时查询信息</th></tr>';
+        el('resultRows').innerHTML = filteredItems.length ? filteredItems.map(function (item) {
+          var action = item.resultVisible
+            ? '<button class="btn-view" type="button" data-result-request-no="' + escapeHtml(item.requestNo) + '">查看</button>'
+            : item.processStatus === 'PENDING'
+              ? '<div class="result-action"><span class="pending-text">待处理</span><button class="btn-cancel" type="button" data-cancel-request-no="' + escapeHtml(item.requestNo) + '">取消查询</button></div>'
+              : '<span class="pending-text">' + escapeHtml(processStatusText(item.processStatus)) + '</span>';
+          return '<tr><td>' + escapeHtml(item.name || '-') + '</td><td>' + escapeHtml(maskIdCard(item.idCard)) + '</td><td>' + escapeHtml(formatDateTime(item.submitTime)) + '</td><td>' + escapeHtml(formatDateTime(item.handledTime)) + '</td><td>' + action + '</td></tr>';
+        }).join('') : '<tr><td colspan="5">暂无符合条件的查询记录</td></tr>';
+        el('resultTableWrap').hidden = false;
+      }
+      function filterResultItems(items) {
+        var name = el('resultFilterName').value.trim().toLowerCase();
+        var idCard = el('resultFilterIdCard').value.trim().toUpperCase();
+        var queryType = el('resultFilterType').value;
+        var processStatus = el('resultFilterStatus').value;
+        var beginDate = el('resultFilterBegin').value;
+        var endDate = el('resultFilterEnd').value;
+        return items.filter(function (item) {
+          var itemType = item.queryType === 'BIG_DATA' ? 'BIG_DATA' : 'MEDICAL';
+          var itemStatus = item.processStatus === 'COMPLETED' ? 'COMPLETED'
+            : (item.processStatus === 'PENDING' || item.processStatus === 'PROCESSING' ? 'PENDING' : item.processStatus);
+          var submitDate = datePart(item.submitTime);
+          return (!name || String(item.name || '').toLowerCase().indexOf(name) !== -1)
+            && (!idCard || String(item.idCard || '').toUpperCase().indexOf(idCard) !== -1)
+            && (!queryType || itemType === queryType)
+            && (!processStatus || itemStatus === processStatus)
+            && (!beginDate || submitDate >= beginDate)
+            && (!endDate || submitDate <= endDate);
+        });
+      }
+      function resetResultFilters() { ['resultFilterName','resultFilterIdCard','resultFilterType','resultFilterStatus','resultFilterBegin','resultFilterEnd'].forEach(function (id) { el(id).value = ''; }); renderUnifiedResults(); }
+      function datePart(value) { var text = formatDateTime(value); var match = text.match(/^\d{4}-\d{2}-\d{2}/); return match ? match[0] : ''; }
+      function formatDateTime(value) { if (value === null || value === undefined || value === '') return '-'; if (typeof value === 'number') { var date = new Date(value); if (!isNaN(date.getTime())) return date.getFullYear() + '-' + padDate(date.getMonth() + 1) + '-' + padDate(date.getDate()) + ' ' + padDate(date.getHours()) + ':' + padDate(date.getMinutes()) + ':' + padDate(date.getSeconds()); } var text = String(value).replace('T',' '); var match = text.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/); if (match) return match[1] + '-' + padDate(match[2]) + '-' + padDate(match[3]) + (match[4] ? ' ' + padDate(match[4]) + ':' + padDate(match[5]) + ':' + padDate(match[6] || 0) : ''); return text.replace(/\.\d{3}(?:Z|[+-]\d{2}:?\d{2})?$/, ''); }
+      function padDate(value) { return String(value).padStart(2, '0'); }
+      function processStatusText(status) { if (status === 'PROCESSING') return '处理中'; if (status === 'CANCELLED') return '已取消'; if (status === 'FAILED') return '处理失败'; return '待处理'; }
+      function renderSelectedResult() {
+        var item = latestRequests.find(function (candidate) { return candidate.requestNo === selectedResultRequestNo; });
+        if (!item || !item.resultVisible) { selectedResultRequestNo = ''; renderUnifiedResults(); return; }
+        el('resultToolbar').classList.add('show');
+        el('resultPersonName').textContent = item.name || '-';
+        el('resultPersonIdCard').textContent = item.idCard || '-';
+        el('resultDetailTitle').textContent = (item.name || '-') + ' 的延时查询详情';
+        el('resultSummary').textContent = item.resultSummary || (item.resultStatus === 'NO_RESULT' ? '未查得该人员的医疗数据。' : '以下内容为管理后台上传的查询结果。');
+        renderResultTable(item);
+        renderCoverageTable(item.insuranceCoverage);
+      }
+      function showResultDetail(resultRequestNo) { selectedResultRequestNo = resultRequestNo; renderSelectedResult(); }
+      function cancelRequest(cancelRequestNo, button) { if (!cancelRequestNo || !window.confirm('确认取消这条查询申请吗？取消后管理后台将不能再处理该申请。')) return; button.disabled = true; api('/company/embed/medical/delayed/requests/' + encodeURIComponent(cancelRequestNo) + '/cancel', { method:'POST' }).then(function () { showNotice(''); return pollHistory(); }).catch(function (error) { showNotice(error.message); button.disabled = false; }); }
+      function backToResults() { selectedResultRequestNo = ''; renderUnifiedResults(); }
+      function maskIdCard(value) { value = value || ''; return value.length >= 10 ? value.slice(0,6) + '********' + value.slice(-4) : value || '-'; }
       function switchMode(batch) { el('singleModeBtn').classList.toggle('active', !batch); el('batchModeBtn').classList.toggle('active', batch); el('singlePanel').classList.toggle('show', !batch); el('batchPanel').classList.toggle('show', batch); }
+      function switchTiming(realtime) { timingMode = realtime ? 'REALTIME' : 'DELAYED'; el('delayedTimingBtn').classList.toggle('active', !realtime); el('realtimeTimingBtn').classList.toggle('active', realtime); showNotice(''); refreshActionState(); }
+      function switchDataQuery(bigData) { dataQueryType = bigData ? 'BIG_DATA' : 'MEDICAL'; el('medicalQueryBtn').classList.toggle('active', !bigData); el('bigDataQueryBtn').classList.toggle('active', bigData); }
       function label(value, map) { return map[value] || value || '-'; }
-      function renderStatus(data) { el('resultEmpty').style.display = 'none'; el('resultContent').classList.add('show'); el('requestNo').textContent = data.requestNo || requestNo || '-'; var tone = data.processStatus === 'COMPLETED' ? 'success' : data.processStatus === 'FAILED' || data.processStatus === 'CANCELLED' ? 'error' : 'pending'; el('processStatus').innerHTML = '<span class="badge ' + tone + '">' + label(data.processStatus,statusLabels) + '</span>'; el('resultStatus').textContent = label(data.resultStatus,resultLabels); el('resultSummary').textContent = data.reused ? '已找到相同人员的未完成请求，页面跟踪原请求。' : '请求已提交，等待平台人员处理。'; el('polling').classList.toggle('show', data.processStatus === 'PENDING' || data.processStatus === 'PROCESSING'); }
-      function poll() { if (!requestNo) return; api('/company/embed/medical/requests/' + encodeURIComponent(requestNo)).then(function (data) { renderStatus(data); if (data.resultVisible || ['FAILED','CANCELLED'].indexOf(data.processStatus) >= 0) renderResult(data); else pollTimer = setTimeout(poll,5000); }).catch(function (error) { showNotice(error.message); pollTimer = setTimeout(poll,8000); }); }
-      function renderResult(data) { el('polling').classList.remove('show'); el('resultSummary').textContent = data.resultSummary || (data.resultStatus === 'NO_RESULT' ? '未查得该投保人的医疗数据。' : data.resultStatus === 'HINT_ONLY' ? '平台已返回结果提示。' : data.resultStatus === 'FAILED' ? '处理失败，平台未收取本次费用。' : '查询结果已上传，可查看明细。'); var values = data.data || {}; var records = Array.isArray(values.records) ? values.records : [values]; var schema = Array.isArray(data.columnSchema) ? data.columnSchema : []; if (!schema.length && values && typeof values === 'object') schema = Object.keys(records[0] || {}).filter(function (key) { return key !== 'records'; }).map(function (key) { return { field:key,label:key }; }); if (!schema.length || (records.length === 1 && !Object.keys(records[0] || {}).length)) { el('resultTableWrap').hidden = true; return; } el('resultHead').innerHTML = '<tr>' + schema.map(function (column) { return '<th>' + escapeHtml(column.label || column.field || column.key) + '</th>'; }).join('') + '</tr>'; el('resultRows').innerHTML = records.map(function (record) { return '<tr>' + schema.map(function (column) { var key = column.field || column.key || column.name; return '<td>' + escapeHtml(formatValue(record[key])) + '</td>'; }).join('') + '</tr>'; }).join(''); el('resultTableWrap').hidden = false; }
+      function renderResultTable(data) { var values = data.data || {}; var records = Array.isArray(values.records) ? values.records : [values]; var schema = Array.isArray(data.columnSchema) ? data.columnSchema : []; if (!schema.length && values && typeof values === 'object') schema = Object.keys(records[0] || {}).filter(function (key) { return key !== 'records'; }).map(function (key) { return { field:key,label:key }; }); if (!schema.length || (records.length === 1 && !Object.keys(records[0] || {}).length)) { el('resultTableWrap').hidden = true; return; } el('resultHead').innerHTML = '<tr>' + schema.map(function (column) { return '<th>' + escapeHtml(column.label || column.field || column.key) + '</th>'; }).join('') + '</tr>'; el('resultRows').innerHTML = records.map(function (record) { return '<tr>' + schema.map(function (column) { var key = column.field || column.key || column.name; return '<td>' + escapeHtml(formatValue(record[key])) + '</td>'; }).join('') + '</tr>'; }).join(''); el('resultTableWrap').hidden = false; }
+      function renderCoverageTable(records) { var columns = ['医保区划','单位名称','人员类型','参保状态','险种类型','本次参保日期','暂停参保日期','首次参保年月']; records = Array.isArray(records) ? records : []; if (!records.length) { el('coverageResult').hidden = true; return; } el('coverageHead').innerHTML = '<tr><th>序号</th>' + columns.map(function (column) { return '<th>' + escapeHtml(column) + '</th>'; }).join('') + '</tr>'; el('coverageRows').innerHTML = records.map(function (record, index) { return '<tr><td>' + (index + 1) + '</td>' + columns.map(function (column) { return '<td>' + escapeHtml(formatValue(record[column])) + '</td>'; }).join('') + '</tr>'; }).join(''); el('coverageResult').hidden = false; }
       function formatValue(value) { if (value === null || value === undefined || value === '') return '-'; return typeof value === 'object' ? JSON.stringify(value) : String(value); }
       function escapeHtml(value) { return String(value).replace(/[&<>"']/g, function (character) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[character]; }); }
-      el('connectBtn').addEventListener('click',connect); el('resetBtn').addEventListener('click',reset); el('submitBtn').addEventListener('click',submit); el('singleModeBtn').addEventListener('click',function () { switchMode(false); }); el('batchModeBtn').addEventListener('click',function () { switchMode(true); }); el('chooseBatchBtn').addEventListener('click',function () { el('batchFile').click(); }); el('batchFile').addEventListener('change',function () { var file = this.files && this.files[0]; if (!file) return; el('batchFileName').textContent = file.name; uploadBatch(file).then(renderBatchPreview).catch(function (error) { showNotice(error.message); }); }); el('validateBatchBtn').addEventListener('click',validateBatch); el('submitBatchBtn').addEventListener('click',submitBatch); el('previewRows').addEventListener('input',function (event) { var input = event.target; if (!input.dataset || input.dataset.index === undefined) return; batchRows[Number(input.dataset.index)][input.dataset.field] = input.value; }); el('idCard').addEventListener('input',function () { this.value = this.value.toUpperCase(); }); [el('personName'),el('idCard')].forEach(function (field) { field.addEventListener('keydown',function (event) { if (event.key === 'Enter' && !el('submitBtn').disabled) submit(); }); });
+      el('connectBtn').addEventListener('click',connect); el('resetBtn').addEventListener('click',reset); el('submitBtn').addEventListener('click',submit); el('delayedTimingBtn').addEventListener('click',function () { switchTiming(false); }); el('realtimeTimingBtn').addEventListener('click',function () { switchTiming(true); }); el('medicalQueryBtn').addEventListener('click',function () { switchDataQuery(false); }); el('bigDataQueryBtn').addEventListener('click',function () { switchDataQuery(true); }); el('singleModeBtn').addEventListener('click',function () { switchMode(false); }); el('batchModeBtn').addEventListener('click',function () { switchMode(true); }); el('chooseBatchBtn').addEventListener('click',function () { el('batchFile').click(); }); el('batchFile').addEventListener('change',function () { var file = this.files && this.files[0]; if (!file) return; el('batchFileName').textContent = file.name; uploadBatch(file).then(renderBatchPreview).catch(function (error) { showNotice(error.message); }); }); el('validateBatchBtn').addEventListener('click',validateBatch); el('submitBatchBtn').addEventListener('click',submitBatch); el('resultFilterBtn').addEventListener('click',renderUnifiedResults); el('resultFilterResetBtn').addEventListener('click',resetResultFilters); el('backToResultsBtn').addEventListener('click',backToResults); el('resultRows').addEventListener('click',function (event) { var cancelButton = event.target.closest('[data-cancel-request-no]'); if (cancelButton) { cancelRequest(cancelButton.dataset.cancelRequestNo, cancelButton); return; } var button = event.target.closest('[data-result-request-no]'); if (button) showResultDetail(button.dataset.resultRequestNo); }); el('previewRows').addEventListener('input',function (event) { var input = event.target; if (!input.dataset || input.dataset.index === undefined) return; batchRows[Number(input.dataset.index)][input.dataset.field] = input.value; }); el('idCard').addEventListener('input',function () { this.value = this.value.toUpperCase(); }); [el('personName'),el('idCard'),el('resultFilterName'),el('resultFilterIdCard')].forEach(function (field) { field.addEventListener('keydown',function (event) { if (event.key === 'Enter') { if (field.id.indexOf('resultFilter') === 0) renderUnifiedResults(); else if (!el('submitBtn').disabled) submit(); } }); });
+      refreshActionState();
     }());
   </script>
 </body>

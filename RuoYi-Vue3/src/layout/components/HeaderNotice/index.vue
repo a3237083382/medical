@@ -43,28 +43,51 @@ import { listNoticeTop, markNoticeRead, markNoticeReadAll } from '@/api/system/n
 
 const noticePopover = ref(null)
 const noticeList = ref([])
-const unreadCount = ref(0)
+const announcementUnreadCount = ref(0)
+const delayedPendingCount = ref(0)
+const unreadCount = computed(() => announcementUnreadCount.value + delayedPendingCount.value)
 const noticeLoading = ref(false)
 const noticeVisible = ref(false)
 const noticeLeaveTimer = ref(null)
+const noticePollTimer = ref(null)
 const { proxy } = getCurrentInstance()
+const router = useRouter()
 
 // 加载顶部公告列表
 function loadNoticeTop() {
   noticeLoading.value = true
   listNoticeTop().then(res => {
-    noticeList.value = res.data || []
-    unreadCount.value = res.unreadCount !== undefined ? res.unreadCount : noticeList.value.filter(n => !n.isRead).length
+    const announcements = res.data || []
+    delayedPendingCount.value = Number(res.delayedPendingCount) || 0
+    announcementUnreadCount.value = res.unreadCount !== undefined ? res.unreadCount : announcements.filter(n => !n.isRead).length
+    const delayedNotice = delayedPendingCount.value > 0 ? [{
+      noticeId: 'delayed-query-pending',
+      noticeType: '1',
+      noticeTitle: `精准延时查询待处理 ${delayedPendingCount.value} 人`,
+      createTime: '待处理',
+      isRead: false,
+      isDelayedQuery: true
+    }] : []
+    noticeList.value = delayedNotice.concat(announcements)
   }).finally(() => {
     noticeLoading.value = false
   })
 }
 
-onMounted(() => loadNoticeTop())
+onMounted(() => {
+  loadNoticeTop()
+  noticePollTimer.value = setInterval(loadNoticeTop, 10000)
+})
+
+onBeforeUnmount(() => {
+  clearInterval(noticePollTimer.value)
+  clearTimeout(noticeLeaveTimer.value)
+})
 
 // 鼠标移入铃铛区域
 function onNoticeEnter() {
   clearTimeout(noticeLeaveTimer.value)
+  loadNoticeTop()
   noticeVisible.value = true
   nextTick(() => {
     const popper = noticePopover.value?.popperRef?.contentRef
@@ -85,22 +108,27 @@ function onNoticeLeave() {
 
 // 预览公告详情
 function previewNotice(item) {
+  if (item.isDelayedQuery) {
+    noticeVisible.value = false
+    router.push('/business/delayed-query')
+    return
+  }
   if (!item.isRead) {
     markNoticeRead(item.noticeId).catch(() => {})
     const idx = noticeList.value.indexOf(item)
     if (idx !== -1) noticeList.value[idx] = { ...item, isRead: true }
-    unreadCount.value = Math.max(0, unreadCount.value - 1)
+    announcementUnreadCount.value = Math.max(0, announcementUnreadCount.value - 1)
   }
   proxy.$refs["noticeViewRef"].open(item.noticeId)
 }
 
 // 全部已读
 function markAllRead() {
-  const ids = noticeList.value.map(n => n.noticeId).join(',')
+  const ids = noticeList.value.filter(n => !n.isDelayedQuery).map(n => n.noticeId).join(',')
   if (!ids) return
   markNoticeReadAll(ids).catch(() => {})
-  noticeList.value = noticeList.value.map(n => ({ ...n, isRead: true }))
-  unreadCount.value = 0
+  noticeList.value = noticeList.value.map(n => n.isDelayedQuery ? n : ({ ...n, isRead: true }))
+  announcementUnreadCount.value = 0
 }
 </script>
 

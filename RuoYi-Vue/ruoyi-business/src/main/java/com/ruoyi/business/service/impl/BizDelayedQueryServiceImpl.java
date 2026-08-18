@@ -3,6 +3,8 @@ package com.ruoyi.business.service.impl;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.DateTimeException;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,6 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -45,8 +49,11 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
 {
     private static final int MAX_BATCH_SIZE = 500;
     private static final BigDecimal ZERO_FEE = new BigDecimal("0.00");
+    private static final Pattern DATE_PREFIX = Pattern.compile("^(\\d{4})[-/.年](\\d{1,2})[-/.月](\\d{1,2})");
 
-    public static final String QUERY_TYPE = "delayed_precise";
+    public static final String BILLING_QUERY_TYPE = "delayed_precise";
+    public static final String QUERY_TYPE_MEDICAL = "MEDICAL";
+    public static final String QUERY_TYPE_BIG_DATA = "BIG_DATA";
     public static final String QUERY_PENDING = "PENDING";
     public static final String QUERY_QUERIED = "QUERIED";
     public static final String UPLOAD_NOT_UPLOADED = "NOT_UPLOADED";
@@ -54,6 +61,7 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
     public static final String RESULT_HIT = "HIT";
     public static final String RESULT_NO_RESULT = "NO_RESULT";
     public static final String RESULT_PARTIAL = "PARTIAL";
+    private static final String COVERAGE_RECORD_MARKER = "\"__recordType\":\"INSURANCE_COVERAGE\"";
 
     private final BizDelayedQueryRequestMapper requestMapper;
     private final BizDelayedQueryResultMapper resultMapper;
@@ -90,17 +98,25 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
     @Transactional
     public BizDelayedQueryRequest submit(Long companyId, String companyName, String patientName, String idCard, String requestIp)
     {
-        return submit(companyId, companyName, patientName, idCard, requestIp, null);
+        return submit(companyId, companyName, patientName, idCard, QUERY_TYPE_MEDICAL, requestIp);
+    }
+
+    @Override
+    @Transactional
+    public BizDelayedQueryRequest submit(Long companyId, String companyName, String patientName, String idCard,
+            String queryType, String requestIp)
+    {
+        return submit(companyId, companyName, patientName, idCard, normalizeQueryType(queryType), requestIp, null);
     }
 
     private BizDelayedQueryRequest submit(Long companyId, String companyName, String patientName, String idCard,
-            String requestIp, String batchNo)
+            String queryType, String requestIp, String batchNo)
     {
         if (empty(patientName) || empty(idCard))
         {
             throw new IllegalArgumentException("patientName and idCard are required");
         }
-        BizDelayedQueryRequest duplicate = requestMapper.selectPendingDuplicate(companyId, patientName, idCard);
+        BizDelayedQueryRequest duplicate = requestMapper.selectPendingDuplicate(companyId, patientName, idCard, queryType);
         if (duplicate != null)
         {
             duplicate.setResults(new ArrayList<>());
@@ -115,7 +131,7 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
         request.setCompanyNameSnapshot(companyName);
         request.setPatientName(patientName);
         request.setIdCard(idCard);
-        request.setQueryType(QUERY_TYPE);
+        request.setQueryType(queryType);
         request.setQueryStatus(QUERY_PENDING);
         request.setUploadStatus(UPLOAD_NOT_UPLOADED);
         request.setChargedFlag("0");
@@ -132,6 +148,14 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
     public List<BizDelayedQueryRequest> submitBatch(Long companyId, String companyName,
             List<BizDelayedQueryRequest> requests, String requestIp)
     {
+        return submitBatch(companyId, companyName, requests, QUERY_TYPE_MEDICAL, requestIp);
+    }
+
+    @Override
+    @Transactional
+    public List<BizDelayedQueryRequest> submitBatch(Long companyId, String companyName,
+            List<BizDelayedQueryRequest> requests, String queryType, String requestIp)
+    {
         if (requests == null || requests.isEmpty())
         {
             throw new IllegalArgumentException("items are required");
@@ -142,13 +166,15 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
         }
         List<BizDelayedQueryRequest> submitted = new ArrayList<>();
         String batchNo = "BD" + UUID.randomUUID().toString().replace("-", "");
+        String normalizedQueryType = normalizeQueryType(queryType);
         for (BizDelayedQueryRequest item : requests)
         {
             if (item == null)
             {
                 throw new IllegalArgumentException("patientName and idCard are required");
             }
-            submitted.add(submit(companyId, companyName, item.getPatientName(), item.getIdCard(), requestIp, batchNo));
+            submitted.add(submit(companyId, companyName, item.getPatientName(), item.getIdCard(),
+                    normalizedQueryType, requestIp, batchNo));
         }
         return submitted;
     }
@@ -157,6 +183,12 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
     public List<BizDelayedQueryRequest> selectList(BizDelayedQueryRequest request)
     {
         return requestMapper.selectBizDelayedQueryRequestList(request);
+    }
+
+    @Override
+    public int countPendingRequests()
+    {
+        return requestMapper.countPendingRequests();
     }
 
     @Override
@@ -206,15 +238,16 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
         {
             return false;
         }
-        BizDelayedQueryRequest update = new BizDelayedQueryRequest();
-        update.setId(request.getId());
-        update.setQueryStatus("CANCELLED");
-        update.setResultMessage("已取消");
-        requestMapper.updateBizDelayedQueryRequest(update);
         BigDecimal reserved = nvl(request.getReservedFee());
-        if (monthlyUsageMapper != null && reserved.signum() > 0 && request.getBillingMonth() != null)
+        String billingMonth = request.getBillingMonth();
+        if (requestMapper.cancelPendingRequest(request.getId(), companyId) != 1)
         {
-            monthlyUsageMapper.releaseBudget(companyId, request.getBillingMonth(), reserved);
+            return false;
+        }
+        resultMapper.deleteByRequestId(request.getId());
+        if (monthlyUsageMapper != null && reserved.signum() > 0 && billingMonth != null)
+        {
+            monthlyUsageMapper.releaseBudget(companyId, billingMonth, reserved);
         }
         return true;
     }
@@ -252,6 +285,7 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
             String resultStatus, String resultMessage, String handlerName)
     {
         BizDelayedQueryRequest current = requireRequest(id);
+        ensureNotCancelled(current);
         replaceResults(id, results, handlerName);
         BizDelayedQueryRequest update = new BizDelayedQueryRequest();
         update.setId(id);
@@ -271,6 +305,7 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
             String resultStatus, String resultMessage, String handlerName)
     {
         BizDelayedQueryRequest current = requireRequest(id);
+        ensureNotCancelled(current);
         String finalResultStatus = normalizeResultStatus(resultStatus);
         validateFinalResult(results, finalResultStatus, resultMessage);
         replaceResults(id, results, handlerName);
@@ -337,7 +372,16 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
         {
             throw new IllegalArgumentException("file is required");
         }
-        List<BizDelayedQueryResult> results = parseExcel(file, operator);
+        BizDelayedQueryRequest request = requireRequest(id);
+        ensureNotCancelled(request);
+        List<BizDelayedQueryResult> results = parseExcel(file, operator, request.getQueryType());
+        for (BizDelayedQueryResult existing : resultMapper.selectByRequestId(id))
+        {
+            if (isCoverageResult(existing))
+            {
+                results.add(existing);
+            }
+        }
         if (importMapper != null)
         {
             BizDelayedQueryImport importLog = new BizDelayedQueryImport();
@@ -373,6 +417,14 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
             throw new IllegalArgumentException("request not found");
         }
         return request;
+    }
+
+    private void ensureNotCancelled(BizDelayedQueryRequest request)
+    {
+        if ("CANCELLED".equals(request.getQueryStatus()))
+        {
+            throw new IllegalStateException("Cancelled requests cannot be processed");
+        }
     }
 
     private void replaceResults(Long requestId, List<BizDelayedQueryResult> results, String operator)
@@ -425,7 +477,7 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
         }
         for (BizDelayedQueryResult result : results)
         {
-            if (result != null && !empty(result.getRawJson()))
+            if (result != null && !empty(result.getRawJson()) && !isCoverageResult(result))
             {
                 return true;
             }
@@ -440,7 +492,7 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
 
     private Billing calculateBilling(Long companyId, String resultStatus, String billingMonth)
     {
-        BizCompanyQueryPrice price = priceMapper == null ? null : priceMapper.selectActivePrice(companyId, QUERY_TYPE);
+        BizCompanyQueryPrice price = priceMapper == null ? null : priceMapper.selectActivePrice(companyId, BILLING_QUERY_TYPE);
         if (price == null)
         {
             return new Billing(ZERO_FEE, ZERO_FEE, billingMonth, null);
@@ -496,7 +548,7 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
     {
         BizQueryLog log = new BizQueryLog();
         log.setCompanyId(request.getCompanyId());
-        log.setQueryType(QUERY_TYPE);
+        log.setQueryType(BILLING_QUERY_TYPE);
         log.setQueryParams(JSON.toJSONString(Map.of(
                 "requestNo", request.getRequestNo(),
                 "name", request.getPatientName(),
@@ -513,55 +565,211 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
         queryLogMapper.insertBizQueryLog(log);
     }
 
-    private List<BizDelayedQueryResult> parseExcel(MultipartFile file, String operator) throws Exception
+    private List<BizDelayedQueryResult> parseExcel(MultipartFile file, String operator, String queryType) throws Exception
     {
         List<BizDelayedQueryResult> results = new ArrayList<>();
         try (InputStream input = file.getInputStream(); Workbook workbook = WorkbookFactory.create(input))
         {
             Sheet sheet = workbook.getSheetAt(0);
-            List<String> headers = new ArrayList<>();
-            for (int i = 0; i <= sheet.getLastRowNum(); i++)
+            String normalizedQueryType = QUERY_TYPE_BIG_DATA.equals(queryType) ? QUERY_TYPE_BIG_DATA : QUERY_TYPE_MEDICAL;
+            int headerRowIndex = findHeaderRow(sheet, normalizedQueryType);
+            if (headerRowIndex < 0)
+            {
+                throw new IllegalArgumentException(QUERY_TYPE_BIG_DATA.equals(normalizedQueryType)
+                        ? "上传文件与大数据查询模板不匹配"
+                        : "上传文件与医保查询模板不匹配");
+            }
+            Map<String, Integer> headers = readHeaders(sheet.getRow(headerRowIndex));
+            for (int i = headerRowIndex + 1; i <= sheet.getLastRowNum(); i++)
             {
                 Row row = sheet.getRow(i);
-                if (row == null)
+                if (row == null || !hasMeaningfulData(row, headers, normalizedQueryType))
                 {
                     continue;
                 }
-                int colCount = Math.max(row.getLastCellNum(), 0);
-                if (i == 0)
-                {
-                    for (int j = 0; j < colCount; j++)
-                    {
-                        headers.add(cellValue(row.getCell(j)));
-                    }
-                    continue;
-                }
-                Map<String, String> raw = new LinkedHashMap<>();
-                boolean hasValue = false;
-                for (int j = 0; j < headers.size(); j++)
-                {
-                    String header = headers.get(j);
-                    if (empty(header))
-                    {
-                        header = "column_" + (j + 1);
-                    }
-                    String value = cellValue(row.getCell(j));
-                    if (!empty(value))
-                    {
-                        hasValue = true;
-                    }
-                    raw.put(header, value);
-                }
-                if (hasValue)
-                {
-                    BizDelayedQueryResult result = new BizDelayedQueryResult();
-                    result.setCreateBy(operator);
-                    result.setRawJson(JSON.toJSONString(raw));
-                    results.add(result);
-                }
+                Map<String, String> output = QUERY_TYPE_BIG_DATA.equals(normalizedQueryType)
+                        ? mapBigDataRow(row, headers)
+                        : mapMedicalRow(row, headers);
+                BizDelayedQueryResult result = new BizDelayedQueryResult();
+                result.setCreateBy(operator);
+                result.setRawJson(JSON.toJSONString(output));
+                results.add(result);
             }
         }
         return results;
+    }
+
+    private int findHeaderRow(Sheet sheet, String queryType)
+    {
+        int lastCandidate = Math.min(sheet.getLastRowNum(), 9);
+        for (int i = 0; i <= lastCandidate; i++)
+        {
+            Map<String, Integer> headers = readHeaders(sheet.getRow(i));
+            if (QUERY_TYPE_BIG_DATA.equals(queryType))
+            {
+                if (headers.containsKey("姓名") && headers.containsKey("身份证号码")
+                        && headers.containsKey("就诊医院") && headers.containsKey("诊断"))
+                {
+                    return i;
+                }
+            }
+            else if (headers.containsKey("就诊时间") && headers.containsKey("病种名称")
+                    && headers.containsKey("定点医药机构名称"))
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private Map<String, Integer> readHeaders(Row row)
+    {
+        Map<String, Integer> headers = new LinkedHashMap<>();
+        if (row == null)
+        {
+            return headers;
+        }
+        int colCount = Math.max(row.getLastCellNum(), 0);
+        for (int i = 0; i < colCount; i++)
+        {
+            String header = normalizeHeader(cellValue(row.getCell(i)));
+            if (!empty(header) && !headers.containsKey(header))
+            {
+                headers.put(header, i);
+            }
+        }
+        return headers;
+    }
+
+    private String normalizeHeader(String value)
+    {
+        return value == null ? "" : value.replace("\uFEFF", "").replace("\r", "")
+                .replace("\n", "").trim();
+    }
+
+    private boolean hasMeaningfulData(Row row, Map<String, Integer> headers, String queryType)
+    {
+        String[] fields = QUERY_TYPE_BIG_DATA.equals(queryType)
+                ? new String[] { "姓名", "身份证号码", "就诊医院", "日期", "门诊/住院/体检", "诊断" }
+                : new String[] { "定点医药机构名称", "就诊时间", "病种名称", "结束时间" };
+        for (String field : fields)
+        {
+            if (!empty(sourceValue(row, headers, field)))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isCoverageResult(BizDelayedQueryResult result)
+    {
+        if (result == null || empty(result.getRawJson()))
+        {
+            return false;
+        }
+        if (result.getRawJson().contains(COVERAGE_RECORD_MARKER))
+        {
+            return true;
+        }
+        try
+        {
+            return "INSURANCE_COVERAGE".equals(JSON.parseObject(result.getRawJson()).getString("__recordType"));
+        }
+        catch (Exception e)
+        {
+            return false;
+        }
+    }
+
+    private Map<String, String> mapMedicalRow(Row row, Map<String, Integer> headers)
+    {
+        String visitTime = sourceValue(row, headers, "就诊时间");
+        String endTime = sourceValue(row, headers, "结束时间");
+        String diseaseName = sourceValue(row, headers, "病种名称");
+        Map<String, String> output = new LinkedHashMap<>();
+        output.put("定点医药机构名称", sourceValue(row, headers, "定点医药机构名称"));
+        output.put("就诊时间", visitTime);
+        output.put("就诊类型", deriveVisitType(diseaseName, visitTime, endTime));
+        output.put("诊断结果", diseaseName);
+        output.put("是否报销", deriveReimbursed(sourceValue(row, headers, "有效标志", "有效标识")));
+        output.put("结束时间", endTime);
+        return output;
+    }
+
+    private Map<String, String> mapBigDataRow(Row row, Map<String, Integer> headers)
+    {
+        Map<String, String> output = new LinkedHashMap<>();
+        output.put("姓名", sourceValue(row, headers, "姓名"));
+        output.put("性别", sourceValue(row, headers, "性别"));
+        output.put("身份证号码", sourceValue(row, headers, "身份证号码"));
+        output.put("就诊医院", sourceValue(row, headers, "就诊医院"));
+        output.put("日期", sourceValue(row, headers, "日期"));
+        output.put("门诊/住院/体检", sourceValue(row, headers, "门诊/住院/体检"));
+        output.put("医嘱", sourceValue(row, headers, "医嘱"));
+        output.put("诊断", sourceValue(row, headers, "诊断"));
+        return output;
+    }
+
+    private String sourceValue(Row row, Map<String, Integer> headers, String... names)
+    {
+        for (String name : names)
+        {
+            Integer column = headers.get(name);
+            if (column != null)
+            {
+                return cellValue(row.getCell(column)).trim();
+            }
+        }
+        return "";
+    }
+
+    private String deriveReimbursed(String validFlag)
+    {
+        if (empty(validFlag))
+        {
+            return "";
+        }
+        String value = validFlag.trim();
+        return "有效".equals(value) || "1".equals(value) || "是".equals(value)
+                || "Y".equalsIgnoreCase(value) || "TRUE".equalsIgnoreCase(value) ? "是" : "否";
+    }
+
+    private String deriveVisitType(String diseaseName, String visitTime, String endTime)
+    {
+        if (!empty(diseaseName) && diseaseName.contains("门诊"))
+        {
+            return "门诊";
+        }
+        LocalDate visitDate = dateOnly(visitTime);
+        LocalDate endDate = dateOnly(endTime);
+        if (visitDate == null || endDate == null)
+        {
+            return "";
+        }
+        return visitDate.equals(endDate) ? "门诊" : "住院";
+    }
+
+    private LocalDate dateOnly(String value)
+    {
+        if (empty(value))
+        {
+            return null;
+        }
+        Matcher matcher = DATE_PREFIX.matcher(value.trim());
+        if (!matcher.find())
+        {
+            return null;
+        }
+        try
+        {
+            return LocalDate.of(Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)),
+                    Integer.parseInt(matcher.group(3)));
+        }
+        catch (DateTimeException | NumberFormatException e)
+        {
+            return null;
+        }
     }
 
     private String cellValue(Cell cell)
@@ -610,6 +818,15 @@ public class BizDelayedQueryServiceImpl implements IBizDelayedQueryService
     {
         return "DQ" + new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date())
                 + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+    }
+
+    private String normalizeQueryType(String queryType)
+    {
+        if (QUERY_TYPE_MEDICAL.equals(queryType) || QUERY_TYPE_BIG_DATA.equals(queryType))
+        {
+            return queryType;
+        }
+        throw new IllegalArgumentException("查询类型仅支持医保查询或大数据查询");
     }
 
     private boolean empty(String value)

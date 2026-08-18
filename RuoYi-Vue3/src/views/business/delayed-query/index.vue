@@ -35,10 +35,17 @@
           @keyup.enter="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="查询类型" prop="queryType">
+        <el-select v-model="queryParams.queryType" placeholder="全部" clearable style="width: 140px">
+          <el-option label="医保查询" value="MEDICAL" />
+          <el-option label="大数据查询" value="BIG_DATA" />
+        </el-select>
+      </el-form-item>
       <el-form-item label="查询状态" prop="queryStatus">
         <el-select v-model="queryParams.queryStatus" placeholder="全部" clearable style="width: 130px">
           <el-option label="未查询" value="PENDING" />
           <el-option label="已查询" value="QUERIED" />
+          <el-option label="已取消" value="CANCELLED" />
         </el-select>
       </el-form-item>
       <el-form-item label="上传状态" prop="uploadStatus">
@@ -66,13 +73,13 @@
 
     <el-row :gutter="10" class="mb8 action-row">
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="Upload" :disabled="!currentId" @click="openProcess('upload')">上传结果</el-button>
+        <el-button type="warning" plain icon="Upload" :disabled="!currentId || currentRow.queryStatus === 'CANCELLED'" @click="openProcess('upload')">上传结果</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="success" plain icon="Check" :disabled="!currentId" @click="openProcess('complete')">上传完毕</el-button>
+        <el-button type="success" plain icon="Check" :disabled="!currentId || currentRow.queryStatus === 'CANCELLED'" @click="openProcess('complete')">上传完毕</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="info" plain icon="Edit" :disabled="!currentId || currentUploadStatus !== 'UPLOADED'" @click="openProcess('update')">修改结果</el-button>
+        <el-button type="info" plain icon="Edit" :disabled="!currentId || currentRow.queryStatus === 'CANCELLED' || currentUploadStatus !== 'UPLOADED'" @click="openProcess('update')">修改结果</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
     </el-row>
@@ -88,6 +95,9 @@
       <el-table-column label="公司名称" align="center" prop="companyNameSnapshot" min-width="160" />
       <el-table-column label="姓名" align="center" prop="patientName" width="120" />
       <el-table-column label="身份证号" align="center" prop="idCard" width="210" show-overflow-tooltip />
+      <el-table-column label="查询类型" align="center" width="110">
+        <template #default="{ row }">{{ queryTypeText(row.queryType) }}</template>
+      </el-table-column>
       <el-table-column label="查询状态" align="center" width="100">
         <template #default="{ row }">
           <el-tag :type="row.queryStatus === 'QUERIED' ? 'success' : 'warning'">
@@ -97,23 +107,27 @@
       </el-table-column>
       <el-table-column label="结果上传" align="center" width="100">
         <template #default="{ row }">
-          <el-tag :type="row.uploadStatus === 'UPLOADED' ? 'success' : 'info'">
+          <el-tag v-if="row.queryStatus !== 'CANCELLED'" :type="row.uploadStatus === 'UPLOADED' ? 'success' : 'info'">
             {{ uploadStatusText(row.uploadStatus) }}
           </el-tag>
         </template>
       </el-table-column>
       <el-table-column label="结果状态" align="center" width="110">
-        <template #default="{ row }">{{ resultStatusText(row.resultStatus) }}</template>
+        <template #default="{ row }">{{ row.queryStatus === 'CANCELLED' ? '' : resultStatusText(row.resultStatus) }}</template>
       </el-table-column>
       <el-table-column label="提交时间" align="center" prop="submitTime" width="170" />
-      <el-table-column label="处理人" align="center" prop="handlerName" width="110" />
-      <el-table-column label="处理时间" align="center" prop="handledTime" width="170" />
+      <el-table-column label="处理人" align="center" width="110">
+        <template #default="{ row }">{{ row.queryStatus === 'CANCELLED' ? '' : row.handlerName }}</template>
+      </el-table-column>
+      <el-table-column label="处理时间" align="center" width="170">
+        <template #default="{ row }">{{ row.queryStatus === 'CANCELLED' ? '' : row.handledTime }}</template>
+      </el-table-column>
       <el-table-column label="操作" align="center" width="260" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" icon="View" @click="handleDetail(row)">详情</el-button>
-          <el-button v-if="row.uploadStatus !== 'UPLOADED'" link type="warning" icon="Upload" @click="openProcessForRow(row, 'upload')">上传结果</el-button>
-          <el-button v-else link type="info" icon="Edit" @click="openProcessForRow(row, 'update')">修改结果</el-button>
-          <el-button v-if="row.uploadStatus !== 'UPLOADED'" link type="success" icon="Check" @click="openProcessForRow(row, 'complete')">上传完毕</el-button>
+          <el-button v-if="row.queryStatus !== 'CANCELLED' && row.uploadStatus !== 'UPLOADED'" link type="warning" icon="Upload" @click="openProcessForRow(row, 'upload')">上传结果</el-button>
+          <el-button v-else-if="row.queryStatus !== 'CANCELLED'" link type="info" icon="Edit" @click="openProcessForRow(row, 'update')">修改结果</el-button>
+          <el-button v-if="row.queryStatus !== 'CANCELLED' && row.uploadStatus !== 'UPLOADED'" link type="success" icon="Check" @click="openProcessForRow(row, 'complete')">上传完毕</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -141,12 +155,24 @@
           <strong>{{ currentRow.idCard || '-' }}</strong>
         </div>
         <div>
+          <span>查询类型</span>
+          <strong>{{ queryTypeText(currentRow.queryType) }}</strong>
+        </div>
+        <div v-if="currentRow.queryStatus !== 'CANCELLED'">
           <span>请求编号</span>
           <strong>{{ currentRow.requestNo || '-' }}</strong>
         </div>
+        <div v-if="currentRow.queryStatus === 'CANCELLED'">
+          <span>查询状态</span>
+          <strong>已取消</strong>
+        </div>
+        <div v-if="currentRow.queryStatus === 'CANCELLED'">
+          <span>提交时间</span>
+          <strong>{{ currentRow.submitTime || '-' }}</strong>
+        </div>
       </div>
 
-      <el-form :model="form" ref="formRef" label-width="108px" class="result-form">
+      <el-form v-if="currentRow.queryStatus !== 'CANCELLED'" :model="form" ref="formRef" label-width="108px" class="result-form">
         <el-row :gutter="16">
           <el-col :span="6">
             <el-form-item label="查询状态">
@@ -191,7 +217,7 @@
         </el-row>
       </el-form>
 
-      <div class="import-strip">
+      <div v-if="currentRow.queryStatus !== 'CANCELLED'" class="import-strip">
         <div class="import-title">
           <strong>结果明细</strong>
           <span>Excel 导入和手动新增的每一行都可以直接修改</span>
@@ -204,81 +230,25 @@
         </el-space>
       </div>
 
-      <el-table :data="form.results" border size="small" max-height="420" class="detail-table">
-        <el-table-column label="医院名称" min-width="150">
+      <el-table v-if="currentRow.queryStatus !== 'CANCELLED'" :data="form.results" border size="small" max-height="420" class="detail-table">
+        <el-table-column
+          v-for="field in activeDetailFields"
+          :key="field.prop"
+          :label="field.output"
+          :min-width="field.width || 150"
+        >
           <template #default="{ row }">
-            <el-input v-model="row.hospitalName" :disabled="readonly" placeholder="医院名称" />
-          </template>
-        </el-table-column>
-        <el-table-column label="就诊时间" min-width="190">
-          <template #default="{ row }">
-            <el-input v-model="row.visitTime" :disabled="readonly" placeholder="就诊时间" />
-          </template>
-        </el-table-column>
-        <el-table-column label="就诊类型" min-width="120">
-          <template #default="{ row }">
-            <el-input v-model="row.visitType" :disabled="readonly" placeholder="门诊/住院" />
-          </template>
-        </el-table-column>
-        <el-table-column label="医嘱" min-width="130">
-          <template #default="{ row }">
-            <el-input v-model="row.medicalAdvice" :disabled="readonly" placeholder="医嘱" />
-          </template>
-        </el-table-column>
-        <el-table-column label="诊断结果" min-width="150">
-          <template #default="{ row }">
-            <el-input v-model="row.diagnosisResult" :disabled="readonly" placeholder="诊断结果" />
-          </template>
-        </el-table-column>
-        <el-table-column label="是否报销" width="110">
-          <template #default="{ row }">
-            <el-switch
-              v-model="row.reimbursed"
+            <el-select
+              v-if="field.options"
+              v-model="row[field.prop]"
               :disabled="readonly"
-              active-text="是"
-              inactive-text="否"
-              inline-prompt
-            />
-          </template>
-        </el-table-column>
-        <el-table-column label="医保区划" min-width="130">
-          <template #default="{ row }">
-            <el-input v-model="row.medicalArea" :disabled="readonly" placeholder="医保区划" />
-          </template>
-        </el-table-column>
-        <el-table-column label="险种类型" min-width="130">
-          <template #default="{ row }">
-            <el-input v-model="row.insuranceType" :disabled="readonly" placeholder="险种类型" />
-          </template>
-        </el-table-column>
-        <el-table-column label="人员类型" min-width="130">
-          <template #default="{ row }">
-            <el-input v-model="row.personType" :disabled="readonly" placeholder="人员类型" />
-          </template>
-        </el-table-column>
-        <el-table-column label="本次参保日期" min-width="150">
-          <template #default="{ row }">
-            <el-input v-model="row.currentInsuranceDate" :disabled="readonly" placeholder="本次参保日期" />
-          </template>
-        </el-table-column>
-        <el-table-column label="暂停参保日期" min-width="150">
-          <template #default="{ row }">
-            <el-input v-model="row.suspendedInsuranceDate" :disabled="readonly" placeholder="暂停参保日期" />
-          </template>
-        </el-table-column>
-        <el-table-column label="首次参保年月" min-width="150">
-          <template #default="{ row }">
-            <el-input v-model="row.firstInsuranceMonth" :disabled="readonly" placeholder="首次参保年月" />
-          </template>
-        </el-table-column>
-        <el-table-column label="医保参保单位" min-width="160">
-          <template #default="{ row }">
-            <el-input v-model="row.insuranceUnit" :disabled="readonly" placeholder="医保参保单位" />
-          </template>
-        </el-table-column>
-        <el-table-column label="其他信息" min-width="180">
-          <template #default="{ row }">
-            <el-input v-model="row.extraText" :disabled="readonly" type="textarea" :rows="1" placeholder="其他字段 JSON" />
+              clearable
+              placeholder="请选择"
+              style="width: 100%"
+            >
+              <el-option v-for="option in field.options" :key="option" :label="option" :value="option" />
+            </el-select>
+            <el-input v-else v-model="row[field.prop]" :disabled="readonly" :placeholder="field.output" />
           </template>
         </el-table-column>
         <el-table-column label="操作" width="120" fixed="right">
@@ -288,6 +258,31 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <template v-if="currentRow.queryStatus !== 'CANCELLED' && currentRow.queryType !== 'BIG_DATA'">
+        <div class="import-strip coverage-strip">
+          <div class="import-title">
+            <strong>参保信息</strong>
+            <span>此表由管理员手动填写；未填写时不会同步到保险公司页面</span>
+          </div>
+          <el-button type="primary" plain icon="Plus" :disabled="readonly" @click="addCoverageRow">新增一行</el-button>
+        </div>
+
+        <el-table :data="form.insuranceCoverage" border size="small" max-height="320" class="detail-table">
+          <el-table-column label="序号" type="index" width="70" align="center" />
+          <el-table-column v-for="field in coverageFields" :key="field.prop" :label="field.output" :min-width="field.width || 150">
+            <template #default="{ row }">
+              <el-input v-model="row[field.prop]" :disabled="readonly" :placeholder="field.output" />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="120" fixed="right">
+            <template #default="{ row, $index }">
+              <el-button link type="primary" icon="DocumentCopy" :disabled="readonly" @click="copyCoverageRow(row)">复制</el-button>
+              <el-button link type="danger" icon="Delete" :disabled="readonly" @click="removeCoverageRow($index)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </template>
 
       <template #footer>
         <el-button @click="dialogOpen = false">返回列表</el-button>
@@ -323,25 +318,45 @@ const mode = ref("save")
 const currentId = ref(null)
 const currentUploadStatus = ref("")
 const currentRow = reactive({})
+const AUTO_REFRESH_INTERVAL = 5000
+
+let listRequest = null
+let autoRefreshTimer = null
 
 const readonly = computed(() => mode.value === "detail")
 
-const detailFields = [
-  { prop: "hospitalName", output: "医院名称", aliases: ["医院名称", "医院", "医院名", "hospital", "hospitalName"] },
-  { prop: "visitTime", output: "就诊时间", aliases: ["就诊时间", "就诊日期", "visitTime", "visitDate"] },
-  { prop: "visitType", output: "就诊类型", aliases: ["就诊类型", "就诊类别", "visitType"] },
-  { prop: "medicalAdvice", output: "医嘱", aliases: ["医嘱", "医生", "医师", "doctor", "doctorName", "medicalAdvice"] },
-  { prop: "diagnosisResult", output: "诊断结果", aliases: ["诊断结果", "诊断", "diagnosis", "diagnosisResult"] },
-  { prop: "reimbursed", output: "是否报销", aliases: ["是否报销", "报销", "reimbursed"] },
-  { prop: "medicalArea", output: "医保区划", aliases: ["医保区划", "医保区", "medicalArea"] },
-  { prop: "insuranceType", output: "险种类型", aliases: ["险种类型", "险种", "insuranceType"] },
-  { prop: "personType", output: "人员类型", aliases: ["人员类型", "personType"] },
-  { prop: "personalInsuranceDate", output: "个人参保日期", aliases: ["个人参保日期", "personalInsuranceDate"] },
-  { prop: "currentInsuranceDate", output: "本次参保日期", aliases: ["本次参保日期", "currentInsuranceDate"] },
-  { prop: "suspendedInsuranceDate", output: "暂停参保日期", aliases: ["暂停参保日期", "suspendedInsuranceDate"] },
-  { prop: "firstInsuranceMonth", output: "首次参保年月", aliases: ["首次参保年月", "首次参保日期", "firstInsuranceMonth"] },
-  { prop: "insuranceUnit", output: "医保参保单位", aliases: ["医保参保单位", "参保单位", "insuranceUnit"] }
+const medicalDetailFields = [
+  { prop: "medicalInstitutionName", output: "定点医药机构名称", width: 190, aliases: ["定点医药机构名称", "医院名称", "医院", "hospital", "hospitalName"] },
+  { prop: "visitTime", output: "就诊时间", width: 190, aliases: ["就诊时间", "就诊日期", "visitTime", "visitDate"] },
+  { prop: "visitType", output: "就诊类型", width: 120, aliases: ["就诊类型", "就诊类别", "visitType"] },
+  { prop: "diagnosisResult", output: "诊断结果", width: 170, aliases: ["诊断结果", "病种名称", "诊断", "diagnosis", "diagnosisResult"] },
+  { prop: "reimbursed", output: "是否报销", width: 120, options: ["是", "否"], aliases: ["是否报销", "报销", "reimbursed"] },
+  { prop: "endTime", output: "结束时间", width: 190, aliases: ["结束时间", "endTime"] }
 ]
+
+const bigDataDetailFields = [
+  { prop: "patientName", output: "姓名", width: 120, aliases: ["姓名", "人员姓名", "patientName", "name"] },
+  { prop: "gender", output: "性别", width: 100, aliases: ["性别", "gender"] },
+  { prop: "idCard", output: "身份证号码", width: 200, aliases: ["身份证号码", "身份证号", "证件号码", "idCard"] },
+  { prop: "hospitalName", output: "就诊医院", width: 180, aliases: ["就诊医院", "医院名称", "hospitalName"] },
+  { prop: "visitDate", output: "日期", width: 150, aliases: ["日期", "就诊日期", "visitDate"] },
+  { prop: "visitCategory", output: "门诊/住院/体检", width: 150, aliases: ["门诊/住院/体检", "就诊类型", "visitCategory"] },
+  { prop: "medicalAdvice", output: "医嘱", width: 180, aliases: ["医嘱", "medicalAdvice"] },
+  { prop: "diagnosis", output: "诊断", width: 180, aliases: ["诊断", "诊断结果", "diagnosis"] }
+]
+
+const coverageFields = [
+  { prop: "medicalArea", output: "医保区划", width: 140 },
+  { prop: "companyName", output: "单位名称", width: 180 },
+  { prop: "personType", output: "人员类型", width: 130 },
+  { prop: "coverageStatus", output: "参保状态", width: 130 },
+  { prop: "insuranceType", output: "险种类型", width: 140 },
+  { prop: "currentCoverageDate", output: "本次参保日期", width: 160 },
+  { prop: "suspensionDate", output: "暂停参保日期", width: 160 },
+  { prop: "firstCoverageMonth", output: "首次参保年月", width: 150 }
+]
+
+const activeDetailFields = computed(() => currentRow.queryType === "BIG_DATA" ? bigDataDetailFields : medicalDetailFields)
 
 const queryParams = reactive({
   pageNum: 1,
@@ -349,6 +364,7 @@ const queryParams = reactive({
   companyNameSnapshot: undefined,
   patientName: undefined,
   idCard: undefined,
+  queryType: undefined,
   queryStatus: undefined,
   uploadStatus: undefined
 })
@@ -357,17 +373,44 @@ const form = reactive({
   resultStatus: "HIT",
   resultMessage: undefined,
   modifyReason: undefined,
-  results: []
+  results: [],
+  insuranceCoverage: []
 })
 
-function getList() {
-  loading.value = true
-  listDelayedQuery(addDateRange(queryParams, dateRange.value)).then(res => {
+function getList(options = {}) {
+  if (listRequest) {
+    return options && options.silent === true
+      ? listRequest
+      : listRequest.then(() => getList(options))
+  }
+
+  const silent = options && options.silent === true
+  if (!silent) loading.value = true
+  listRequest = listDelayedQuery(addDateRange(queryParams, dateRange.value)).then(res => {
     requestList.value = res.rows || []
     total.value = res.total || 0
   }).finally(() => {
-    loading.value = false
+    if (!silent) loading.value = false
+    listRequest = null
   })
+  return listRequest
+}
+
+function startAutoRefresh() {
+  stopAutoRefresh()
+  autoRefreshTimer = window.setTimeout(async () => {
+    if (document.visibilityState === "visible") {
+      await getList({ silent: true })
+    }
+    startAutoRefresh()
+  }, AUTO_REFRESH_INTERVAL)
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshTimer !== null) {
+    window.clearTimeout(autoRefreshTimer)
+    autoRefreshTimer = null
+  }
 }
 
 function handleQuery() {
@@ -398,6 +441,10 @@ function openProcess(type) {
     proxy.$modal.msgWarning("请先选择一条记录")
     return
   }
+  if (currentRow.queryStatus === "CANCELLED") {
+    proxy.$modal.msgWarning("已取消的申请不能处理")
+    return
+  }
   openEditor(type)
 }
 
@@ -416,6 +463,7 @@ function openEditor(type) {
     form.resultStatus = currentRow.resultStatus || "HIT"
     form.resultMessage = currentRow.resultMessage
     form.results = normalizeResults(currentRow.results || [])
+    form.insuranceCoverage = normalizeCoverage(currentRow.results || [])
     dialogOpen.value = true
   })
 }
@@ -425,6 +473,7 @@ function resetEditor() {
   form.resultMessage = undefined
   form.modifyReason = undefined
   form.results = []
+  form.insuranceCoverage = []
 }
 
 function addRow() {
@@ -439,35 +488,57 @@ function removeRow(index) {
   form.results.splice(index, 1)
 }
 
-function emptyDetailRow() {
-  return detailFields.reduce((row, field) => {
-    row[field.prop] = field.prop === "reimbursed" ? false : ""
+function addCoverageRow() {
+  form.insuranceCoverage.push(emptyCoverageRow())
+}
+
+function copyCoverageRow(row) {
+  form.insuranceCoverage.push({ ...row })
+}
+
+function removeCoverageRow(index) {
+  form.insuranceCoverage.splice(index, 1)
+}
+
+function emptyCoverageRow() {
+  return coverageFields.reduce((row, field) => {
+    row[field.prop] = ""
     return row
-  }, { extraText: "" })
+  }, {})
+}
+
+function emptyDetailRow() {
+  return activeDetailFields.value.reduce((row, field) => {
+    row[field.prop] = ""
+    return row
+  }, {})
 }
 
 function normalizeResults(rows) {
-  return (rows || []).map(item => rawJsonToRow(item.rawJson || JSON.stringify(item)))
+  return (rows || [])
+    .filter(item => parseJsonObject(item.rawJson || JSON.stringify(item)).__recordType !== "INSURANCE_COVERAGE")
+    .map(item => rawJsonToRow(item.rawJson || JSON.stringify(item)))
+}
+
+function normalizeCoverage(rows) {
+  return (rows || []).map(item => parseJsonObject(item.rawJson || JSON.stringify(item)))
+    .filter(item => item.__recordType === "INSURANCE_COVERAGE")
+    .map(item => coverageFields.reduce((row, field) => {
+      const value = item[field.output]
+      row[field.prop] = value === undefined || value === null ? "" : String(value)
+      return row
+    }, {}))
 }
 
 function rawJsonToRow(rawJson) {
   const row = emptyDetailRow()
   const raw = parseJsonObject(rawJson)
-  const usedKeys = new Set()
-  detailFields.forEach(field => {
+  activeDetailFields.value.forEach(field => {
     const key = field.aliases.find(alias => raw[alias] !== undefined && raw[alias] !== null)
     if (key) {
-      row[field.prop] = field.prop === "reimbursed" ? normalizeBoolean(raw[key]) : String(raw[key])
-      usedKeys.add(key)
+      row[field.prop] = String(raw[key])
     }
   })
-  const extra = {}
-  Object.keys(raw).forEach(key => {
-    if (!usedKeys.has(key)) {
-      extra[key] = raw[key]
-    }
-  })
-  row.extraText = Object.keys(extra).length ? JSON.stringify(extra) : ""
   return row
 }
 
@@ -482,42 +553,37 @@ function parseJsonObject(rawJson) {
   }
 }
 
-function normalizeBoolean(value) {
-  return value === true || value === "true" || value === "1" || value === "是" || value === "已报销"
-}
-
 function buildPayload() {
   return {
     resultStatus: form.resultStatus || currentRow.resultStatus || "HIT",
     resultMessage: form.resultMessage,
     modifyReason: form.modifyReason,
-    results: form.results.map(rowToPayload).filter(Boolean)
+    results: form.results.map(rowToPayload).filter(Boolean),
+    insuranceCoverage: currentRow.queryType === "BIG_DATA"
+      ? []
+      : form.insuranceCoverage.map(coverageRowToPayload).filter(Boolean)
   }
+}
+
+function coverageRowToPayload(row) {
+  const data = {}
+  coverageFields.forEach(field => {
+    const value = row[field.prop]
+    data[field.output] = value === undefined || value === null ? "" : String(value).trim()
+  })
+  return Object.values(data).some(Boolean) ? data : null
 }
 
 function rowToPayload(row) {
   const data = {}
-  detailFields.forEach(field => {
+  activeDetailFields.value.forEach(field => {
     const value = row[field.prop]
-    if (value !== undefined && value !== null && value !== "") {
-      data[field.output] = field.prop === "reimbursed" ? (value ? "是" : "否") : value
-    }
+    data[field.output] = value === undefined || value === null ? "" : value
   })
-  Object.assign(data, parseExtra(row.extraText))
-  if (Object.keys(data).length === 0) {
+  if (!Object.values(data).some(value => value !== "")) {
     return null
   }
   return { rawJson: JSON.stringify(data) }
-}
-
-function parseExtra(extraText) {
-  if (!extraText || !extraText.trim()) return {}
-  try {
-    const parsed = JSON.parse(extraText)
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : { 其他信息: extraText }
-  } catch (e) {
-    return { 其他信息: extraText }
-  }
 }
 
 function validateFinalPayload(payload) {
@@ -583,6 +649,7 @@ function handleExcelChange(file) {
     form.resultStatus = currentRow.resultStatus || form.resultStatus || "HIT"
     form.resultMessage = currentRow.resultMessage
     form.results = normalizeResults(currentRow.results || [])
+    form.insuranceCoverage = normalizeCoverage(currentRow.results || [])
     getList()
   })
   return false
@@ -591,7 +658,14 @@ function handleExcelChange(file) {
 function queryStatusText(status) {
   if (status === "QUERIED") return "已查询"
   if (status === "PENDING") return "未查询"
+  if (status === "CANCELLED") return "已取消"
   return status || "-"
+}
+
+function queryTypeText(type) {
+  if (type === "BIG_DATA") return "大数据查询"
+  if (type === "MEDICAL" || type === "delayed_precise" || type === "precision_delayed") return "医保查询"
+  return type || "-"
 }
 
 function uploadStatusText(status) {
@@ -612,7 +686,14 @@ function formatMoney(val) {
   return Number(val).toFixed(2)
 }
 
-getList()
+onMounted(() => {
+  getList()
+  startAutoRefresh()
+})
+
+onActivated(startAutoRefresh)
+onDeactivated(stopAutoRefresh)
+onBeforeUnmount(stopAutoRefresh)
 </script>
 
 <style scoped>
@@ -695,5 +776,10 @@ getList()
 
 .detail-table :deep(.el-table__cell) {
   padding: 7px 0;
+}
+
+.coverage-strip {
+  margin-top: 18px;
+  border-top: 1px solid #edf2f7;
 }
 </style>

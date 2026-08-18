@@ -22,6 +22,8 @@ import com.ruoyi.business.domain.BizCompanyQueryPrice;
 import com.ruoyi.business.domain.BizInsuranceCompany;
 import com.ruoyi.business.domain.BizMonthlyUsage;
 import com.ruoyi.business.domain.BizQueryPrice;
+import com.ruoyi.business.domain.BizDelayedQueryRequest;
+import com.ruoyi.business.domain.BizDelayedQueryResult;
 import com.ruoyi.business.domain.medical.MedicalQueryBatchPreview;
 import com.ruoyi.business.domain.medical.MedicalQueryBatchRow;
 import com.ruoyi.business.domain.medical.MedicalQueryBatchValidationCommand;
@@ -36,6 +38,8 @@ import com.ruoyi.business.service.IMedicalQueryService;
 import com.ruoyi.business.service.IMedicalQueryBatchService;
 import com.ruoyi.business.service.IMedicalQueryBatchSubmissionService;
 import com.ruoyi.business.service.IMedicalQueryBatchCancellationService;
+import com.ruoyi.business.service.IBizDelayedQueryService;
+import com.ruoyi.business.service.IDelayedMedicalQueryExportService;
 import com.ruoyi.business.service.MedicalQueryException;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.web.core.CompanyEmbedRequestContext;
@@ -193,6 +197,161 @@ public class CompanyEmbedMedicalQueryControllerTest
 
         assertEquals(200, result.get("code"));
         verify(delayedMedicalQueryService).submit(eq(1L), eq("张三"), eq("430102199001011234"), any());
+    }
+
+    @Test
+    public void delayedSubmissionPassesSelectedBigDataTypeToCanonicalService()
+    {
+        IBizDelayedQueryService canonicalService = mock(IBizDelayedQueryService.class);
+        CompanyEmbedMedicalQueryController canonicalController = new CompanyEmbedMedicalQueryController(priceService,
+                medicalQueryService, delayedMedicalQueryService, medicalQueryBatchService, monthlyUsageMapper,
+                companyPriceMapper, medicalQueryBatchSubmissionService, medicalQueryBatchCancellationService,
+                mock(IDelayedMedicalQueryExportService.class), canonicalService);
+        BizDelayedQueryRequest submitted = new BizDelayedQueryRequest();
+        submitted.setRequestNo("DQ001");
+        submitted.setQueryType("BIG_DATA");
+        when(canonicalService.submit(eq(1L), eq("测试保险公司"), eq("张三"),
+                eq("430102199001011234"), eq("BIG_DATA"), any())).thenReturn(submitted);
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("name", "张三");
+        body.put("idCard", "430102199001011234");
+        body.put("queryType", "BIG_DATA");
+
+        AjaxResult result = canonicalController.submitDelayed(body, request(company(true, "100.00")));
+
+        assertEquals(200, result.get("code"));
+        verify(canonicalService).submit(eq(1L), eq("测试保险公司"), eq("张三"),
+                eq("430102199001011234"), eq("BIG_DATA"), any());
+    }
+
+    @Test
+    public void delayedCancellationUsesRequestNumberAndAuthenticatedCompany()
+    {
+        IBizDelayedQueryService canonicalService = mock(IBizDelayedQueryService.class);
+        CompanyEmbedMedicalQueryController canonicalController = new CompanyEmbedMedicalQueryController(priceService,
+                medicalQueryService, delayedMedicalQueryService, medicalQueryBatchService, monthlyUsageMapper,
+                companyPriceMapper, medicalQueryBatchSubmissionService, medicalQueryBatchCancellationService,
+                mock(IDelayedMedicalQueryExportService.class), canonicalService);
+        BizDelayedQueryRequest pending = new BizDelayedQueryRequest();
+        pending.setId(31L);
+        pending.setRequestNo("DQ031");
+        when(canonicalService.selectList(any(BizDelayedQueryRequest.class))).thenReturn(List.of(pending));
+        when(canonicalService.selectCompanyDetail(31L, 1L)).thenReturn(pending);
+        when(canonicalService.cancelItem(1L, 31L)).thenReturn(Map.of("id", 31L, "cancelled", true));
+
+        AjaxResult result = canonicalController.cancelDelayed("DQ031", request(company(true, "100.00")));
+
+        assertEquals(200, result.get("code"));
+        verify(canonicalService).cancelItem(1L, 31L);
+    }
+
+    @Test
+    public void delayedCancellationMapsStartedRequestToNotCancellable()
+    {
+        IBizDelayedQueryService canonicalService = mock(IBizDelayedQueryService.class);
+        CompanyEmbedMedicalQueryController canonicalController = new CompanyEmbedMedicalQueryController(priceService,
+                medicalQueryService, delayedMedicalQueryService, medicalQueryBatchService, monthlyUsageMapper,
+                companyPriceMapper, medicalQueryBatchSubmissionService, medicalQueryBatchCancellationService,
+                mock(IDelayedMedicalQueryExportService.class), canonicalService);
+        BizDelayedQueryRequest started = new BizDelayedQueryRequest();
+        started.setId(32L);
+        started.setRequestNo("DQ032");
+        when(canonicalService.selectList(any(BizDelayedQueryRequest.class))).thenReturn(List.of(started));
+        when(canonicalService.selectCompanyDetail(32L, 1L)).thenReturn(started);
+        when(canonicalService.cancelItem(1L, 32L)).thenThrow(new IllegalStateException("not cancellable"));
+
+        AjaxResult result = canonicalController.cancelDelayed("DQ032", request(company(true, "100.00")));
+
+        assertEquals(409, result.get("code"));
+        assertEquals("NOT_CANCELLABLE", result.get("errorCode"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void bigDataDetailKeepsTemplateColumnsAndValues()
+    {
+        IBizDelayedQueryService canonicalService = mock(IBizDelayedQueryService.class);
+        CompanyEmbedMedicalQueryController canonicalController = new CompanyEmbedMedicalQueryController(priceService,
+                medicalQueryService, delayedMedicalQueryService, medicalQueryBatchService, monthlyUsageMapper,
+                companyPriceMapper, medicalQueryBatchSubmissionService, medicalQueryBatchCancellationService,
+                mock(IDelayedMedicalQueryExportService.class), canonicalService);
+        BizDelayedQueryRequest detail = new BizDelayedQueryRequest();
+        detail.setId(20L);
+        detail.setRequestNo("DQ020");
+        detail.setQueryType("BIG_DATA");
+        detail.setQueryStatus("QUERIED");
+        detail.setUploadStatus("UPLOADED");
+        java.util.Date submitTime = new java.util.Date(1767225600000L);
+        java.util.Date uploadedTime = new java.util.Date(1767229200000L);
+        detail.setSubmitTime(submitTime);
+        detail.setUploadedTime(uploadedTime);
+        BizDelayedQueryResult row = new BizDelayedQueryResult();
+        row.setRawJson("{\"姓名\":\"张三\",\"性别\":\"男\",\"身份证号码\":\"430102199001011234\","
+                + "\"就诊医院\":\"测试医院\",\"日期\":\"2026.08.01-2026.08.05\","
+                + "\"门诊/住院/体检\":\"住院\",\"医嘱\":\"注意休息\",\"诊断\":\"肺炎\"}");
+        detail.setResults(List.of(row));
+        when(canonicalService.selectList(any(BizDelayedQueryRequest.class))).thenReturn(List.of(detail));
+        when(canonicalService.selectCompanyDetail(20L, 1L)).thenReturn(detail);
+
+        AjaxResult result = canonicalController.requestDetail("DQ020", request(company(true, "100.00")));
+        Map<String, Object> data = (Map<String, Object>) result.get("data");
+        List<Map<String, Object>> schema = (List<Map<String, Object>>) data.get("columnSchema");
+        Map<String, Object> resultData = (Map<String, Object>) data.get("data");
+        List<Map<String, Object>> records = (List<Map<String, Object>>) resultData.get("records");
+
+        assertEquals(List.of("姓名", "性别", "身份证号码", "就诊医院", "日期", "门诊/住院/体检", "医嘱", "诊断"),
+                schema.stream().map(column -> String.valueOf(column.get("field"))).toList());
+        assertEquals("张三", records.get(0).get("姓名"));
+        assertEquals("男", records.get(0).get("性别"));
+        assertEquals("430102199001011234", records.get(0).get("身份证号码"));
+        assertEquals("测试医院", records.get(0).get("就诊医院"));
+        assertEquals("2026.08.01-2026.08.05", records.get(0).get("日期"));
+        assertEquals("住院", records.get(0).get("门诊/住院/体检"));
+        assertEquals("注意休息", records.get(0).get("医嘱"));
+        assertEquals("肺炎", records.get(0).get("诊断"));
+        assertEquals(submitTime, data.get("submitTime"));
+        assertEquals(uploadedTime, data.get("handledTime"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void medicalDetailReturnsCoverageSeparatelyFromResultRecords()
+    {
+        IBizDelayedQueryService canonicalService = mock(IBizDelayedQueryService.class);
+        CompanyEmbedMedicalQueryController canonicalController = new CompanyEmbedMedicalQueryController(priceService,
+                medicalQueryService, delayedMedicalQueryService, medicalQueryBatchService, monthlyUsageMapper,
+                companyPriceMapper, medicalQueryBatchSubmissionService, medicalQueryBatchCancellationService,
+                mock(IDelayedMedicalQueryExportService.class), canonicalService);
+        BizDelayedQueryRequest detail = new BizDelayedQueryRequest();
+        detail.setId(21L);
+        detail.setRequestNo("DQ021");
+        detail.setQueryType("MEDICAL");
+        detail.setQueryStatus("QUERIED");
+        detail.setUploadStatus("UPLOADED");
+        BizDelayedQueryResult medical = new BizDelayedQueryResult();
+        medical.setRawJson("{\"定点医药机构名称\":\"测试医院\",\"诊断结果\":\"肺炎\"}");
+        BizDelayedQueryResult coverage = new BizDelayedQueryResult();
+        coverage.setRawJson("{\"__recordType\":\"INSURANCE_COVERAGE\",\"医保区划\":\"长沙市\","
+                + "\"单位名称\":\"测试单位\",\"参保状态\":\"正常参保\",\"险种类型\":\"职工医保\"}");
+        detail.setResults(List.of(medical, coverage));
+        when(canonicalService.selectList(any(BizDelayedQueryRequest.class))).thenReturn(List.of(detail));
+        when(canonicalService.selectCompanyDetail(21L, 1L)).thenReturn(detail);
+
+        AjaxResult result = canonicalController.requestDetail("DQ021", request(company(true, "100.00")));
+        Map<String, Object> data = (Map<String, Object>) result.get("data");
+        List<Map<String, Object>> schema = (List<Map<String, Object>>) data.get("columnSchema");
+        Map<String, Object> resultData = (Map<String, Object>) data.get("data");
+        List<Map<String, Object>> records = (List<Map<String, Object>>) resultData.get("records");
+        List<Map<String, Object>> coverageRecords = (List<Map<String, Object>>) data.get("insuranceCoverage");
+
+        assertEquals(1, records.size());
+        assertFalse(schema.stream().anyMatch(column -> "险种类型".equals(column.get("field"))));
+        assertEquals("测试医院", records.get(0).get("定点医药机构名称"));
+        assertEquals(1, coverageRecords.size());
+        assertEquals("长沙市", coverageRecords.get(0).get("医保区划"));
+        assertEquals("测试单位", coverageRecords.get(0).get("单位名称"));
+        assertEquals("职工医保", coverageRecords.get(0).get("险种类型"));
+        assertFalse(coverageRecords.get(0).containsKey("__recordType"));
     }
 
     @Test

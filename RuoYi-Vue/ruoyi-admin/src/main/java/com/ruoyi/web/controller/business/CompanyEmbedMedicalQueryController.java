@@ -22,6 +22,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
+import com.alibaba.fastjson2.JSON;
 import com.ruoyi.business.domain.BizInsuranceCompany;
 import com.ruoyi.business.domain.BizDelayedQueryRequest;
 import com.ruoyi.business.domain.BizDelayedQueryResult;
@@ -56,7 +57,16 @@ import com.ruoyi.web.core.CompanyEmbedRequestContext;
 public class CompanyEmbedMedicalQueryController
 {
     private static final String DELAYED_QUERY_TYPE = "precision_delayed";
+    private static final String MEDICAL_QUERY_TYPE = "MEDICAL";
+    private static final String BIG_DATA_QUERY_TYPE = "BIG_DATA";
     private static final BigDecimal NEAR_LIMIT_PERCENT = new BigDecimal("80");
+    private static final List<String> MEDICAL_RESULT_COLUMNS = List.of("定点医药机构名称", "就诊时间", "就诊类型",
+            "诊断结果", "是否报销", "结束时间");
+    private static final List<String> BIG_DATA_RESULT_COLUMNS = List.of("姓名", "性别", "身份证号码", "就诊医院",
+            "日期", "门诊/住院/体检", "医嘱", "诊断");
+    private static final String COVERAGE_RECORD_TYPE = "INSURANCE_COVERAGE";
+    private static final List<String> COVERAGE_COLUMNS = List.of("医保区划", "单位名称", "人员类型", "参保状态",
+            "险种类型", "本次参保日期", "暂停参保日期", "首次参保年月");
 
     private final IBizQueryPriceService priceService;
     private final IMedicalQueryService medicalQueryService;
@@ -187,7 +197,8 @@ public class CompanyEmbedMedicalQueryController
                     requests.add(item);
                 }
                 List<BizDelayedQueryRequest> submitted = bizDelayedQueryService.submitBatch(company.getId(),
-                        company.getCompanyName(), requests, request.getRemoteAddr());
+                        company.getCompanyName(), requests, normalizeDelayedQueryType(command.getQueryType()),
+                        request.getRemoteAddr());
                 Map<String, Object> result = new LinkedHashMap<>();
                 result.put("batchNo", submitted.isEmpty() ? null : submitted.get(0).getBatchNo());
                 result.put("items", submitted);
@@ -228,6 +239,7 @@ public class CompanyEmbedMedicalQueryController
                 int pending = 0;
                 int failed = 0;
                 int cancelled = 0;
+                List<Map<String, Object>> itemDetails = new ArrayList<>();
                 for (BizDelayedQueryRequest item : items)
                 {
                     String status = item.getQueryStatus();
@@ -236,6 +248,8 @@ public class CompanyEmbedMedicalQueryController
                     else if ("CANCELLED".equals(status)) cancelled++;
                     else if ("FAILED".equals(status)) failed++;
                     else pending++;
+                    BizDelayedQueryRequest detail = bizDelayedQueryService.selectCompanyDetail(item.getId(), company.getId());
+                    itemDetails.add(toEmbedResponse(detail == null ? item : detail));
                 }
                 progress.put("batchNo", batchNo);
                 progress.put("totalCount", items.size());
@@ -246,7 +260,7 @@ public class CompanyEmbedMedicalQueryController
                 progress.put("cancelledCount", cancelled);
                 progress.put("batchStatus", items.isEmpty() ? "NOT_FOUND"
                         : completed + failed + cancelled == items.size() ? "COMPLETED" : "PROCESSING");
-                progress.put("items", items);
+                progress.put("items", itemDetails);
                 return AjaxResult.success(progress);
             }
             return AjaxResult.success(medicalQueryBatchCancellationService.getProgress(company.getId(), batchNo));
@@ -315,7 +329,7 @@ public class CompanyEmbedMedicalQueryController
             {
                 return AjaxResult.success(toEmbedResponse(bizDelayedQueryService.submit(company.getId(),
                         company.getCompanyName(), toString(body.get("name")), toString(body.get("idCard")),
-                        request.getRemoteAddr())));
+                        normalizeDelayedQueryType(toString(body.get("queryType"))), request.getRemoteAddr())));
             }
             return AjaxResult.success(delayedMedicalQueryService.submit(company.getId(), toString(body.get("name")),
                     toString(body.get("idCard")), request.getRemoteAddr()));
@@ -323,6 +337,41 @@ public class CompanyEmbedMedicalQueryController
         catch (MedicalQueryException e)
         {
             return queryError(e);
+        }
+        catch (IllegalArgumentException e)
+        {
+            return AjaxResult.error(400, e.getMessage());
+        }
+    }
+
+    @PostMapping("/delayed/requests/{requestNo}/cancel")
+    public AjaxResult cancelDelayed(@PathVariable String requestNo, HttpServletRequest request)
+    {
+        BizInsuranceCompany company = CompanyEmbedRequestContext.getCompany(request);
+        if (company == null)
+        {
+            return invalidAppKey();
+        }
+        if (bizDelayedQueryService == null)
+        {
+            return AjaxResult.error(409, "当前查询不支持取消").put("errorCode", "NOT_CANCELLABLE");
+        }
+        BizDelayedQueryRequest detail = findBizRequest(company.getId(), requestNo);
+        if (detail == null)
+        {
+            return AjaxResult.error(404, "请求不存在").put("errorCode", "REQUEST_NOT_FOUND");
+        }
+        try
+        {
+            return AjaxResult.success(bizDelayedQueryService.cancelItem(company.getId(), detail.getId()));
+        }
+        catch (IllegalStateException e)
+        {
+            return AjaxResult.error(409, "该申请已开始处理，不能取消").put("errorCode", "NOT_CANCELLABLE");
+        }
+        catch (IllegalArgumentException e)
+        {
+            return AjaxResult.error(404, "请求不存在").put("errorCode", "REQUEST_NOT_FOUND");
         }
     }
 
@@ -750,7 +799,15 @@ public class CompanyEmbedMedicalQueryController
     private Map<String, Object> toEmbedResponse(BizDelayedQueryRequest request)
     {
         Map<String, Object> response = new LinkedHashMap<>();
+        response.put("id", request.getId());
         response.put("requestNo", request.getRequestNo());
+        response.put("batchNo", request.getBatchNo());
+        response.put("name", request.getPatientName());
+        response.put("idCard", request.getIdCard());
+        response.put("queryType", request.getQueryType());
+        response.put("submitTime", request.getSubmitTime());
+        response.put("handledTime", request.getUploadedTime() == null
+                ? request.getHandledTime() : request.getUploadedTime());
         response.put("processStatus", "QUERIED".equals(request.getQueryStatus()) ? "COMPLETED" : request.getQueryStatus());
         response.put("resultStatus", request.getResultStatus());
         response.put("resultSummary", request.getResultMessage());
@@ -759,17 +816,76 @@ public class CompanyEmbedMedicalQueryController
         {
             Map<String, Object> data = new LinkedHashMap<>();
             List<Map<String, Object>> records = new ArrayList<>();
+            List<Map<String, Object>> coverageRecords = new ArrayList<>();
+            List<Map<String, Object>> schema = new ArrayList<>();
+            List<String> resultColumns = BIG_DATA_QUERY_TYPE.equals(request.getQueryType())
+                    ? BIG_DATA_RESULT_COLUMNS : MEDICAL_RESULT_COLUMNS;
+            for (String field : resultColumns)
+            {
+                Map<String, Object> column = new LinkedHashMap<>();
+                column.put("field", field);
+                column.put("label", field);
+                schema.add(column);
+            }
             for (BizDelayedQueryResult result : request.getResults())
             {
-                Map<String, Object> row = new LinkedHashMap<>();
-                row.put("rowNo", result.getRowNo());
-                row.put("rawJson", result.getRawJson());
-                records.add(row);
+                Map<String, Object> row;
+                try
+                {
+                    row = JSON.parseObject(result.getRawJson(), LinkedHashMap.class);
+                    if (row == null)
+                    {
+                        row = new LinkedHashMap<>();
+                    }
+                }
+                catch (Exception e)
+                {
+                    row = new LinkedHashMap<>();
+                    row.put(resultColumns.get(resultColumns.size() - 1), result.getRawJson());
+                }
+                if (COVERAGE_RECORD_TYPE.equals(row.get("__recordType")))
+                {
+                    if (MEDICAL_QUERY_TYPE.equals(request.getQueryType()))
+                    {
+                        coverageRecords.add(orderResultRow(row, COVERAGE_COLUMNS));
+                    }
+                    continue;
+                }
+                records.add(orderResultRow(row, resultColumns));
             }
             data.put("records", records);
             response.put("data", data);
+            response.put("columnSchema", schema);
+            if (!coverageRecords.isEmpty())
+            {
+                response.put("insuranceCoverage", coverageRecords);
+            }
         }
         return response;
+    }
+
+    private Map<String, Object> orderResultRow(Map<String, Object> source, List<String> columns)
+    {
+        Map<String, Object> row = new LinkedHashMap<>();
+        for (String column : columns)
+        {
+            row.put(column, source.getOrDefault(column, ""));
+        }
+        return row;
+    }
+
+    private String normalizeDelayedQueryType(String queryType)
+    {
+        if (StringUtils.isEmpty(queryType) || DELAYED_QUERY_TYPE.equals(queryType)
+                || "delayed_precise".equals(queryType))
+        {
+            return MEDICAL_QUERY_TYPE;
+        }
+        if (MEDICAL_QUERY_TYPE.equals(queryType) || BIG_DATA_QUERY_TYPE.equals(queryType))
+        {
+            return queryType;
+        }
+        throw new IllegalArgumentException("查询类型仅支持医保查询或大数据查询");
     }
 
     private AjaxResult invalidAppKey()

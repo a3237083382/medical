@@ -28,6 +28,8 @@ import com.ruoyi.common.enums.BusinessType;
 @RequestMapping("/business/delayed-query")
 public class BizDelayedQueryController extends BaseController
 {
+    private static final String COVERAGE_RECORD_TYPE = "INSURANCE_COVERAGE";
+
     @Autowired
     private IBizDelayedQueryService delayedQueryService;
 
@@ -51,7 +53,7 @@ public class BizDelayedQueryController extends BaseController
     @PostMapping("/{id}/save")
     public AjaxResult save(@PathVariable Long id, @RequestBody Map<String, Object> body)
     {
-        return success(delayedQueryService.saveDraft(id, rows(body), str(body.get("resultStatus")),
+        return success(delayedQueryService.saveDraft(id, allRows(body), str(body.get("resultStatus")),
                 str(body.get("resultMessage")), getUsername()));
     }
 
@@ -60,7 +62,7 @@ public class BizDelayedQueryController extends BaseController
     @PostMapping("/{id}/complete")
     public AjaxResult complete(@PathVariable Long id, @RequestBody Map<String, Object> body)
     {
-        return success(delayedQueryService.complete(id, rows(body), str(body.get("resultStatus")),
+        return success(delayedQueryService.complete(id, allRows(body), str(body.get("resultStatus")),
                 str(body.get("resultMessage")), getUsername()));
     }
 
@@ -69,7 +71,7 @@ public class BizDelayedQueryController extends BaseController
     @PutMapping("/{id}/result")
     public AjaxResult updateResult(@PathVariable Long id, @RequestBody Map<String, Object> body)
     {
-        return success(delayedQueryService.updateUploadedResult(id, rows(body), str(body.get("resultStatus")),
+        return success(delayedQueryService.updateUploadedResult(id, allRows(body), str(body.get("resultStatus")),
                 str(body.get("resultMessage")), getUsername(), str(body.get("modifyReason"))));
     }
 
@@ -78,7 +80,14 @@ public class BizDelayedQueryController extends BaseController
     @PostMapping("/{id}/import")
     public AjaxResult importExcel(@PathVariable Long id, @RequestParam("file") MultipartFile file) throws Exception
     {
-        return success(delayedQueryService.importExcel(id, file, getUsername()));
+        try
+        {
+            return success(delayedQueryService.importExcel(id, file, getUsername()));
+        }
+        catch (IllegalArgumentException e)
+        {
+            return AjaxResult.error(400, e.getMessage());
+        }
     }
 
     @PreAuthorize("@ss.hasPermi('business:delayed-query:list')")
@@ -116,6 +125,36 @@ public class BizDelayedQueryController extends BaseController
             {
                 result.setRawJson(str(item));
             }
+            results.add(result);
+        }
+        return results;
+    }
+
+    private List<BizDelayedQueryResult> allRows(Map<String, Object> body)
+    {
+        List<BizDelayedQueryResult> results = rows(body);
+        Object value = body.get("insuranceCoverage");
+        if (!(value instanceof List<?> list))
+        {
+            return results;
+        }
+        for (Object item : list)
+        {
+            if (!(item instanceof Map<?, ?> source))
+            {
+                continue;
+            }
+            boolean hasContent = source.values().stream()
+                    .anyMatch(fieldValue -> fieldValue != null && !String.valueOf(fieldValue).trim().isEmpty());
+            if (!hasContent)
+            {
+                continue;
+            }
+            Map<String, Object> row = new java.util.LinkedHashMap<>();
+            row.put("__recordType", COVERAGE_RECORD_TYPE);
+            source.forEach((key, fieldValue) -> row.put(String.valueOf(key), fieldValue));
+            BizDelayedQueryResult result = new BizDelayedQueryResult();
+            result.setRawJson(JSON.toJSONString(row));
             results.add(result);
         }
         return results;

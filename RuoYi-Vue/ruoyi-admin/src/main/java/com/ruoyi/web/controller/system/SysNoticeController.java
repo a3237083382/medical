@@ -19,6 +19,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.business.service.IBizDelayedQueryService;
 import com.ruoyi.system.domain.SysNotice;
 import com.ruoyi.system.service.ISysNoticeReadService;
 import com.ruoyi.system.service.ISysNoticeService;
@@ -37,6 +38,9 @@ public class SysNoticeController extends BaseController
 
     @Autowired
     private ISysNoticeReadService noticeReadService;
+
+    @Autowired
+    private IBizDelayedQueryService delayedQueryService;
 
     /**
      * 获取通知公告列表
@@ -95,6 +99,7 @@ public class SysNoticeController extends BaseController
         long unreadCount = list.stream().filter(n -> !n.getIsRead()).count();
         AjaxResult result = AjaxResult.success(list);
         result.put("unreadCount", unreadCount);
+        result.put("delayedPendingCount", delayedQueryService.countPendingRequests());
         return result;
     }
 

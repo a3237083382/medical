@@ -57,6 +57,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where company_id = #{companyId}
           and patient_name = #{patientName}
           and id_card = #{idCard}
+          and query_type = #{queryType}
           and (query_status = 'PENDING' or upload_status = 'NOT_UPLOADED')
         order by submit_time desc
         limit 1
@@ -71,13 +72,32 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="companyNameSnapshot != null and companyNameSnapshot != ''">and company_name_snapshot like concat('%', #{companyNameSnapshot}, '%')</if>
             <if test="patientName != null and patientName != ''">and patient_name like concat('%', #{patientName}, '%')</if>
             <if test="idCard != null and idCard != ''">and id_card like concat('%', #{idCard}, '%')</if>
+            <if test="queryType != null and queryType != ''">
+                <choose>
+                    <when test="queryType == 'MEDICAL'">
+                        and query_type in ('MEDICAL', 'delayed_precise', 'precision_delayed')
+                    </when>
+                    <otherwise>
+                        and query_type = #{queryType}
+                    </otherwise>
+                </choose>
+            </if>
             <if test="queryStatus != null and queryStatus != ''">and query_status = #{queryStatus}</if>
             <if test="uploadStatus != null and uploadStatus != ''">and upload_status = #{uploadStatus}</if>
             <if test="resultStatus != null and resultStatus != ''">and result_status = #{resultStatus}</if>
             <if test="params.beginTime != null and params.beginTime != ''">and submit_time &gt;= #{params.beginTime}</if>
-            <if test="params.endTime != null and params.endTime != ''">and submit_time &lt;= #{params.endTime}</if>
+            <if test="params.endTime != null and params.endTime != ''">
+                and submit_time &lt; date_add(date(#{params.endTime}), interval 1 day)
+            </if>
         </where>
         order by submit_time desc, id desc
+    </select>
+
+    <select id="countPendingRequests" resultType="int">
+        select count(1)
+        from biz_delayed_query_request
+        where query_status = 'PENDING'
+          and upload_status = 'NOT_UPLOADED'
     </select>
 
     <insert id="insertBizDelayedQueryRequest" parameterType="com.ruoyi.business.domain.BizDelayedQueryRequest" useGeneratedKeys="true" keyProperty="id">
@@ -118,5 +138,29 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             update_time = sysdate()
         </set>
         where id = #{id}
+    </update>
+
+    <update id="cancelPendingRequest">
+        update biz_delayed_query_request
+        set query_status = 'CANCELLED',
+            result_status = null,
+            result_message = null,
+            handler_id = null,
+            handler_name = null,
+            handled_time = null,
+            uploaded_time = null,
+            fee = null,
+            reserved_fee = 0,
+            billing_month = null,
+            charged_flag = '0',
+            price_config_id = null,
+            modify_by = null,
+            modify_time = null,
+            modify_reason = null,
+            update_time = sysdate()
+        where id = #{id}
+          and company_id = #{companyId}
+          and query_status = 'PENDING'
+          and upload_status = 'NOT_UPLOADED'
     </update>
 </mapper>

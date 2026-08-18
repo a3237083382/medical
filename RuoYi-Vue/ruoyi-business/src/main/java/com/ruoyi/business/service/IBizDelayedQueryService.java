@@ -11,10 +11,24 @@ public interface IBizDelayedQueryService
 {
     public BizDelayedQueryRequest submit(Long companyId, String companyName, String patientName, String idCard, String requestIp);
 
+    public default BizDelayedQueryRequest submit(Long companyId, String companyName, String patientName, String idCard,
+            String queryType, String requestIp)
+    {
+        return submit(companyId, companyName, patientName, idCard, requestIp);
+    }
+
     public List<BizDelayedQueryRequest> submitBatch(Long companyId, String companyName,
             List<BizDelayedQueryRequest> requests, String requestIp);
 
+    public default List<BizDelayedQueryRequest> submitBatch(Long companyId, String companyName,
+            List<BizDelayedQueryRequest> requests, String queryType, String requestIp)
+    {
+        return submitBatch(companyId, companyName, requests, requestIp);
+    }
+
     public List<BizDelayedQueryRequest> selectList(BizDelayedQueryRequest request);
+
+    public int countPendingRequests();
 
     public Map<String, Object> cancelBatch(Long companyId, String batchNo);
 
