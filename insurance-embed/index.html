@@ -195,14 +195,14 @@
       function showNotice(message) { el('notice').textContent = message || ''; el('notice').classList.toggle('show', !!message); }
       function maskKey(key) { return key.length > 8 ? key.slice(0,4) + '****' + key.slice(-4) : '****'; }
       function refreshActionState() {
-        var delayedReady = !!appKey && timingMode === 'DELAYED';
-        el('submitBtn').disabled = !delayedReady;
-        el('chooseBatchBtn').disabled = !delayedReady;
-        el('validateBatchBtn').disabled = !delayedReady || !batchRows.length;
-        el('submitBatchBtn').disabled = !delayedReady || !batchRows.length || batchInvalidCount > 0;
-        el('submitBtn').textContent = timingMode === 'REALTIME' ? '实时查询待接入' : '提交精准延时查询';
+        var accessReady = !!appKey;
+        el('submitBtn').disabled = !accessReady;
+        el('chooseBatchBtn').disabled = !accessReady;
+        el('validateBatchBtn').disabled = !accessReady || !batchRows.length;
+        el('submitBatchBtn').disabled = !accessReady || !batchRows.length || batchInvalidCount > 0;
+        el('submitBtn').textContent = timingMode === 'REALTIME' ? '立即实时查询' : '提交精准延时查询';
         el('queryPanelTitle').textContent = timingMode === 'REALTIME' ? '实时查询' : '精准延时查询';
-        el('queryPanelDesc').textContent = timingMode === 'REALTIME' ? '实时查询界面已开放，服务接口将在后续接入' : '提交后由平台人员处理，完成后可查看结果';
+        el('queryPanelDesc').textContent = timingMode === 'REALTIME' ? '调用实时接口后立即返回结果' : '提交后由平台人员处理，完成后可查看结果';
       }
       function connect() {
         var value = el('appKey').value.trim();
@@ -215,7 +215,8 @@
       }
       function reset() { if (pollTimer) clearTimeout(pollTimer); pollTimer = null; appKey = ''; requestNo = ''; batchNo = ''; latestRequests = []; selectedResultRequestNo = ''; el('appKey').value = ''; el('appKeyLabel').textContent = '未接入'; el('accessHint').textContent = 'AppKey 仅保存在当前页面内存中，刷新页面后需要重新验证。'; setAccess('','待接入'); el('resultEmpty').style.display = ''; el('resultContent').classList.remove('show'); el('resultToolbar').classList.remove('show'); showNotice(''); refreshActionState(); }
       function validatePerson() { var name = el('personName').value.trim(); var id = el('idCard').value.trim().toUpperCase(); if (!name) return '请输入姓名'; if (!/^[0-9]{17}[0-9X]$/.test(id)) return '请输入正确的 18 位身份证号'; return ''; }
-      function submit() { if (timingMode !== 'DELAYED') return; var invalid = validatePerson(); if (invalid) { showNotice(invalid); return; } showNotice(''); el('submitBtn').disabled = true; el('submitBtn').textContent = '提交中…'; api('/company/embed/medical/delayed/requests', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ name:el('personName').value.trim(), idCard:el('idCard').value.trim().toUpperCase(), queryType:dataQueryType }) }).then(function (data) { requestNo = data.requestNo || ''; showNotice(''); pollHistory(); }).catch(function (error) { showNotice(error.message); }).finally(refreshActionState); }
+      function submit() { var invalid = validatePerson(); if (invalid) { showNotice(invalid); return; } if (timingMode === 'REALTIME') { submitRealtime(); return; } showNotice(''); el('submitBtn').disabled = true; el('submitBtn').textContent = '提交中…'; api('/company/embed/medical/delayed/requests', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ name:el('personName').value.trim(), idCard:el('idCard').value.trim().toUpperCase(), queryType:dataQueryType }) }).then(function (data) { requestNo = data.requestNo || ''; showNotice(''); pollHistory(); }).catch(function (error) { showNotice(error.message); }).finally(refreshActionState); }
+      function submitRealtime() { showNotice(''); el('submitBtn').disabled = true; el('submitBtn').textContent = '查询中…'; api('/company/embed/medical/query', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ queryType:realtimeQueryType(), queryParams:{ name:el('personName').value.trim(), idCard:el('idCard').value.trim().toUpperCase() } }) }).then(function (data) { appendRealtimeResult({ rowNo:1, name:el('personName').value.trim(), idCard:el('idCard').value.trim().toUpperCase(), queryType:realtimeQueryType(), requestNo:data.requestNo, processStatus:data.processStatus, uploadStatus:data.uploadStatus, resultStatus:data.resultStatus, serviceStatus:data.serviceStatus, fee:data.fee, data:data.data, columnSchema:buildSchemaFromData(data.data), resultVisible:true }); showNotice(''); }).catch(function (error) { showNotice(error.message); }).finally(refreshActionState); }
       function pollHistory() {
         if (!appKey) return;
         if (pollTimer) clearTimeout(pollTimer);
@@ -230,8 +231,8 @@
       }
       function uploadBatch(file) { var form = new FormData(); form.append('file', file); return fetch(API_BASE + '/company/embed/medical/batches/import-preview', { method:'POST', headers:{ Accept:'application/json', 'X-App-Key':appKey }, body:form }).then(function (response) { return response.json().then(function (json) { if (!response.ok || json.code !== 200) throw new Error(json.msg || '名单解析失败'); return json.data; }); }); }
       function renderBatchPreview(preview) { batchRows = (preview && preview.rows) || []; batchInvalidCount = (preview && preview.invalidCount) || 0; el('previewSummary').textContent = '共 ' + (preview.totalCount || 0) + ' 人，可提交 ' + (preview.validCount || 0) + ' 人，问题 ' + batchInvalidCount + ' 人'; el('previewRows').innerHTML = batchRows.map(function (row, index) { var errors = (row.errors || []).join('；'); return '<tr class="' + (row.valid ? '' : 'row-invalid') + '"><td>' + escapeHtml(row.rowNo || index + 2) + '</td><td><input data-index="' + index + '" data-field="name" value="' + escapeHtml(row.name || '') + '"></td><td><input data-index="' + index + '" data-field="idCard" value="' + escapeHtml(row.idCard || '') + '"></td><td>' + escapeHtml(errors || '通过') + '</td></tr>'; }).join(''); el('previewWrap').hidden = !batchRows.length; refreshActionState(); }
-      function validateBatch() { if (timingMode !== 'DELAYED' || !batchRows.length) return Promise.resolve(null); var rows = batchRows.map(function (row) { return { rowNo:row.rowNo, originalName:row.originalName, originalIdCard:row.originalIdCard, name:row.name, idCard:row.idCard }; }); el('validateBatchBtn').disabled = true; return api('/company/embed/medical/batches/validate', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ rows:rows }) }).then(function (preview) { renderBatchPreview(preview); return preview; }).catch(function (error) { showNotice(error.message); throw error; }).finally(refreshActionState); }
-      function submitBatch() { if (timingMode !== 'DELAYED') return; el('submitBatchBtn').disabled = true; validateBatch().then(function (preview) { if (!preview || preview.invalidCount > 0) { showNotice('请先修正名单中的问题'); return; } var rows = batchRows.map(function (row) { return { rowNo:row.rowNo, name:row.name, idCard:row.idCard }; }); return api('/company/embed/medical/batches', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ serviceMode:'DELAYED', queryType:dataQueryType, rows:rows }) }).then(function (data) { batchNo = data.batchNo || ''; showNotice(''); pollHistory(); }); }).catch(function (error) { if (error && error.message) showNotice(error.message); }).finally(refreshActionState); }
+      function validateBatch() { if (!batchRows.length) return Promise.resolve(null); var rows = batchRows.map(function (row) { return { rowNo:row.rowNo, originalName:row.originalName, originalIdCard:row.originalIdCard, name:row.name, idCard:row.idCard }; }); el('validateBatchBtn').disabled = true; return api('/company/embed/medical/batches/validate', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ rows:rows }) }).then(function (preview) { renderBatchPreview(preview); return preview; }).catch(function (error) { showNotice(error.message); throw error; }).finally(refreshActionState); }
+      function submitBatch() { el('submitBatchBtn').disabled = true; validateBatch().then(function (preview) { if (!preview || preview.invalidCount > 0) { showNotice('请先修正名单中的问题'); return; } var rows = batchRows.map(function (row) { return { rowNo:row.rowNo, name:row.name, idCard:row.idCard }; }); return api('/company/embed/medical/batches', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ serviceMode:timingMode, queryType:timingMode === 'REALTIME' ? realtimeQueryType() : dataQueryType, rows:rows }) }).then(function (data) { if (timingMode === 'REALTIME') { appendRealtimeBatch(data); return; } batchNo = data.batchNo || ''; showNotice(''); pollHistory(); }); }).catch(function (error) { if (error && error.message) showNotice(error.message); }).finally(refreshActionState); }
       function renderUnifiedResults() {
         var visibleItems = latestRequests.filter(function (item) { return item.resultVisible === true; });
         var pendingCount = latestRequests.filter(function (item) { return item.processStatus === 'PENDING' || item.processStatus === 'PROCESSING'; }).length;
@@ -243,15 +244,15 @@
         el('resultContent').classList.toggle('show', !!latestRequests.length);
         if (!latestRequests.length) return;
         el('resultSummary').innerHTML = '已收到 <span class="summary-count">' + visibleItems.length + '</span> 人的查询结果，余下 <span class="summary-count">' + pendingCount + '</span> 人待处理。';
-        el('resultHead').innerHTML = '<tr><th>姓名</th><th>身份证号</th><th>提交时间</th><th>处理时间</th><th>延时查询信息</th></tr>';
+        el('resultHead').innerHTML = '<tr><th>查询方式</th><th>数据类型</th><th>姓名</th><th>身份证号</th><th>提交时间</th><th>处理时间</th><th>查询信息</th></tr>';
         el('resultRows').innerHTML = filteredItems.length ? filteredItems.map(function (item) {
           var action = item.resultVisible
             ? '<button class="btn-view" type="button" data-result-request-no="' + escapeHtml(item.requestNo) + '">查看</button>'
-            : item.processStatus === 'PENDING'
+            : item.processStatus === 'PENDING' && item.serviceMode !== 'REALTIME'
               ? '<div class="result-action"><span class="pending-text">待处理</span><button class="btn-cancel" type="button" data-cancel-request-no="' + escapeHtml(item.requestNo) + '">取消查询</button></div>'
               : '<span class="pending-text">' + escapeHtml(processStatusText(item.processStatus)) + '</span>';
-          return '<tr><td>' + escapeHtml(item.name || '-') + '</td><td>' + escapeHtml(maskIdCard(item.idCard)) + '</td><td>' + escapeHtml(formatDateTime(item.submitTime)) + '</td><td>' + escapeHtml(formatDateTime(item.handledTime)) + '</td><td>' + action + '</td></tr>';
-        }).join('') : '<tr><td colspan="5">暂无符合条件的查询记录</td></tr>';
+          return '<tr><td>' + escapeHtml(serviceModeText(item.serviceMode)) + '</td><td>' + escapeHtml(queryTypeText(item.queryType)) + '</td><td>' + escapeHtml(item.name || '-') + '</td><td>' + escapeHtml(maskIdCard(item.idCard)) + '</td><td>' + escapeHtml(formatDateTime(item.submitTime)) + '</td><td>' + escapeHtml(formatDateTime(item.handledTime)) + '</td><td>' + action + '</td></tr>';
+        }).join('') : '<tr><td colspan="7">暂无符合条件的查询记录</td></tr>';
         el('resultTableWrap').hidden = false;
       }
       function filterResultItems(items) {
@@ -262,7 +263,7 @@
         var beginDate = el('resultFilterBegin').value;
         var endDate = el('resultFilterEnd').value;
         return items.filter(function (item) {
-          var itemType = item.queryType === 'BIG_DATA' ? 'BIG_DATA' : 'MEDICAL';
+          var itemType = item.queryType === 'BIG_DATA' || item.queryType === 'medical_all' ? 'BIG_DATA' : 'MEDICAL';
           var itemStatus = item.processStatus === 'COMPLETED' ? 'COMPLETED'
             : (item.processStatus === 'PENDING' || item.processStatus === 'PROCESSING' ? 'PENDING' : item.processStatus);
           var submitDate = datePart(item.submitTime);
@@ -285,8 +286,8 @@
         el('resultToolbar').classList.add('show');
         el('resultPersonName').textContent = item.name || '-';
         el('resultPersonIdCard').textContent = item.idCard || '-';
-        el('resultDetailTitle').textContent = (item.name || '-') + ' 的延时查询详情';
-        el('resultSummary').textContent = item.resultSummary || (item.resultStatus === 'NO_RESULT' ? '未查得该人员的医疗数据。' : '以下内容为管理后台上传的查询结果。');
+        el('resultDetailTitle').textContent = (item.name || '-') + ' 的' + serviceModeText(item.serviceMode) + '详情';
+        el('resultSummary').textContent = item.resultSummary || (item.resultStatus === 'NO_RESULT' ? '未查得该人员的医疗数据。' : '以下为查询返回结果。');
         renderResultTable(item);
         renderCoverageTable(item.insuranceCoverage);
       }
@@ -297,6 +298,12 @@
       function switchMode(batch) { el('singleModeBtn').classList.toggle('active', !batch); el('batchModeBtn').classList.toggle('active', batch); el('singlePanel').classList.toggle('show', !batch); el('batchPanel').classList.toggle('show', batch); }
       function switchTiming(realtime) { timingMode = realtime ? 'REALTIME' : 'DELAYED'; el('delayedTimingBtn').classList.toggle('active', !realtime); el('realtimeTimingBtn').classList.toggle('active', realtime); showNotice(''); refreshActionState(); }
       function switchDataQuery(bigData) { dataQueryType = bigData ? 'BIG_DATA' : 'MEDICAL'; el('medicalQueryBtn').classList.toggle('active', !bigData); el('bigDataQueryBtn').classList.toggle('active', bigData); }
+      function realtimeQueryType() { return dataQueryType === 'BIG_DATA' ? 'medical_all' : 'medical_insurance'; }
+      function serviceModeText(value) { return value === 'REALTIME' ? '实时查询' : '精准延时'; }
+      function queryTypeText(value) { return value === 'BIG_DATA' || value === 'medical_all' ? '大数据查询' : '医保查询'; }
+      function appendRealtimeResult(item) { var now = new Date(); item.serviceMode = 'REALTIME'; item.submitTime = now; item.handledTime = now; item.resultVisible = item.resultVisible !== false; latestRequests = [item].concat(latestRequests); selectedResultRequestNo = item.requestNo || ('RT-' + now.getTime()); if (!item.requestNo) item.requestNo = selectedResultRequestNo; renderUnifiedResults(); }
+      function appendRealtimeBatch(data) { var items = (data && data.items) || []; var now = new Date(); latestRequests = items.map(function (item, index) { item.serviceMode = 'REALTIME'; item.submitTime = now; item.handledTime = now; item.requestNo = item.requestNo || ('RT-' + now.getTime() + '-' + index); item.resultVisible = item.resultVisible !== false; item.columnSchema = item.columnSchema && item.columnSchema.length ? item.columnSchema : buildSchemaFromData(item.data); return item; }).concat(latestRequests); showNotice(data && data.failedCount ? '批量实时查询完成，失败 ' + data.failedCount + ' 人' : '批量实时查询完成'); renderUnifiedResults(); }
+      function buildSchemaFromData(data) { var values = data || {}; var records = Array.isArray(values.records) ? values.records : []; var sample = records.length ? records[0] : values; return Object.keys(sample || {}).filter(function (key) { return key !== 'records'; }).map(function (key) { return { field:key, label:key }; }); }
       function label(value, map) { return map[value] || value || '-'; }
       function renderResultTable(data) { var values = data.data || {}; var records = Array.isArray(values.records) ? values.records : [values]; var schema = Array.isArray(data.columnSchema) ? data.columnSchema : []; if (!schema.length && values && typeof values === 'object') schema = Object.keys(records[0] || {}).filter(function (key) { return key !== 'records'; }).map(function (key) { return { field:key,label:key }; }); if (!schema.length || (records.length === 1 && !Object.keys(records[0] || {}).length)) { el('resultTableWrap').hidden = true; return; } el('resultHead').innerHTML = '<tr>' + schema.map(function (column) { return '<th>' + escapeHtml(column.label || column.field || column.key) + '</th>'; }).join('') + '</tr>'; el('resultRows').innerHTML = records.map(function (record) { return '<tr>' + schema.map(function (column) { var key = column.field || column.key || column.name; return '<td>' + escapeHtml(formatValue(record[key])) + '</td>'; }).join('') + '</tr>'; }).join(''); el('resultTableWrap').hidden = false; }
       function renderCoverageTable(records) { var columns = ['医保区划','单位名称','人员类型','参保状态','险种类型','本次参保日期','暂停参保日期','首次参保年月']; records = Array.isArray(records) ? records : []; if (!records.length) { el('coverageResult').hidden = true; return; } el('coverageHead').innerHTML = '<tr><th>序号</th>' + columns.map(function (column) { return '<th>' + escapeHtml(column) + '</th>'; }).join('') + '</tr>'; el('coverageRows').innerHTML = records.map(function (record, index) { return '<tr><td>' + (index + 1) + '</td>' + columns.map(function (column) { return '<td>' + escapeHtml(formatValue(record[column])) + '</td>'; }).join('') + '</tr>'; }).join(''); el('coverageResult').hidden = false; }

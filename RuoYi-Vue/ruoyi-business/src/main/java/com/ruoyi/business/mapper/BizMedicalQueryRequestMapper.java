@@ -16,6 +16,8 @@ public interface BizMedicalQueryRequestMapper
 
     List<BizMedicalQueryRequest> selectCompanyDelayedHistory(BizMedicalQueryRequest request);
 
+    List<BizMedicalQueryRequest> selectCompanyRealtimeHistory(BizMedicalQueryRequest request);
+
     int countCompanyUnreadDelayedResults(@Param("companyId") Long companyId);
 
     int markCompanyDelayedRequestRead(@Param("companyId") Long companyId, @Param("requestNo") String requestNo);

@@ -86,6 +86,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         limit 100
     </select>
 
+    <select id="selectCompanyRealtimeHistory" parameterType="com.ruoyi.business.domain.BizMedicalQueryRequest"
+            resultMap="BizMedicalQueryRequestResult">
+        select r.*, c.company_name
+        from biz_medical_query_request r
+        left join biz_insurance_company c on c.id = r.company_id
+        <where>
+            r.company_id = #{companyId}
+            and r.service_mode = 'REALTIME'
+            <if test="requestNo != null and requestNo != ''">and r.request_no like concat('%', #{requestNo}, '%')</if>
+            <if test="patientName != null and patientName != ''">and r.patient_name like concat('%', #{patientName}, '%')</if>
+            <if test="processStatus != null and processStatus != ''">and r.process_status = #{processStatus}</if>
+            <if test="resultStatus != null and resultStatus != ''">and r.result_status = #{resultStatus}</if>
+            <if test="params.beginTime != null and params.beginTime != ''">and r.create_time &gt;= #{params.beginTime}</if>
+            <if test="params.endTime != null and params.endTime != ''">and r.create_time &lt;= #{params.endTime}</if>
+        </where>
+        order by r.create_time desc, r.id desc
+        limit 100
+    </select>
+
     <select id="countCompanyUnreadDelayedResults" resultType="int">
         select count(*)
         from biz_medical_query_request

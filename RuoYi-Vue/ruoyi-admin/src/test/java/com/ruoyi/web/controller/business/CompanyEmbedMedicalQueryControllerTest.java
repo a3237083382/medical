@@ -30,6 +30,7 @@ import com.ruoyi.business.domain.medical.MedicalQueryBatchValidationCommand;
 import com.ruoyi.business.domain.medical.MedicalQueryBatchSubmission;
 import com.ruoyi.business.domain.medical.MedicalQueryBatchSubmissionResult;
 import com.ruoyi.business.domain.medical.MedicalQueryBatchProgress;
+import com.ruoyi.business.domain.medical.MedicalQueryResult;
 import com.ruoyi.business.mapper.BizCompanyQueryPriceMapper;
 import com.ruoyi.business.mapper.BizMonthlyUsageMapper;
 import com.ruoyi.business.service.IBizQueryPriceService;
@@ -397,6 +398,48 @@ public class CompanyEmbedMedicalQueryControllerTest
 
         assertEquals(200, result.get("code"));
         verify(medicalQueryBatchSubmissionService).submit(eq(1L), eq(command), any());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void realtimeBatchQueriesEachValidPersonImmediately()
+    {
+        MedicalQueryBatchRow row = new MedicalQueryBatchRow();
+        row.setRowNo(2);
+        row.setName("张三");
+        row.setIdCard("430102199001011234");
+        MedicalQueryBatchSubmission command = new MedicalQueryBatchSubmission();
+        command.setServiceMode("REALTIME");
+        command.setQueryType("medical_insurance");
+        command.setRows(List.of(row));
+        MedicalQueryBatchPreview preview = new MedicalQueryBatchPreview();
+        row.setValid(true);
+        preview.setRows(List.of(row));
+        preview.setValidCount(1);
+        preview.setInvalidCount(0);
+        MedicalQueryResult realtimeResult = new MedicalQueryResult();
+        realtimeResult.setRequestNo("RT001");
+        realtimeResult.setProcessStatus("COMPLETED");
+        realtimeResult.setResultStatus("HIT");
+        realtimeResult.setServiceStatus("NORMAL");
+        realtimeResult.setFee(new BigDecimal("30.00"));
+        realtimeResult.setData(Map.of("records", List.of(Map.of("项目", "医保"))));
+        when(medicalQueryBatchService.validate(command.getRows())).thenReturn(preview);
+        when(medicalQueryService.query(any())).thenReturn(realtimeResult);
+
+        AjaxResult result = controller.submitBatch(command, request(company(true, "100.00")));
+        Map<String, Object> data = (Map<String, Object>) result.get("data");
+        List<Map<String, Object>> items = (List<Map<String, Object>>) data.get("items");
+
+        assertEquals(200, result.get("code"));
+        assertEquals("REALTIME", data.get("serviceMode"));
+        assertEquals(1, data.get("totalCount"));
+        assertEquals("RT001", items.get(0).get("requestNo"));
+        assertEquals("张三", items.get(0).get("name"));
+        assertEquals("430102199001011234", items.get(0).get("idCard"));
+        assertEquals("HIT", items.get(0).get("resultStatus"));
+        assertTrue((Boolean) items.get(0).get("resultVisible"));
+        verify(medicalQueryService).query(any());
     }
 
     @Test

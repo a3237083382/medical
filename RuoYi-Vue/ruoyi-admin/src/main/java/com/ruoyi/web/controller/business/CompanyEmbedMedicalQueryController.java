@@ -27,6 +27,7 @@ import com.ruoyi.business.domain.BizInsuranceCompany;
 import com.ruoyi.business.domain.BizDelayedQueryRequest;
 import com.ruoyi.business.domain.BizDelayedQueryResult;
 import com.ruoyi.business.domain.BizCompanyQueryPrice;
+import com.ruoyi.business.domain.BizMedicalQueryRequest;
 import com.ruoyi.business.domain.BizMonthlyUsage;
 import com.ruoyi.business.domain.BizQueryPrice;
 import com.ruoyi.business.domain.medical.MedicalQueryRequest;
@@ -35,6 +36,8 @@ import com.ruoyi.business.domain.medical.MedicalQueryBatchValidationCommand;
 import com.ruoyi.business.domain.medical.MedicalQueryBatchSubmission;
 import com.ruoyi.business.domain.medical.MedicalQueryBatchRow;
 import com.ruoyi.business.mapper.BizCompanyQueryPriceMapper;
+import com.ruoyi.business.mapper.BizMedicalQueryRequestMapper;
+import com.ruoyi.business.mapper.BizMedicalQueryResultMapper;
 import com.ruoyi.business.mapper.BizMonthlyUsageMapper;
 import com.ruoyi.business.service.IBizQueryPriceService;
 import com.ruoyi.business.service.IDelayedMedicalQueryService;
@@ -78,6 +81,8 @@ public class CompanyEmbedMedicalQueryController
     private IDelayedMedicalQueryExportService delayedMedicalQueryExportService;
     private final BizMonthlyUsageMapper monthlyUsageMapper;
     private final BizCompanyQueryPriceMapper companyPriceMapper;
+    private BizMedicalQueryRequestMapper realtimeRequestMapper;
+    private BizMedicalQueryResultMapper realtimeResultMapper;
 
     public CompanyEmbedMedicalQueryController(IBizQueryPriceService priceService,
             IMedicalQueryService medicalQueryService, IDelayedMedicalQueryService delayedMedicalQueryService,
@@ -96,9 +101,31 @@ public class CompanyEmbedMedicalQueryController
         this.monthlyUsageMapper = monthlyUsageMapper;
         this.companyPriceMapper = companyPriceMapper;
         this.delayedMedicalQueryExportService = null;
+        this.realtimeRequestMapper = null;
+        this.realtimeResultMapper = null;
     }
 
     @Autowired
+    public CompanyEmbedMedicalQueryController(IBizQueryPriceService priceService,
+            IMedicalQueryService medicalQueryService, IDelayedMedicalQueryService delayedMedicalQueryService,
+            IMedicalQueryBatchService medicalQueryBatchService, BizMonthlyUsageMapper monthlyUsageMapper,
+            BizCompanyQueryPriceMapper companyPriceMapper,
+            IMedicalQueryBatchSubmissionService medicalQueryBatchSubmissionService,
+            IMedicalQueryBatchCancellationService medicalQueryBatchCancellationService,
+            IDelayedMedicalQueryExportService delayedMedicalQueryExportService,
+            IBizDelayedQueryService bizDelayedQueryService,
+            BizMedicalQueryRequestMapper realtimeRequestMapper,
+            BizMedicalQueryResultMapper realtimeResultMapper)
+    {
+        this(priceService, medicalQueryService, delayedMedicalQueryService, medicalQueryBatchService,
+                monthlyUsageMapper, companyPriceMapper, medicalQueryBatchSubmissionService,
+                medicalQueryBatchCancellationService);
+        this.delayedMedicalQueryExportService = delayedMedicalQueryExportService;
+        this.bizDelayedQueryService = bizDelayedQueryService;
+        this.realtimeRequestMapper = realtimeRequestMapper;
+        this.realtimeResultMapper = realtimeResultMapper;
+    }
+
     public CompanyEmbedMedicalQueryController(IBizQueryPriceService priceService,
             IMedicalQueryService medicalQueryService, IDelayedMedicalQueryService delayedMedicalQueryService,
             IMedicalQueryBatchService medicalQueryBatchService, BizMonthlyUsageMapper monthlyUsageMapper,
@@ -110,9 +137,8 @@ public class CompanyEmbedMedicalQueryController
     {
         this(priceService, medicalQueryService, delayedMedicalQueryService, medicalQueryBatchService,
                 monthlyUsageMapper, companyPriceMapper, medicalQueryBatchSubmissionService,
-                medicalQueryBatchCancellationService);
-        this.delayedMedicalQueryExportService = delayedMedicalQueryExportService;
-        this.bizDelayedQueryService = bizDelayedQueryService;
+                medicalQueryBatchCancellationService, delayedMedicalQueryExportService, bizDelayedQueryService,
+                null, null);
     }
 
     public CompanyEmbedMedicalQueryController(IBizQueryPriceService priceService,
@@ -177,6 +203,10 @@ public class CompanyEmbedMedicalQueryController
         }
         try
         {
+            if (command != null && "REALTIME".equalsIgnoreCase(command.getServiceMode()))
+            {
+                return AjaxResult.success(submitRealtimeBatch(company, command, request));
+            }
             if (bizDelayedQueryService != null)
             {
                 if (command == null)
@@ -215,6 +245,100 @@ public class CompanyEmbedMedicalQueryController
         {
             return AjaxResult.error(400, e.getMessage());
         }
+    }
+
+    private Map<String, Object> submitRealtimeBatch(BizInsuranceCompany company, MedicalQueryBatchSubmission command,
+            HttpServletRequest request)
+    {
+        if (StringUtils.isEmpty(command.getQueryType()))
+        {
+            throw new IllegalArgumentException("查询类型不能为空");
+        }
+        var preview = medicalQueryBatchService.validate(command.getRows());
+        if (preview.getInvalidCount() > 0)
+        {
+            throw new IllegalArgumentException("名单中存在无效或重复记录");
+        }
+
+        List<Map<String, Object>> items = new ArrayList<>();
+        int successCount = 0;
+        int failedCount = 0;
+        for (MedicalQueryBatchRow row : preview.getRows())
+        {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("rowNo", row.getRowNo());
+            item.put("name", row.getName());
+            item.put("idCard", row.getIdCard());
+            item.put("queryType", command.getQueryType());
+            try
+            {
+                MedicalQueryRequest queryRequest = new MedicalQueryRequest();
+                queryRequest.setCompanyId(company.getId());
+                queryRequest.setQueryType(command.getQueryType());
+                Map<String, Object> params = new LinkedHashMap<>();
+                params.put("name", row.getName());
+                params.put("idCard", row.getIdCard());
+                queryRequest.setQueryParams(params);
+                queryRequest.setRequestIp(request.getRemoteAddr());
+                MedicalQueryResult result = medicalQueryService.query(queryRequest);
+                item.put("requestNo", result.getRequestNo());
+                item.put("processStatus", result.getProcessStatus());
+                item.put("uploadStatus", result.getUploadStatus());
+                item.put("resultStatus", result.getResultStatus());
+                item.put("serviceStatus", result.getServiceStatus());
+                item.put("fee", result.getFee());
+                item.put("data", result.getData());
+                item.put("columnSchema", buildRealtimeColumnSchema(result.getData()));
+                item.put("resultVisible", true);
+                successCount++;
+            }
+            catch (MedicalQueryException e)
+            {
+                item.put("processStatus", "FAILED");
+                item.put("uploadStatus", "NOT_UPLOADED");
+                item.put("resultStatus", "FAILED");
+                item.put("serviceStatus", "ERROR");
+                item.put("resultVisible", false);
+                item.put("errorCode", queryError(e).get("errorCode"));
+                item.put("errorMessage", e.getMessage());
+                failedCount++;
+            }
+            items.add(item);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("serviceMode", "REALTIME");
+        result.put("queryType", command.getQueryType());
+        result.put("totalCount", items.size());
+        result.put("successCount", successCount);
+        result.put("failedCount", failedCount);
+        result.put("items", items);
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> buildRealtimeColumnSchema(Map<String, Object> data)
+    {
+        List<Map<String, Object>> schema = new ArrayList<>();
+        if (data == null || data.isEmpty())
+        {
+            return schema;
+        }
+        Object records = data.get("records");
+        Map<String, Object> sample = records instanceof List<?> list && !list.isEmpty()
+                && list.get(0) instanceof Map<?, ?> ? (Map<String, Object>) list.get(0) : data;
+        for (String field : sample.keySet())
+        {
+            if ("records".equals(field))
+            {
+                continue;
+            }
+            Map<String, Object> column = new LinkedHashMap<>();
+            column.put("field", field);
+            column.put("label", field);
+            schema.add(column);
+        }
+        return schema;
     }
 
     @GetMapping("/batches/{batchNo}")
@@ -425,6 +549,8 @@ public class CompanyEmbedMedicalQueryController
                     BizDelayedQueryRequest detail = bizDelayedQueryService.selectCompanyDetail(item.getId(), company.getId());
                     history.add(toEmbedResponse(detail == null ? item : detail));
                 }
+                history.addAll(loadRealtimeHistory(company.getId(), requestNo, name, processStatus, resultStatus,
+                        beginTime, endTime));
                 return AjaxResult.success(history);
             }
             return AjaxResult.success(delayedMedicalQueryService.listHistory(company.getId(), requestNo, name,
@@ -433,6 +559,101 @@ public class CompanyEmbedMedicalQueryController
         catch (MedicalQueryException e)
         {
             return queryError(e);
+        }
+    }
+
+    private List<Map<String, Object>> loadRealtimeHistory(Long companyId, String requestNo, String name,
+            String processStatus, String resultStatus, String beginTime, String endTime)
+    {
+        List<Map<String, Object>> history = new ArrayList<>();
+        if (realtimeRequestMapper == null)
+        {
+            return history;
+        }
+        BizMedicalQueryRequest filter = new BizMedicalQueryRequest();
+        filter.setCompanyId(companyId);
+        if (requestNo != null) filter.setRequestNo(requestNo);
+        if (name != null) filter.setPatientName(name);
+        if (processStatus != null) filter.setProcessStatus(processStatus);
+        if (resultStatus != null) filter.setResultStatus(resultStatus);
+        if (beginTime != null) filter.getParams().put("beginTime", beginTime);
+        if (endTime != null) filter.getParams().put("endTime", endTime);
+        for (BizMedicalQueryRequest item : realtimeRequestMapper.selectCompanyRealtimeHistory(filter))
+        {
+            history.add(toRealtimeEmbedResponse(item));
+        }
+        return history;
+    }
+
+    private Map<String, Object> toRealtimeEmbedResponse(BizMedicalQueryRequest request)
+    {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("id", request.getId());
+        response.put("requestNo", request.getRequestNo());
+        response.put("name", request.getPatientName());
+        response.put("idCard", request.getIdCard());
+        response.put("queryType", request.getQueryType());
+        response.put("serviceMode", "REALTIME");
+        response.put("submitTime", request.getCreateTime());
+        response.put("handledTime", request.getCompleteTime());
+        response.put("processStatus", request.getProcessStatus());
+        response.put("resultStatus", request.getResultStatus());
+        response.put("resultVisible", "COMPLETED".equals(request.getProcessStatus())
+                && "UPLOADED".equals(request.getUploadStatus()));
+        response.put("fee", request.getFeeSnapshot());
+        if (Boolean.TRUE.equals(response.get("resultVisible")) && realtimeResultMapper != null)
+        {
+            com.ruoyi.business.domain.BizMedicalQueryResult result =
+                    realtimeResultMapper.selectByRequestId(request.getId());
+            if (result != null)
+            {
+                Map<String, Object> data = parseJsonMap(result.getResultData());
+                response.put("resultSummary", result.getResultSummary());
+                response.put("data", data);
+                List<Map<String, Object>> schema = buildRealtimeColumnSchema(data);
+                response.put("columnSchema", schema.isEmpty() ? parseJsonList(result.getColumnSchema()) : schema);
+            }
+        }
+        return response;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> parseJsonMap(String value)
+    {
+        if (StringUtils.isEmpty(value))
+        {
+            return new LinkedHashMap<>();
+        }
+        try
+        {
+            return JSON.parseObject(value, LinkedHashMap.class);
+        }
+        catch (Exception e)
+        {
+            return new LinkedHashMap<>();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> parseJsonList(String value)
+    {
+        if (StringUtils.isEmpty(value))
+        {
+            return new ArrayList<>();
+        }
+        try
+        {
+            List<LinkedHashMap> parsed = JSON.parseArray(value, LinkedHashMap.class);
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (LinkedHashMap item : parsed)
+            {
+                result.add(item);
+            }
+            return result;
+        }
+        catch (Exception e)
+        {
+            return new ArrayList<>();
         }
     }
 
@@ -566,7 +787,7 @@ public class CompanyEmbedMedicalQueryController
 
         Map<String, Object> capabilities = new LinkedHashMap<>();
         capabilities.put("singleRealtime", realtimeEnabled);
-        capabilities.put("batchRealtime", realtimeEnabled);
+        capabilities.put("batchRealtime", false);
         capabilities.put("singleDelayed", delayedEnabled);
         capabilities.put("batchDelayed", delayedEnabled);
         capabilities.put("singleExport", true);
@@ -580,6 +801,11 @@ public class CompanyEmbedMedicalQueryController
         data.put("budgetEnabled", usage.budgetEnabled);
         data.put("serviceStatus", usage.serviceStatus);
         data.put("capabilities", capabilities);
+        Map<String, Object> delayedQueryType = loadCompanyQueryType(company.getId(), DELAYED_QUERY_TYPE);
+        if (delayedQueryType != null)
+        {
+            data.put("delayedQueryType", delayedQueryType);
+        }
         return AjaxResult.success(data);
     }
 
@@ -728,6 +954,29 @@ public class CompanyEmbedMedicalQueryController
         }
         BizCompanyQueryPrice companyPrice = companyPriceMapper.selectCompanyPrice(companyId, queryType);
         return companyPrice == null || "0".equals(companyPrice.getStatus());
+    }
+
+    private Map<String, Object> loadCompanyQueryType(Long companyId, String queryType)
+    {
+        BizQueryPrice basePrice = priceService.selectBizQueryPriceByQueryType(queryType);
+        if (basePrice == null || !"0".equals(basePrice.getStatus()))
+        {
+            return null;
+        }
+        BizCompanyQueryPrice companyPrice = companyPriceMapper.selectCompanyPrice(companyId, queryType);
+        if (companyPrice != null && !"0".equals(companyPrice.getStatus()))
+        {
+            return null;
+        }
+
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("queryType", basePrice.getQueryType());
+        item.put("queryName", companyPrice != null && StringUtils.isNotEmpty(companyPrice.getQueryName())
+                ? companyPrice.getQueryName() : basePrice.getQueryName());
+        item.put("hitFee", companyPrice != null && companyPrice.getHitFee() != null
+                ? companyPrice.getHitFee() : nvl(basePrice.getFee()));
+        item.put("noResultFee", BigDecimal.ZERO.setScale(2));
+        return item;
     }
 
     private UsageSummary loadUsage(BizInsuranceCompany company)
