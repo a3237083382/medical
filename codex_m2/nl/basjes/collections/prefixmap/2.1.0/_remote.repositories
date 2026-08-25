@@ -1,0 +1,6 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Tue Aug 18 15:42:07 CST 2026
+prefixmap-2.1.0.jar>aliyunmaven=
+prefixmap-2.1.0.jar>public=
+prefixmap-2.1.0.pom>aliyunmaven=
+prefixmap-2.1.0.pom>public=
