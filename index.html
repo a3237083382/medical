@@ -7,24 +7,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0b1219;
-  --surface: #121f2d;
-  --surface-2: #182b3d;
-  --border: #1e3852;
-  --border-light: #2a4a6a;
-  --text-primary: #e6edf5;
-  --text-secondary: #94a9bf;
-  --text-muted: #5a7a96;
-  --accent: #3b9eff;
-  --accent-glow: rgba(59,158,255,.15);
-  --green: #2ed47a;
-  --orange: #f59e3e;
-  --red: #ef5a5a;
+  --bg: #f3f7fc;
+  --surface: #ffffff;
+  --surface-2: #f8fbff;
+  --border: #d8e2ef;
+  --border-light: #b8c8dc;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --accent: #2563eb;
+  --accent-glow: rgba(37,99,235,.16);
+  --green: #16a34a;
+  --orange: #f97316;
+  --red: #dc2626;
   --radius: 10px;
   --radius-sm: 6px;
-  --shadow: 0 4px 24px rgba(0,0,0,.3);
+  --shadow: 0 18px 45px rgba(15,23,42,.08);
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {
@@ -56,7 +55,7 @@ body {
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand-icon {
   width: 36px; height: 36px; border-radius: 8px;
-  background: linear-gradient(135deg, #3b9eff, #1a6bd6);
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
   display: grid; place-items: center;
   font-family: "Plus Jakarta Sans", sans-serif;
   font-weight: 800; font-size: 16px; color: #fff;
@@ -64,12 +63,163 @@ body {
 .brand-text { font-weight: 700; font-size: 16px; letter-spacing: .3px; }
 .brand-sub { font-size: 12px; color: var(--text-muted); font-weight: 400; }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notice-trigger {
+  position: relative;
+}
+
+.notice-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.notice-btn:hover {
+  border-color: var(--border-light);
+}
+
+.notice-icon {
+  width: 18px;
+  height: 18px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5'/%3E%3Cpath d='M9 17a3 3 0 0 0 6 0'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5'/%3E%3Cpath d='M9 17a3 3 0 0 0 6 0'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.notice-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.notice-panel {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  max-height: 420px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  z-index: 20;
+}
+
+.notice-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.notice-mark-all {
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.notice-list {
+  max-height: 360px;
+  overflow: auto;
+}
+
+.notice-item {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.notice-item:hover {
+  background: rgba(37,99,235,.08);
+}
+
+.notice-item.unread .notice-title {
+  color: var(--text-primary);
+}
+
+.notice-kind {
+  display: inline-block;
+  margin-bottom: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(37,99,235,.12);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.notice-kind.result { background: rgba(46,212,122,.12); color: var(--green); }
+.notice-kind.quota { background: rgba(245,158,62,.12); color: var(--orange); }
+.notice-kind.error { background: rgba(239,90,90,.12); color: var(--red); }
+
+.notice-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.notice-desc {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.notice-time {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.notice-empty {
+  padding: 20px 14px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
 /* connection state */
 .conn-state {
   display: flex; align-items: center; gap: 8px;
   padding: 6px 14px; border-radius: 999px;
   font-size: 12px; font-weight: 600;
-  background: rgba(90,122,150,.12);
+  background: rgba(100,116,139,.14);
   color: var(--text-muted);
   transition: all .3s;
 }
@@ -167,7 +317,7 @@ body {
   outline: none;
   transition: border .2s, box-shadow .2s;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235a7a96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 36px;
@@ -192,12 +342,53 @@ body {
   font-weight: 700; font-size: 18px; color: var(--orange);
 }
 
+.batch-panel {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+.batch-panel.active { display: flex; }
+.file-row {
+  display: flex;
+  gap: 8px;
+}
+.file-row input[type="file"] {
+  flex: 1;
+  min-width: 0;
+  padding: 8px;
+}
+.batch-summary {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+.batch-preview {
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.batch-preview table { font-size: 11px; }
+.batch-preview th,
+.batch-preview td { padding: 4px 6px; }
+.batch-preview th { padding: 5px 6px; }
+.batch-edit {
+  width: 100%; min-width: 0; box-sizing: border-box;
+  padding: 4px 5px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); background: var(--surface);
+  color: var(--text-primary); font: inherit; font-size: 11px;
+}
+.batch-id-edit { line-height: 1.35; overflow-wrap: anywhere; resize: vertical; }
+
 /* submit btn */
 .btn-query {
   width: 100%; height: 44px;
   border: none; border-radius: var(--radius-sm);
   font-size: 14px; font-weight: 700; cursor: pointer;
-  background: linear-gradient(135deg, var(--accent), #1a6bd6);
+  background: linear-gradient(135deg, var(--accent), #1d4ed8);
   color: #fff;
   transition: opacity .2s, transform .1s;
   letter-spacing: .5px;
@@ -283,6 +474,7 @@ thead th {
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
+thead th + th, tbody td + td { border-left: 1px solid var(--border); }
 tbody td {
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
@@ -290,7 +482,7 @@ tbody td {
   vertical-align: top;
 }
 tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover { background: rgba(59,158,255,.03); }
+tbody tr:hover { background: rgba(37,99,235,.06); }
 
 .tag {
   display: inline-block;
@@ -298,8 +490,103 @@ tbody tr:hover { background: rgba(59,158,255,.03); }
   border-radius: 4px;
   font-size: 11px; font-weight: 600;
 }
-.tag.blue { background: rgba(59,158,255,.12); color: var(--accent); }
+.tag.blue { background: rgba(37,99,235,.12); color: var(--accent); }
 .tag.green { background: rgba(46,212,122,.12); color: var(--green); }
+.tag.orange { background: rgba(245,158,62,.12); color: var(--orange); }
+.tag.red { background: rgba(239,90,90,.12); color: var(--red); }
+.field-group.hidden { display: none; }
+.fee-display.deferred .amount { font-size: 13px; color: var(--text-secondary); }
+.notice-card {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(46,212,122,.08);
+  border: 1px solid rgba(46,212,122,.22);
+  border-radius: var(--radius);
+}
+.notice-card.active { display: flex; }
+.notice-main { display: flex; flex-direction: column; gap: 3px; }
+.notice-main strong { color: var(--green); font-size: 13px; }
+.notice-main span { color: var(--text-secondary); font-size: 12px; }
+.btn-small {
+  min-width: 72px;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-small.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+.btn-small.danger { border-color: #fecaca; background: #fff5f5; color: var(--red); }
+.btn-small:disabled { cursor: not-allowed; opacity: .5; }
+.pending-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pending-actions { display: flex; align-items: center; gap: 8px; }
+.pending-toolbar .result-summary { flex: 1; }
+.pending-select { display: none; width: 42px; text-align: center; }
+.batch-select-mode .pending-select { display: table-cell; }
+.pending-select input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+.operation-cell { width: 96px; min-width: 96px; text-align: center; }
+.detail-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.detail-person {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.detail-person strong { color: var(--text-primary); font-weight: 600; }
+.coverage-result { display: flex; flex-direction: column; gap: 10px; }
+.coverage-result h3 { margin: 0; font-size: 14px; color: var(--text-primary); }
+.detail-toolbar[hidden], .coverage-result[hidden] { display: none; }
+.visit-record { border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 10px; overflow: hidden; }
+.visit-record-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--surface-2); }
+.visit-record-header h3 { margin: 0; font-size: 16px; color: var(--text-primary); }
+.visit-record-body { padding: 0 0 10px; }
+.visit-record-body[hidden] { display: none; }
+@media (max-width: 760px) {
+  body { overflow-y: auto; }
+  .page { min-height: 100vh; height: auto; overflow: visible; }
+  .topbar { padding: 10px 14px; }
+  .brand-sub { display: none; }
+  .main { flex-direction: column; overflow: visible; }
+  .sidebar {
+    width: 100%;
+    min-width: 0;
+    padding: 16px;
+    overflow: visible;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .content { width: 100%; padding: 16px; overflow: visible; }
+  .stats-bar { display: grid; grid-template-columns: 1fr; }
+  .result-header { align-items: flex-start; flex-direction: column; }
+  .pending-toolbar { align-items: stretch; flex-direction: column; }
+  .pending-toolbar .btn-small { align-self: flex-end; }
+  .detail-toolbar { align-items: flex-start; flex-direction: column; }
+  .detail-person { justify-content: flex-start; }
+}
 </style>
 </head>
 <body>
@@ -314,9 +601,24 @@ tbody tr:hover { background: rgba(59,158,255,.03); }
         <div class="brand-sub">湖南省医疗信息实时查询</div>
       </div>
     </div>
-    <div class="conn-state active" id="connState">
-      <span class="dot"></span>
-      <span id="stateText">已接入</span>
+    <div class="header-actions">
+      <div class="notice-trigger" id="noticeTrigger">
+        <button class="notice-btn" id="noticeBtn" type="button" aria-label="全局通知" aria-haspopup="true" aria-expanded="false">
+          <span class="notice-icon" aria-hidden="true"></span>
+          <span class="notice-badge" id="noticeBadge" hidden>0</span>
+        </button>
+        <div class="notice-panel" id="noticePanel" hidden>
+          <div class="notice-panel-head">
+            <span>全局通知</span>
+            <button class="notice-mark-all" id="markAllReadBtn" type="button">全部已读</button>
+          </div>
+          <div class="notice-list" id="noticeList"></div>
+        </div>
+      </div>
+      <div class="conn-state active" id="connState">
+        <span class="dot"></span>
+        <span id="stateText">已接入</span>
+      </div>
     </div>
   </header>
 
@@ -346,41 +648,68 @@ tbody tr:hover { background: rgba(59,158,255,.03); }
           </div>
         </div>
 
-        <div class="field-group">
-          <label>查询接口</label>
-          <select id="queryType"><option value="precision_insurance" data-fee="30.00">医保报销记录查询</option><option value="precision_bigdata" data-fee="50.00">医疗大数据查询</option></select>
+        <div class="field-group" id="queryTypeGroup">
+          <label>数据类型</label>
+          <select id="queryType"><option value="medical_all" data-fee="50.00">大数据查询</option><option value="medical_insurance" data-fee="30.00">医保查询</option></select>
         </div>
 
-        <div class="field-group">
-          <label>姓名</label>
-          <input id="personName" placeholder="输入投保人姓名" autocomplete="off">
+
+        <div class="field-group" id="queryObjectGroup">
+          <label>查询对象</label>
+          <div class="data-type-toggle" id="queryObjectToggle">
+            <button class="active" data-target="single">单人查询</button>
+            <button data-target="batch">Excel 批量</button>
+          </div>
         </div>
 
-        <div class="field-group">
-          <label>身份证号</label>
-          <input id="idCard" placeholder="18 位身份证号码" maxlength="18" autocomplete="off">
+        <div id="singleQueryFields">
+          <div class="field-group">
+            <label>姓名</label>
+            <input id="personName" placeholder="输入投保人姓名" autocomplete="off">
+          </div>
+
+          <div class="field-group">
+            <label>身份证号</label>
+            <input id="idCard" placeholder="18 位身份证号码" maxlength="18" autocomplete="off">
+          </div>
+        </div>
+
+        <div id="realtimeDateFields">
+          <div class="field-group">
+            <label>开始时间</label>
+            <input id="startDate" type="datetime-local">
+          </div>
+          <div class="field-group">
+            <label>结束时间</label>
+            <input id="endDate" type="datetime-local">
+          </div>
+        </div>
+
+        <div class="batch-panel" id="batchQueryFields">
+          <div class="field-group">
+            <label>Excel 名单</label>
+            <div class="file-row">
+              <input id="batchFile" type="file" accept=".xls,.xlsx">
+              <button class="btn-small" id="loadBatchBtn" type="button">读取名单</button>
+            </div>
+          </div>
+          <div class="batch-summary" id="batchSummary">支持 .xls / .xlsx 名单，字段为身份证号、开始时间和结束时间。</div>
+          <div class="batch-preview" id="batchPreview" hidden>
+            <table>
+              <thead><tr id="batchPreviewHead"><th>行号</th><th>姓名</th><th>身份证号</th><th>状态</th></tr></thead>
+              <tbody id="batchPreviewRows"></tbody>
+            </table>
+          </div>
         </div>
 
         <div class="fee-display">
-          <span class="label">本次查询费用</span>
-          <span class="amount" id="feeText">¥30.00</span>
+          <span class="label" id="feeLabel">本次查询费用</span>
+          <span class="amount" id="feeText">接入后显示接口价格</span>
         </div>
 
         <button class="btn-query" id="queryBtn">
-          <span id="btnText">查询</span>
+          <span id="btnText">提交查询</span>
         </button>
-      </div>
-
-      <div class="sep"></div>
-
-      <div class="demo-section">
-        <label>演示模式</label>
-        <div class="scenario-toggle" id="scenarioToggle">
-          <button class="active" data-scenario="hit">查得</button>
-          <button data-scenario="nohit">未查得</button>
-          <button data-scenario="error">查询异常</button>
-        </div>
-        <div class="demo-hint" id="demoHint">当前演示场景：查询到数据（查得）</div>
       </div>
 
     </aside>
@@ -398,14 +727,22 @@ tbody tr:hover { background: rgba(59,158,255,.03); }
           <div class="stat-value" id="serviceStatus" style="color:var(--text-secondary)">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">查询费用</div>
+          <div class="stat-label">当前接口费用</div>
           <div class="stat-value" id="resultFee" style="color:var(--orange)">—</div>
         </div>
       </div>
 
       <div class="result-header">
-        <h2>查询结果</h2>
+        <h2 id="resultTitle">查询详情与历史记录</h2>
         <span class="time" id="resultTime">等待查询</span>
+      </div>
+
+      <div class="notice-card" id="newResultNotice">
+        <div class="notice-main">
+          <strong>你有新的精准延时查询结果</strong>
+          <span id="newResultText">点击查看后台已上传的结果</span>
+        </div>
+        <button class="btn-small primary" id="viewNewResultBtn">查看结果</button>
       </div>
 
       <!-- Empty State -->
@@ -417,6 +754,14 @@ tbody tr:hover { background: rgba(59,158,255,.03); }
 
       <!-- Result Body -->
       <div class="result-area" id="resultArea">
+        <div class="detail-toolbar" id="detailToolbar" hidden>
+          <button class="btn-small" id="backToHistoryBtn" type="button">返回查询结果</button>
+          <div class="detail-person">
+            <span>姓名：<strong id="detailPersonName">-</strong></span>
+            <span>身份证号：<strong id="detailPersonIdCard">-</strong></span>
+            <span>查询类型：<strong id="detailQueryType">-</strong></span>
+          </div>
+        </div>
         <div class="result-summary" id="resultSummary"></div>
         <div class="table-wrap">
           <table>
@@ -430,6 +775,89 @@ tbody tr:hover { background: rgba(59,158,255,.03); }
             <tbody id="resultRows"></tbody>
           </table>
         </div>
+        <div class="coverage-result" id="coverageResult" hidden>
+          <h3>参保信息</h3>
+          <div class="table-wrap">
+            <table>
+              <thead id="coverageHead"></thead>
+              <tbody id="coverageRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-area" id="realtimeHistoryArea">
+        <div class="result-summary">实时查询历史记录</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>请求编号</th>
+                <th>查询方式</th>
+                <th>数据类型</th>
+                <th>姓名</th>
+                <th>身份证号</th>
+                <th>查询时间</th>
+                <th>结果</th>
+                <th>费用</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="realtimeRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="result-area" id="pendingRequestArea">
+        <div class="pending-toolbar">
+          <div class="result-summary">待处理查询请求</div>
+          <div class="pending-actions">
+            <button class="btn-small" id="exitBatchCancelBtn" type="button" hidden>退出批量</button>
+            <button class="btn-small danger" id="batchCancelPendingBtn" type="button" disabled>批量取消</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="pending-select"><input id="selectAllPending" type="checkbox" aria-label="全选可取消请求"></th>
+                <th>请求编号</th>
+                <th>姓名</th>
+                <th>身份证号</th>
+                <th>查询类型</th>
+                <th>查询状态</th>
+                <th class="operation-cell">操作</th>
+              </tr>
+            </thead>
+            <tbody id="pendingRequestRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="result-area" id="delayedListArea">
+        <div class="result-summary">延时精准历史记录</div>
+        <div style="display:flex;justify-content:flex-end">
+          <button class="btn-small" id="refreshDelayedBtn">刷新历史记录</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>请求编号</th>
+                <th>姓名</th>
+                <th>身份证号</th>
+                <th>查询类型</th>
+                <th>提交时间</th>
+                <th>查询状态</th>
+                <th>结果上传</th>
+                <th>处理时间</th>
+                <th>费用</th>
+                <th class="operation-cell">操作</th>
+              </tr>
+            </thead>
+            <tbody id="delayedRows"></tbody>
+          </table>
+        </div>
       </div>
 
     </main>
@@ -437,97 +865,90 @@ tbody tr:hover { background: rgba(59,158,255,.03); }
 </div>
 
 <script>
-const MOCK_DATA = {
-  hit: {
-    medical_all: {
-      resultStatus: '\u67e5\u5f97', serviceStatus: '\u670d\u52a1\u6b63\u5e38', fee: 50.00,
-      data: {
-        summary: '\u67e5\u8be2\u5230\u8be5\u6295\u4fdd\u4eba\u5728 3 \u5bb6\u533b\u7597\u673a\u6784\u7684\u5c31\u8bca\u8bb0\u5f55',
-        records: [
-          { name: '\u6e58\u96c5\u533b\u9662 \u795e\u7ecf\u5185\u79d1', value: '\u4f4f\u9662 2025-10-01 \u81f3 2025-10-07', remark: '\u98ce\u9669\u8bc4\u4f30\uff1a\u4e2d\u98ce\u9669' },
-          { name: '\u6e58\u96c5\u533b\u9662 \u5fc3\u8840\u7ba1\u5185\u79d1', value: '\u95e8\u8bca 2025-12-15', remark: '\u98ce\u9669\u8bc4\u4f30\uff1a\u9ad8\u98ce\u9669' },
-          { name: '\u7701\u4eba\u6c11\u533b\u9662 \u5185\u5206\u6ccc\u79d1', value: '\u95e8\u8bca 2026-03-10', remark: '\u98ce\u9669\u8bc4\u4f30\uff1a\u4f4e\u98ce\u9669' },
-          { name: '\u4e2d\u5357\u5927\u5b66\u6e58\u96c5\u4e8c\u533b\u9662 \u547c\u5438\u5185\u79d1', value: '\u95e8\u8bca 2025-08-22', remark: '\u98ce\u9669\u8bc4\u4f30\uff1a\u4f4e\u98ce\u9669' }
-        ]
-      }
-    },
-    medical_insurance: {
-      resultStatus: '\u67e5\u5f97', serviceStatus: '\u670d\u52a1\u6b63\u5e38', fee: 30.00,
-      data: {
-        summary: '\u67e5\u8be2\u5230\u8be5\u6295\u4fdd\u4eba\u7684\u533b\u4fdd\u62a5\u9500\u8bb0\u5f55\uff0c\u5171 3 \u6761',
-        records: [
-          { name: '\u6e58\u96c5\u533b\u9662', value: '2025-10-01 \u81f3 2025-10-07\uff08\u4f4f\u9662\uff09', remark: '\u533b\u4fdd\u7edf\u7b79\u652f\u4ed8\uff1a\uffe512,580.00' },
-          { name: '\u7701\u4eba\u6c11\u533b\u9662', value: '2026-03-10\uff08\u95e8\u8bca\uff09', remark: '\u533b\u4fdd\u7edf\u7b79\u652f\u4ed8\uff1a\uffe5320.00' },
-          { name: '\u8001\u767e\u59d3\u5927\u836f\u623f', value: '2026-01-15\uff08\u8d2d\u836f\uff09', remark: '\u533b\u4fdd\u4e2a\u4eba\u8d26\u6237\u652f\u4ed8\uff1a\uffe5168.50' }
-        ]
-      }
-    },
-    precision_insurance: {
-      resultStatus: '\u67e5\u5f97', serviceStatus: '\u670d\u52a1\u6b63\u5e38', fee: 30.00,
-      data: {
-        summary: '\u67e5\u8be2\u5230\u8be5\u6295\u4fdd\u4eba\u7684\u7cbe\u51c6\u533b\u4fdd\u62a5\u9500\u8bb0\u5f55',
-        clinicVisits: [
-          { orgName: '\u6e58\u96c5\u533b\u9662', visitTime: '2025-10-05', visitDept: '\u795e\u7ecf\u5185\u79d1', diseaseName: '\u98ce\u9669\u8bc4\u4f30\uff1a\u4e2d\u98ce\u9669', doctorName: '\u738b\u5efa\u56fd' },
-          { orgName: '\u6e58\u96c5\u533b\u9662', visitTime: '2025-12-15', visitDept: '\u5fc3\u8840\u7ba1\u5185\u79d1', diseaseName: '\u98ce\u9669\u8bc4\u4f30\uff1a\u9ad8\u98ce\u9669', doctorName: '\u674e\u660e\u8f89' },
-          { orgName: '\u7701\u4eba\u6c11\u533b\u9662', visitTime: '2026-03-10', visitDept: '\u5185\u5206\u6ccc\u79d1', diseaseName: '\u98ce\u9669\u8bc4\u4f30\uff1a\u4f4e\u98ce\u9669', doctorName: '\u5f20\u79c0\u82f1' },
-          { orgName: '\u4e2d\u5357\u5927\u5b66\u6e58\u96c5\u4e8c\u533b\u9662', visitTime: '2025-08-22', visitDept: '\u547c\u5438\u5185\u79d1', diseaseName: '\u98ce\u9669\u8bc4\u4f30\uff1a\u4f4e\u98ce\u9669', doctorName: '\u5218\u5fd7\u5f3a' }
-        ],
-        hospitalizations: [
-          { orgName: '\u6e58\u96c5\u533b\u9662', visitStartTime: '2025-10-01', visitEndTime: '2025-10-07', visitDept: '\u795e\u7ecf\u5185\u79d1', diseaseName: '\u98ce\u9669\u8bc4\u4f30\uff1a\u4e2d\u98ce\u9669', days: 7 },
-          { orgName: '\u6e58\u96c5\u533b\u9662', visitStartTime: '2026-06-10', visitEndTime: '2026-06-15', visitDept: '\u5fc3\u8840\u7ba1\u5185\u79d1', diseaseName: '\u98ce\u9669\u8bc4\u4f30\uff1a\u9ad8\u98ce\u9669', days: 6 }
-        ]
-      }
-    },
-    precision_bigdata: {
-      resultStatus: '\u67e5\u5f97', serviceStatus: '\u670d\u52a1\u6b63\u5e38', fee: 50.00,
-      data: {
-        summary: '\u591a\u6e90\u533b\u7597\u6570\u636e\u805a\u5408\u5206\u6790\u5b8c\u6210\uff0c\u5171 5 \u9879\u6307\u6807',
-        bigdataRecords: [
-          { source: '\u7701\u536b\u5065\u59d4', dataCategory: '\u6162\u6027\u75c5\u6307\u6807', value: '\u8840\u7cd6\uff1a6.8mmol/L\uff0c\u8840\u538b\uff1a145/95mmHg', dataJson: JSON.stringify({ level: '\u4e2d', suggestion: '\u5efa\u8bae\u5b9a\u671f\u76d1\u6d4b\u8840\u538b\u8840\u7cd6\uff0c\u6bcf\u5b63\u5ea6\u590d\u67e5\u4e00\u6b21' }) },
-          { source: '\u7701\u536b\u5065\u59d4', dataCategory: '\u4f53\u91cd\u6307\u6807', value: 'BMI\uff1a27.5\uff0c\u8170\u56f4\uff1a92cm', dataJson: JSON.stringify({ level: '\u9ad8', suggestion: '\u8d85\u91cd\uff0c\u5efa\u8bae\u63a7\u5236\u996e\u98df\u5e76\u589e\u52a0\u8fd0\u52a8' }) },
-          { source: '\u533b\u4fdd\u5c40', dataCategory: '\u7528\u836f\u8bb0\u5f55', value: '\u8fd1 6 \u4e2a\u6708\u95e8\u8bca\u7528\u836f 3 \u79cd\uff0c\u4f4f\u9662\u7528\u836f 5 \u79cd', dataJson: JSON.stringify({ level: '\u4f4e', suggestion: '\u7528\u836f\u65b9\u6848\u7a33\u5b9a\uff0c\u9075\u533b\u562f\u7ee7\u7eed\u4f7f\u7528' }) },
-          { source: '\u7701\u536b\u5065\u59d4', dataCategory: '\u4f53\u68c0\u6307\u6807', value: '\u603b\u80c6\u56fa\u9187\uff1a5.6mmol/L\uff0c\u4f4e\u5bc6\u5ea6\u8102\u86cb\u767d\uff1a3.4mmol/L', dataJson: JSON.stringify({ level: '\u4e2d', suggestion: '\u8840\u8102\u504f\u9ad8\uff0c\u5efa\u8bae\u4f4e\u8102\u996e\u98df\u5e76\u590d\u67e5' }) },
-          { source: '\u533b\u4fdd\u5c40', dataCategory: '\u5c31\u8bca\u9891\u7387', value: '\u8fd1 1 \u5e74\u95e8\u8bca 4 \u6b21\uff0c\u4f4f\u9662 1 \u6b21', dataJson: JSON.stringify({ level: '\u4e2d', suggestion: '\u5c31\u8bca\u9891\u7387\u4e2d\u7b49\uff0c\u5efa\u8bae\u5173\u6ce8\u6162\u6027\u75c5\u7ba1\u7406' }) }
-        ]
-      }
-    }
-  },
-  nohit: {
-    medical_all: { resultStatus: '\u672a\u67e5\u5f97', serviceStatus: '\u670d\u52a1\u6b63\u5e38', fee: 30.00, data: { summary: '\u672a\u67e5\u8be2\u5230\u8be5\u6295\u4fdd\u4eba\u5728\u533b\u7597\u673a\u6784\u4e2d\u7684\u5c31\u8bca\u8bb0\u5f55', records: [] } },
-    medical_insurance: { resultStatus: '\u672a\u67e5\u5f97', serviceStatus: '\u670d\u52a1\u6b63\u5e38', fee: 15.00, data: { summary: '\u672a\u67e5\u8be2\u5230\u8be5\u6295\u4fdd\u4eba\u7684\u533b\u4fdd\u62a5\u9500\u8bb0\u5f55', records: [] } },
-    precision_insurance: { resultStatus: '\u672a\u67e5\u5f97', serviceStatus: '\u670d\u52a1\u6b63\u5e38', fee: 15.00, data: { summary: '\u672a\u67e5\u8be2\u5230\u8be5\u6295\u4fdd\u4eba\u7684\u7cbe\u51c6\u533b\u4fdd\u8bb0\u5f55', clinicVisits: [], hospitalizations: [] } },
-    precision_bigdata: { resultStatus: '\u672a\u67e5\u5f97', serviceStatus: '\u670d\u52a1\u6b63\u5e38', fee: 25.00, data: { summary: '\u672a\u67e5\u8be2\u5230\u8be5\u6295\u4fdd\u4eba\u7684\u533b\u7597\u5927\u6570\u636e\u8bb0\u5f55', bigdataRecords: [] } }
-  }
-};
-
+const API_BASE = localStorage.getItem('medicalApiBase') || 'http://localhost:8088';
+const APP_KEY_STORAGE_KEY = 'medicalAppKey';
+const QUERY_STATE_STORAGE_KEY = 'medicalQueryState';
+const RESULT_SYNC_INTERVAL = 5000;
 let _allQueryTypes = [
-  { queryType: 'medical_all', queryName: '\u533b\u7597\u5927\u6570\u636e', fee: 50.00 },
-  { queryType: 'medical_insurance', queryName: '\u533b\u4fdd\u4fe1\u606f', fee: 30.00 },
-  { queryType: 'precision_insurance', queryName: '\u533b\u4fdd\u62a5\u9500\u8bb0\u5f55\u67e5\u8be2', fee: 30.00 },
-  { queryType: 'precision_bigdata', queryName: '\u533b\u7597\u5927\u6570\u636e\u67e5\u8be2', fee: 50.00 }
+  { queryType: 'medical_all', queryName: '大数据查询', hitFee: 50 },
+  { queryType: 'medical_insurance', queryName: '医保查询', hitFee: 30 }
 ];
+let _delayedQueryType = { queryType: 'delayed_precise', queryName: '精准延时数据查询', hitFee: null };
+let _queryTarget = 'single';
+let _batchRows = [];
+let _realtimeRows = [];
+let _delayedRows = [];
 let _appKey = '';
-let _currentDataType = 'realtime';
-let _currentScenario = 'hit';
+let _connected = false;
+let _currentDataType = 'precision';
+let _noticeOpen = false;
+let _noticeItems = [];
+let _noticeSignals = {
+  lastErrorMessage: '',
+  lastErrorTime: ''
+};
+let _quotaState = null;
+let _syncTimer = null;
+let _activeDelayedDetailId = null;
+let _selectedPendingIds = new Set();
+let _batchCancelMode = false;
 
 const dom = {
+  noticeTrigger: document.getElementById('noticeTrigger'),
+  noticeBtn: document.getElementById('noticeBtn'),
+  noticeBadge: document.getElementById('noticeBadge'),
+  noticePanel: document.getElementById('noticePanel'),
+  noticeList: document.getElementById('noticeList'),
+  markAllReadBtn: document.getElementById('markAllReadBtn'),
   connState: document.getElementById('connState'),
   stateText: document.getElementById('stateText'),
   keyHint: document.getElementById('keyHint'),
   appKeyInput: document.getElementById('appKeyInput'),
   applyKeyBtn: document.getElementById('applyKeyBtn'),
+  qTypeGroup: document.getElementById('queryTypeGroup'),
   qType: document.getElementById('queryType'),
+  queryObjectGroup: document.getElementById('queryObjectGroup'),
+  realtimeDateFields: document.getElementById('realtimeDateFields'),
+  singleQueryFields: document.getElementById('singleQueryFields'),
+  batchQueryFields: document.getElementById('batchQueryFields'),
+  batchFile: document.getElementById('batchFile'),
+  loadBatchBtn: document.getElementById('loadBatchBtn'),
+  batchSummary: document.getElementById('batchSummary'),
+  batchPreview: document.getElementById('batchPreview'),
+  batchPreviewHead: document.getElementById('batchPreviewHead'),
+  batchPreviewRows: document.getElementById('batchPreviewRows'),
+  feeLabel: document.getElementById('feeLabel'),
   feeText: document.getElementById('feeText'),
   queryBtn: document.getElementById('queryBtn'),
   btnText: document.getElementById('btnText'),
   emptyState: document.getElementById('emptyState'),
   resultArea: document.getElementById('resultArea'),
+  pendingRequestArea: document.getElementById('pendingRequestArea'),
+  pendingRequestRows: document.getElementById('pendingRequestRows'),
+  selectAllPending: document.getElementById('selectAllPending'),
+  batchCancelPendingBtn: document.getElementById('batchCancelPendingBtn'),
+  exitBatchCancelBtn: document.getElementById('exitBatchCancelBtn'),
+  delayedListArea: document.getElementById('delayedListArea'),
+  realtimeHistoryArea: document.getElementById('realtimeHistoryArea'),
+  resultTitle: document.getElementById('resultTitle'),
   resultTime: document.getElementById('resultTime'),
   resultRows: document.getElementById('resultRows'),
+  detailToolbar: document.getElementById('detailToolbar'),
+  backToHistoryBtn: document.getElementById('backToHistoryBtn'),
+  detailPersonName: document.getElementById('detailPersonName'),
+  detailPersonIdCard: document.getElementById('detailPersonIdCard'),
+  detailQueryType: document.getElementById('detailQueryType'),
+  coverageResult: document.getElementById('coverageResult'),
+  coverageHead: document.getElementById('coverageHead'),
+  coverageRows: document.getElementById('coverageRows'),
+  delayedRows: document.getElementById('delayedRows'),
+  realtimeRows: document.getElementById('realtimeRows'),
   resultSummary: document.getElementById('resultSummary'),
   resultStatus: document.getElementById('resultStatus'),
   serviceStatus: document.getElementById('serviceStatus'),
-  resultFee: document.getElementById('resultFee')
+  resultFee: document.getElementById('resultFee'),
+  newResultNotice: document.getElementById('newResultNotice'),
+  newResultText: document.getElementById('newResultText')
 };
 
 (function init() {
@@ -536,85 +957,237 @@ const dom = {
       document.querySelectorAll('#dataTypeToggle button').forEach(function(b) { b.classList.remove('active'); });
       this.classList.add('active');
       _currentDataType = this.dataset.type;
-      filterQueryTypes();
+      saveQueryState();
+      window.location.reload();
     });
   });
 
-  document.querySelectorAll('#scenarioToggle button').forEach(function(btn) {
+  document.querySelectorAll('#queryObjectToggle button').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      document.querySelectorAll('#scenarioToggle button').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('#queryObjectToggle button').forEach(function(b) { b.classList.remove('active'); });
       this.classList.add('active');
-      _currentScenario = this.dataset.scenario;
-      document.getElementById('demoHint').textContent = {
-        hit: '\u5f53\u524d\u6f14\u793a\u573a\u666f\uff1a\u67e5\u8be2\u5230\u6570\u636e\uff08\u67e5\u5f97\uff09',
-        nohit: '\u5f53\u524d\u6f14\u793a\u573a\u666f\uff1a\u672a\u67e5\u8be2\u5230\u6570\u636e\uff08\u672a\u67e5\u5f97\uff09',
-        error: '\u5f53\u524d\u6f14\u793a\u573a\u666f\uff1a\u6a21\u62df\u67e5\u8be2\u5f02\u5e38'
-      }[_currentScenario] || '\u6f14\u793a\u6a21\u5f0f';
+      _queryTarget = this.dataset.target;
+      saveQueryState();
+      refreshQueryContext();
     });
   });
 
-  dom.qType.addEventListener('change', updateFee);
+  dom.qType.addEventListener('change', function() { saveQueryState(); updateFee(); });
+  ['personName', 'idCard', 'startDate', 'endDate'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', saveQueryState);
+    document.getElementById(id).addEventListener('change', saveQueryState);
+  });
+  dom.backToHistoryBtn.addEventListener('click', returnToHistory);
+  dom.selectAllPending.addEventListener('change', toggleAllPendingSelection);
+  dom.pendingRequestRows.addEventListener('change', handlePendingSelectionChange);
+  dom.batchCancelPendingBtn.addEventListener('click', handleBatchCancelButton);
+  dom.exitBatchCancelBtn.addEventListener('click', exitBatchCancelMode);
   dom.applyKeyBtn.addEventListener('click', applyKey);
-  document.getElementById('queryBtn').addEventListener('click', doQuery);
-
+  dom.queryBtn.addEventListener('click', doQuery);
+  dom.loadBatchBtn.addEventListener('click', loadBatchFile);
+  dom.batchFile.addEventListener('change', loadBatchFile);
+  dom.batchPreviewRows.addEventListener('change', handleBatchEdit);
+  document.getElementById('refreshDelayedBtn').addEventListener('click', loadDelayedList);
+  dom.noticeBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    toggleNoticePanel();
+  });
+  dom.markAllReadBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    markAllNoticesRead();
+  });
+  dom.noticeList.addEventListener('click', function(e) {
+    const target = e.target.closest('[data-notice-id]');
+    if (target) openNoticeTarget(target.getAttribute('data-notice-id'));
+  });
+  document.getElementById('viewNewResultBtn').addEventListener('click', function() {
+    const row = findNewUploadedRow();
+    if (row) openRequestDetail(row.requestNo || row.id);
+  });
+  document.body.addEventListener('click', function(e) {
+    const visitToggle = e.target.closest('[data-visit-toggle]');
+    if (visitToggle) {
+      const body = document.getElementById(visitToggle.getAttribute('data-visit-toggle'));
+      if (body) {
+        const expanded = !body.hidden;
+        body.hidden = expanded;
+        visitToggle.textContent = expanded ? '展开' : '收起';
+      }
+      return;
+    }
+    const id = e.target.getAttribute('data-delay-id');
+    if (id) openRequestDetail(id);
+    const cancelId = e.target.getAttribute('data-cancel-request');
+    if (cancelId) cancelPendingRequest(cancelId);
+    const realtimeNo = e.target.getAttribute('data-realtime-no');
+    if (realtimeNo) openRealtimeDetail(realtimeNo);
+  });
   document.querySelectorAll('#personName, #idCard').forEach(function(el) {
     el.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') { e.preventDefault(); doQuery(); }
     });
   });
+  document.addEventListener('click', function(e) {
+    if (_noticeOpen && !dom.noticeTrigger.contains(e.target)) toggleNoticePanel(false);
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') toggleNoticePanel(false);
+  });
 
-  dom.appKeyInput.value = 'DEMO_HUNAN_MEDICAL_2026_APPKEY_8888';
-  applyKey();
-  updateFee();
+  dom.queryBtn.disabled = true;
+  setConnState('error', '待接入');
+  dom.keyHint.textContent = '请输入真实 AppKey 后接入';
+  restoreQueryState();
+  setMode();
+  rebuildNotices();
+  renderNotices();
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  restoreSessionAppKey();
 })();
 
-function request(path, opts) {
-  return new Promise(function(resolve, reject) {
-    setTimeout(function() {
-      if (_currentScenario === 'error') {
-        if (path === '/company/embed/medical/query-types') { resolve({ code: 200, data: _allQueryTypes }); return; }
-        reject(new Error('\u670d\u52a1\u6682\u4e0d\u53ef\u7528\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u6216\u8054\u7cfb\u5e73\u53f0\u8fd0\u8425\u65b9'));
-        return;
-      }
-      resolve(getMockResponse(path, opts));
-    }, 600);
-  });
+function refreshQueryContext() {
+  if (_activeDelayedDetailId) leaveDetailContext();
+  dom.resultArea.classList.remove('active');
+  dom.emptyState.style.display = 'none';
+  setMode();
+  loadHistory();
 }
 
-function getMockResponse(path, opts) {
-  if (path === '/company/embed/medical/query-types') return { code: 200, data: _allQueryTypes };
-  if (path === '/company/embed/medical/query') {
-    const body = JSON.parse(opts.body);
-    const mock = MOCK_DATA[_currentScenario] && MOCK_DATA[_currentScenario][body.queryType];
-    if (mock) return { code: 200, data: mock };
-    return { code: 200, data: { resultStatus: '\u67e5\u5f97', serviceStatus: '\u670d\u52a1\u6b63\u5e38', fee: 50.00, data: { records: [] } } };
+function saveQueryState() {
+  try {
+    localStorage.setItem(QUERY_STATE_STORAGE_KEY, JSON.stringify({
+      dataType: _currentDataType,
+      queryTarget: _queryTarget,
+      queryType: dom.qType.value,
+      personName: document.getElementById('personName').value,
+      idCard: document.getElementById('idCard').value,
+      startDate: document.getElementById('startDate').value,
+      endDate: document.getElementById('endDate').value
+    }));
+  } catch (e) { /* storage may be unavailable */ }
+}
+
+function restoreQueryState() {
+  try {
+    const state = JSON.parse(localStorage.getItem(QUERY_STATE_STORAGE_KEY) || '{}');
+    if (state.dataType === 'realtime' || state.dataType === 'precision') _currentDataType = state.dataType;
+    if (state.queryTarget === 'single' || state.queryTarget === 'batch') _queryTarget = state.queryTarget;
+    ['personName', 'idCard', 'startDate', 'endDate'].forEach(function(id) {
+      if (typeof state[id] === 'string') document.getElementById(id).value = state[id];
+    });
+    if (state.queryType) dom.qType.value = state.queryType;
+    document.querySelectorAll('#dataTypeToggle button').forEach(function(btn) { btn.classList.toggle('active', btn.dataset.type === _currentDataType); });
+    document.querySelectorAll('#queryObjectToggle button').forEach(function(btn) { btn.classList.toggle('active', btn.dataset.target === _queryTarget); });
+  } catch (e) { /* ignore malformed saved state */ }
+}
+
+function restoreSessionAppKey() {
+  let saved = '';
+  try { saved = sessionStorage.getItem(APP_KEY_STORAGE_KEY) || ''; } catch (e) { saved = ''; }
+  if (saved) {
+    dom.appKeyInput.value = saved;
+    applyKey();
   }
-  return { code: 200, data: {} };
+}
+
+function saveSessionAppKey(value) {
+  try { sessionStorage.setItem(APP_KEY_STORAGE_KEY, value); } catch (e) { /* storage may be unavailable */ }
+}
+
+function clearSessionAppKey() {
+  try { sessionStorage.removeItem(APP_KEY_STORAGE_KEY); } catch (e) { /* storage may be unavailable */ }
+}
+
+function request(path, opts) {
+  opts = opts || {};
+  const headers = Object.assign({ Accept: 'application/json' }, opts.headers || {});
+  if (_appKey) headers['X-App-Key'] = _appKey;
+  return fetch(API_BASE + path, Object.assign({}, opts, { headers: headers }))
+    .then(function(response) {
+      return response.json().catch(function() {
+        return { code: response.status, msg: response.statusText || '接口请求失败' };
+      }).then(function(json) {
+        if (!response.ok || json.code !== 200) {
+          const message = json.msg || json.errorCode || '接口请求失败';
+          const err = new Error(message);
+          err.errorCode = json.errorCode;
+          throw err;
+        }
+        return json;
+      });
+    });
 }
 
 function applyKey() {
   const raw = (dom.appKeyInput.value || '').replace(/[\s]/g, '');
   if (!raw || raw.length < 16) {
-    setConnState('error', '\u65e0\u6548 Key');
-    dom.keyHint.textContent = '\u8bf7\u7c98\u8d34\u5b8c\u6574\u7684 32 \u4f4d AppKey';
+    setConnState('error', '无效 Key');
+    dom.keyHint.textContent = '请粘贴完整的 AppKey';
+    _connected = false;
+    clearSessionAppKey();
+    stopResultSync();
     dom.queryBtn.disabled = true;
-    dom.btnText.textContent = 'AppKey \u65e0\u6548';
+    dom.btnText.textContent = 'AppKey 无效';
+    updateFee();
     return;
   }
   _appKey = raw;
-  setConnState('active', '\u9a8c\u8bc1\u4e2d\u2026');
-  dom.keyHint.textContent = '\u6b63\u5728\u9a8c\u8bc1 AppKey\u2026';
-  loadQueryTypes().then(function() {
-    setConnState('active', '\u5df2\u63a5\u5165');
-    dom.keyHint.textContent = 'AppKey \u9a8c\u8bc1\u901a\u8fc7\uff0c\u53ef\u53d1\u8d77\u67e5\u8be2';
+  _connected = false;
+  stopResultSync();
+  updateFee();
+  setConnState('active', '验证中…');
+  dom.keyHint.textContent = '正在验证 AppKey…';
+  Promise.all([loadAccess(), loadQueryTypes(), loadHistory(), loadUsage()]).then(function() {
+    _connected = true;
+    saveSessionAppKey(raw);
+    setConnState('active', '已接入');
+    dom.keyHint.textContent = 'AppKey 验证通过，可发起查询';
     dom.queryBtn.disabled = false;
-    dom.btnText.textContent = '\u67e5\u8be2';
+    setMode();
+    startResultSync();
   }).catch(function(err) {
-    setConnState('error', '\u63a5\u5165\u5931\u8d25');
-    dom.keyHint.textContent = '\u63a5\u5165\u5931\u8d25\uff1a' + err.message;
+    _connected = false;
+    clearSessionAppKey();
+    stopResultSync();
+    setConnState('error', '接入失败');
+    dom.keyHint.textContent = '接入失败：' + err.message;
     dom.queryBtn.disabled = true;
-    dom.btnText.textContent = '\u63a5\u5165\u5931\u8d25';
+    dom.btnText.textContent = '接入失败';
+    updateFee();
   });
+}
+
+function startResultSync() {
+  stopResultSync();
+  _syncTimer = setInterval(function() {
+    if (document.visibilityState === 'hidden' || !_connected) return;
+    syncRemoteState();
+  }, RESULT_SYNC_INTERVAL);
+}
+
+function stopResultSync() {
+  if (_syncTimer) {
+    clearInterval(_syncTimer);
+    _syncTimer = null;
+  }
+}
+
+function syncRemoteState() {
+  Promise.all([loadHistory(), loadUsage()]).catch(function(err) {
+    _noticeSignals.lastErrorMessage = err.message || '结果同步失败';
+    _noticeSignals.lastErrorTime = new Date().toLocaleString('zh-CN', { hour12: false });
+    rebuildNotices();
+    renderNotices();
+  });
+}
+
+function handleVisibilityChange() {
+  if (document.visibilityState === 'visible' && _connected) {
+    syncRemoteState();
+    startResultSync();
+  } else if (document.visibilityState === 'hidden') {
+    stopResultSync();
+  }
 }
 
 function setConnState(cls, text) {
@@ -622,172 +1195,1057 @@ function setConnState(cls, text) {
   dom.stateText.textContent = text;
 }
 
+function setMode() {
+  const isDelayed = _currentDataType === 'precision';
+  dom.qTypeGroup.classList.remove('hidden');
+  dom.feeText.parentElement.classList.toggle('deferred', isDelayed);
+  dom.feeLabel.textContent = '本次查询费用';
+  const effectiveTarget = _queryTarget;
+  dom.btnText.textContent = isDelayed ? (effectiveTarget === 'batch' ? '提交批量延时查询' : '提交查询') : '查询';
+  dom.resultTitle.textContent = '查询详情与历史记录';
+  dom.queryObjectGroup.classList.remove('hidden');
+  dom.singleQueryFields.style.display = effectiveTarget === 'single' ? '' : 'none';
+  dom.realtimeDateFields.style.display = !isDelayed && effectiveTarget === 'single' ? '' : 'none';
+  document.getElementById('personName').parentElement.style.display = isDelayed ? '' : 'none';
+  dom.batchQueryFields.classList.toggle('active', effectiveTarget === 'batch');
+  dom.realtimeHistoryArea.classList.toggle('active', !isDelayed);
+  dom.delayedListArea.classList.toggle('active', isDelayed);
+  // Real-time mode uses the history table as its landing view; avoid a large empty placeholder.
+  if (!isDelayed) dom.emptyState.style.display = 'none';
+  filterQueryTypes();
+  renderRealtimeHistory();
+  renderDelayedList();
+  renderPendingRequests();
+  updateFee();
+}
+
 function loadQueryTypes() {
   return request('/company/embed/medical/query-types', { method: 'GET', headers: { 'X-App-Key': _appKey } })
     .then(function(j) {
-      _allQueryTypes = Array.isArray(j.data) ? j.data : [];
+      const loaded = (Array.isArray(j.data) ? j.data : []).filter(function(t) {
+        return String(t.queryType || '').toLowerCase() !== 'delayed_precise';
+      });
+      _allQueryTypes = loaded.length ? loaded : _allQueryTypes;
       filterQueryTypes();
     });
 }
 
+function priceOf(item) {
+  if (!item) return null;
+  if (item.hitFee != null) return Number(item.hitFee);
+  if (item.fee != null) return Number(item.fee);
+  return null;
+}
+
+function realtimeQueryName(item) {
+  if (!item) return '-';
+  if (item.queryType === 'medical_all') return '大数据查询';
+  if (item.queryType === 'medical_insurance') return '医保查询';
+  return item.queryName || item.queryType;
+}
+
 function filterQueryTypes() {
-  var filtered;
-  if (_currentDataType === 'precision') {
-    filtered = _allQueryTypes.filter(function(t) { return t.queryType.indexOf('precision_') === 0; });
-  } else {
-    filtered = _allQueryTypes.filter(function(t) { return t.queryType.indexOf('precision_') !== 0; });
-  }
-  dom.qType.innerHTML = (filtered.length ? filtered : _allQueryTypes).map(function(t) {
-    return '<option value="' + t.queryType + '" data-fee="' + (t.fee || 0).toFixed(2) + '">' + (t.queryName || t.queryType) + '</option>';
+  const filtered = _allQueryTypes.filter(function(t) {
+    return t.queryType === 'medical_all' || t.queryType === 'medical_insurance';
+  });
+  const available = filtered.length ? filtered : [
+    { queryType: 'medical_all', queryName: '大数据查询', hitFee: 50 },
+    { queryType: 'medical_insurance', queryName: '医保查询', hitFee: 30 }
+  ];
+  const selected = dom.qType.value;
+  dom.qType.innerHTML = available.map(function(t) {
+    const fee = priceOf(t);
+    return '<option value="' + escapeHtml(t.queryType) + '" data-fee="' + Number(fee || 0).toFixed(2) + '">' + escapeHtml(realtimeQueryName(t)) + '</option>';
   }).join('');
-  updateFee();
+  if (available.some(function(t) { return t.queryType === selected; })) dom.qType.value = selected;
+}
+
+function selectedDelayedQueryType() {
+  return dom.qType.value === 'medical_all' ? 'BIG_DATA' : 'MEDICAL';
+}
+
+function loadAccess() {
+  return request('/company/embed/medical/access', { method: 'GET' }).then(function(j) {
+    const data = j.data || {};
+    if (data.companyName) dom.keyHint.textContent = data.companyName + ' 已接入，可发起查询';
+    if (data.delayedQueryType) _delayedQueryType = data.delayedQueryType;
+    updateFee();
+    return data;
+  });
+}
+
+function loadUsage() {
+  return request('/company/embed/medical/usage', { method: 'GET' }).then(function(j) {
+    _quotaState = j.data || _quotaState;
+    updateFee();
+    rebuildNotices();
+    renderNotices();
+    return _quotaState;
+  });
+}
+
+function loadHistory() {
+  if (!_appKey) return Promise.resolve();
+  return request('/company/embed/medical/history/requests', { method: 'GET' })
+    .then(function(j) {
+      const rows = Array.isArray(j.data) ? j.data : [];
+      _realtimeRows = rows.filter(function(row) { return row.serviceMode === 'REALTIME'; }).map(normalizeRealtimeHistoryRow);
+      _delayedRows = rows.filter(function(row) { return row.serviceMode !== 'REALTIME'; });
+      renderRealtimeHistory();
+      renderDelayedList();
+      renderPendingRequests();
+      if (_activeDelayedDetailId) {
+        const activeRow = _delayedRows.find(function(row) {
+          return String(row.requestNo || row.id) === String(_activeDelayedDetailId);
+        });
+        if (activeRow) renderDelayedDetail(activeRow);
+      }
+      renderNewResultNotice();
+      rebuildNotices();
+      renderNotices();
+    });
+}
+
+function loadDelayedList() {
+  return loadHistory();
 }
 
 function updateFee() {
-  const sel = dom.qType.options[dom.qType.selectedIndex];
-  dom.feeText.textContent = '\u00a5' + (sel ? Number(sel.dataset.fee || 0).toFixed(2) : '0.00');
+  let text = '接入后显示接口价格';
+  if (_connected) {
+    if (_currentDataType === 'precision') {
+      const delayedFee = priceOf(_delayedQueryType);
+      text = delayedFee == null ? '接入后显示接口价格' : '¥' + Number(delayedFee).toFixed(2);
+    } else {
+      const sel = dom.qType.options[dom.qType.selectedIndex];
+      text = '¥' + (sel ? Number(sel.dataset.fee || 0).toFixed(2) : '0.00');
+    }
+  }
+  dom.feeText.textContent = text;
+  dom.resultFee.textContent = text;
+}
+
+function canSubmitByUsage(amount) {
+  if (!_quotaState || _quotaState.budgetEnabled === false) return true;
+  const remaining = Number(_quotaState.remaining);
+  if (!Number.isFinite(remaining)) return true;
+  if (remaining <= 0 || (amount != null && remaining < Number(amount))) {
+    alert('当前账户额度不足，请联系平台运营方充值或调整月度额度');
+    return false;
+  }
+  return true;
 }
 
 function doQuery() {
   const name = document.getElementById('personName').value.trim();
   const idCard = document.getElementById('idCard').value.trim();
-  if (!name || !idCard) { alert('\u8bf7\u586b\u5199\u59d3\u540d\u548c\u8eab\u4efd\u8bc1\u53f7'); return; }
-  if (!/^[0-9]{17}[0-9Xx]$/.test(idCard)) { alert('\u8bf7\u8f93\u5165\u6b63\u786e\u7684 18 \u4f4d\u8eab\u4efd\u8bc1\u53f7'); return; }
-  if (!_appKey || dom.queryBtn.disabled) { alert('\u8bf7\u5148\u63a5\u5165 AppKey'); return; }
+  if (!_appKey || dom.queryBtn.disabled) { alert('请先接入 AppKey'); return; }
+  if (_queryTarget === 'batch') {
+    if (_currentDataType === 'precision') submitDelayedBatch();
+    else submitRealtimeBatch();
+    return;
+  }
+  if (!idCard) { alert('请填写身份证号'); return; }
+  if (!/^[0-9]{17}[0-9Xx]$/.test(idCard)) { alert('请输入正确的 18 位身份证号'); return; }
+  if (_currentDataType !== 'precision') {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    if (!startDate || !endDate) { alert('请选择开始时间和结束时间'); return; }
+    if (new Date(startDate) > new Date(endDate)) { alert('开始时间不能晚于结束时间'); return; }
+    submitRealtime(idCard, startDate, endDate);
+    return;
+  }
+  if (!name) { alert('请填写姓名'); return; }
+  if (_currentDataType === 'precision') submitDelayed(name, idCard);
+}
 
+function submitRealtime(idCard, startDate, endDate) {
   const qType = dom.qType.value;
-  dom.btnText.textContent = '\u67e5\u8be2\u4e2d\u2026';
+  const sel = dom.qType.options[dom.qType.selectedIndex];
+  if (!canSubmitByUsage(sel ? Number(sel.dataset.fee || 0) : null)) return;
+  dom.btnText.textContent = '查询中…';
   dom.queryBtn.disabled = true;
-
   request('/company/embed/medical/query', {
     method: 'POST',
     headers: { 'X-App-Key': _appKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ queryType: qType, queryParams: { name: name, idCard: idCard } })
+    body: JSON.stringify({ queryType: qType, queryParams: { sfzhm: idCard, startdate: toApiDateTime(startDate), enddate: toApiDateTime(endDate) } })
   }).then(function(j) {
     const r = j.data || {};
-    const payload = r.data || {};
-    dom.resultStatus.textContent = r.resultStatus || '\u2014';
-    dom.serviceStatus.textContent = r.serviceStatus || '\u2014';
-    dom.resultFee.textContent = r.fee ? '\u00a5' + Number(r.fee).toFixed(2) : '\u2014';
-    dom.resultTime.textContent = new Date().toLocaleString('zh-CN', { hour12: false });
-
+    dom.resultStatus.textContent = resultText(r.resultStatus) || '查询完成';
+    dom.serviceStatus.textContent = r.serviceStatus || '服务正常';
+    dom.resultFee.textContent = r.fee != null ? '¥' + Number(r.fee).toFixed(2) : '—';
+    dom.resultTime.textContent = formatDateTime(r.queryTime || r.handledTime || r.submitTime) || formatDateTime(new Date());
+    dom.resultSummary.textContent = r.resultSummary || '查询完成，请在下方历史记录中点击“查看”查看结果';
+    dom.resultArea.classList.remove('active');
     dom.emptyState.style.display = 'none';
-    dom.resultArea.classList.add('active');
-
-    if (qType === 'precision_insurance') { renderPrecisionInsuranceResult(payload); }
-    else if (qType === 'precision_bigdata') { renderPrecisionBigdataResult(payload); }
-    else if (qType === 'history_medical') { renderHistoryResult(payload); }
-    else { renderRealtimeResult(payload); }
-  }).catch(function(err) {
-    dom.resultStatus.textContent = '\u67e5\u8be2\u5931\u8d25';
-    dom.serviceStatus.textContent = '\u670d\u52a1\u5f02\u5e38';
-    dom.resultFee.textContent = '\u2014';
-    dom.resultTime.textContent = new Date().toLocaleString('zh-CN', { hour12: false });
-
-    dom.emptyState.style.display = 'none';
-    dom.resultArea.classList.add('active');
-
-    document.querySelector('#resultArea thead tr').innerHTML = '<th>\u72b6\u6001</th><th>\u8bf4\u660e</th><th>\u5efa\u8bae</th>';
-    dom.resultSummary.textContent = '\u67e5\u8be2\u5f02\u5e38\uff1a' + err.message;
-    dom.resultRows.innerHTML = '<tr><td><span class="tag" style="background:rgba(239,90,90,.12);color:var(--red)">\u67e5\u8be2\u5931\u8d25</span></td><td>' + err.message + '</td><td>\u8bf7\u68c0\u67e5\u7f51\u7edc\u8fde\u63a5\u6216\u8054\u7cfb\u5e73\u53f0\u8fd0\u8425\u65b9</td></tr>';
-  }).finally(function() {
-    dom.btnText.textContent = '\u67e5\u8be2';
+    setMode();
+    return Promise.all([loadHistory(), loadUsage()]);
+  }).catch(renderError).finally(function() {
+    dom.btnText.textContent = '查询';
     dom.queryBtn.disabled = false;
   });
 }
 
-function renderRealtimeResult(payload) {
-  document.querySelector('#resultArea thead tr').innerHTML = '<th style="width:30%">\u9879\u76ee</th><th style="width:35%">\u5185\u5bb9</th><th style="width:35%">\u5907\u6ce8</th>';
-  const rows = Array.isArray(payload.records) ? payload.records : [];
-  dom.resultSummary.textContent = payload.summary || '\u67e5\u8be2\u5b8c\u6210';
-  dom.resultRows.innerHTML = rows.length
-    ? rows.map(function(r) {
-        var cls = '';
-        if (r.remark && r.remark.indexOf('\u9ad8\u98ce\u9669') >= 0) cls = ' style="color:var(--red)"';
-        else if (r.remark && r.remark.indexOf('\u4e2d\u98ce\u9669') >= 0) cls = ' style="color:var(--orange)"';
-        else if (r.remark && r.remark.indexOf('\u4f4e\u98ce\u9669') >= 0) cls = ' style="color:var(--green)"';
-        return '<tr><td>' + (r.name || '') + '</td><td>' + (r.value || '') + '</td><td' + cls + '>' + (r.remark || '') + '</td></tr>';
-      }).join('')
-    : '<tr><td colspan="3">\u65e0\u8be6\u7ec6\u8bb0\u5f55</td></tr>';
+function submitDelayedBatch() {
+  if (!canSubmitByUsage(null)) return;
+  if (!_batchRows.length) { alert('请先读取 Excel 名单'); return; }
+  const validRows = _batchRows.filter(function(row) { return row.valid; });
+  if (!validRows.length) { alert('名单中没有可提交人员'); return; }
+  const delayedFee = priceOf(_delayedQueryType);
+  if (!canSubmitByUsage(delayedFee == null ? null : delayedFee * validRows.length)) return;
+  dom.btnText.textContent = '批量提交中…';
+  dom.queryBtn.disabled = true;
+  request('/company/embed/medical/batches', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ serviceMode: 'DELAYED', queryType: selectedDelayedQueryType(), rows: validRows })
+  }).then(function(j) {
+    const data = j.data || {};
+    renderDelayedBatchSubmitted(data);
+    return Promise.all([loadHistory(), loadUsage()]);
+  }).catch(renderError).finally(function() {
+    dom.btnText.textContent = '提交批量延时查询';
+    dom.queryBtn.disabled = false;
+  });
 }
 
-function renderPrecisionInsuranceResult(payload) {
-  document.querySelector('#resultArea thead tr').innerHTML = '<th style="width:22%">\u533b\u7597\u673a\u6784</th><th style="width:15%">\u5c31\u8bca\u65f6\u95f4</th><th style="width:10%">\u7c7b\u578b</th><th style="width:18%">\u8bca\u65ad\u7ed3\u679c</th><th style="width:15%">\u4e3b\u6cbb\u533b\u751f</th><th style="width:20%">\u5907\u6ce8</th>';
-  const clinicVisits = Array.isArray(payload.clinicVisits) ? payload.clinicVisits : [];
-  const hospitalizations = Array.isArray(payload.hospitalizations) ? payload.hospitalizations : [];
-  const total = clinicVisits.length + hospitalizations.length;
-
-  if (total === 0) {
-    dom.resultSummary.textContent = '\u672a\u67e5\u8be2\u5230\u8be5\u6295\u4fdd\u4eba\u7684\u533b\u4fdd\u62a5\u9500\u8bb0\u5f55';
-    dom.resultRows.innerHTML = '<tr><td colspan="6">\u65e0\u62a5\u9500\u8bb0\u5f55</td></tr>';
-    return;
-  }
-  dom.resultSummary.textContent = '\u67e5\u8be2\u5230\u8be5\u6295\u4fdd\u4eba\u7684\u533b\u4fdd\u62a5\u9500\u8bb0\u5f55\uff0c\u5171 ' + total + ' \u6761';
-  var rows = [];
-  clinicVisits.forEach(function(v) {
-    var cls = '';
-    if (v.diseaseName && v.diseaseName.indexOf('\u9ad8\u98ce\u9669') >= 0) cls = ' style="color:var(--red)"';
-    else if (v.diseaseName && v.diseaseName.indexOf('\u4e2d\u98ce\u9669') >= 0) cls = ' style="color:var(--orange)"';
-    else if (v.diseaseName && v.diseaseName.indexOf('\u4f4e\u98ce\u9669') >= 0) cls = ' style="color:var(--green)"';
-    rows.push('<tr><td>' + (v.orgName || '') + '</td><td>' + (v.visitTime || '') + '</td><td>\u95e8\u8bca</td><td' + cls + '>' + (v.diseaseName || '-') + '</td><td>' + (v.doctorName || '') + '</td><td>' + (v.visitDept || '') + '</td></tr>');
+function submitDelayed(name, idCard) {
+  const delayedFee = priceOf(_delayedQueryType);
+  if (!canSubmitByUsage(delayedFee)) return;
+  dom.btnText.textContent = '提交中…';
+  dom.queryBtn.disabled = true;
+  request('/company/embed/medical/delayed/requests', {
+    method: 'POST',
+    headers: { 'X-App-Key': _appKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name, idCard: idCard, queryType: selectedDelayedQueryType() })
+  }).then(function(j) {
+    renderDelayedSubmitted(j.data || {});
+    return Promise.all([loadHistory(), loadUsage()]);
+  }).catch(renderError).finally(function() {
+    dom.btnText.textContent = '提交查询';
+    dom.queryBtn.disabled = false;
   });
-  hospitalizations.forEach(function(h) {
-    var cls = '';
-    if (h.diseaseName && h.diseaseName.indexOf('\u9ad8\u98ce\u9669') >= 0) cls = ' style="color:var(--red)"';
-    else if (h.diseaseName && h.diseaseName.indexOf('\u4e2d\u98ce\u9669') >= 0) cls = ' style="color:var(--orange)"';
-    else if (h.diseaseName && h.diseaseName.indexOf('\u4f4e\u98ce\u9669') >= 0) cls = ' style="color:var(--green)"';
-    rows.push('<tr><td>' + (h.orgName || '') + '</td><td>' + (h.visitStartTime || '') + ' ~ ' + (h.visitEndTime || '') + '</td><td>\u4f4f\u9662</td><td' + cls + '>' + (h.diseaseName || '-') + '</td><td>\u4f4f\u9662 ' + (h.days || '') + '\u5929</td><td>' + (h.visitDept || '') + '</td></tr>');
-  });
-  dom.resultRows.innerHTML = rows.join('');
 }
 
-function renderPrecisionBigdataResult(payload) {
-  document.querySelector('#resultArea thead tr').innerHTML = '<th style="width:15%">\u6570\u636e\u6765\u6e90</th><th style="width:12%">\u6570\u636e\u7c7b\u522b</th><th style="width:33%">\u5206\u6790\u7ed3\u679c</th><th style="width:12%">\u98ce\u9669\u7b49\u7ea7</th><th style="width:28%">\u5efa\u8bae</th>';
-  const records = Array.isArray(payload.bigdataRecords) ? payload.bigdataRecords : [];
-  if (records.length === 0) {
-    dom.resultSummary.textContent = '\u672a\u67e5\u8be2\u5230\u8be5\u6295\u4fdd\u4eba\u7684\u533b\u7597\u5927\u6570\u636e\u8bb0\u5f55';
-    dom.resultRows.innerHTML = '<tr><td colspan="5">\u65e0\u5927\u6570\u636e\u8bb0\u5f55</td></tr>';
+function renderRealtimeResult(r) {
+  dom.resultStatus.textContent = resultText(r.resultStatus) || '—';
+  dom.serviceStatus.textContent = r.serviceStatus || r.processStatus || '服务正常';
+  dom.resultFee.textContent = r.fee != null ? '¥' + Number(r.fee).toFixed(2) : '—';
+  dom.resultTime.textContent = formatDateTime(r.queryTime || r.handledTime || r.submitTime) || formatDateTime(new Date());
+  dom.emptyState.style.display = 'none';
+  dom.resultArea.classList.add('active');
+  enterDetailContext(r);
+  dom.resultSummary.textContent = (r.data && r.data.summary) || r.resultSummary || '查询完成';
+  renderRecordTable(r, '无详细记录');
+}
+
+function renderRecordTable(item, emptyText) {
+  const values = item.data || {};
+  if (Array.isArray(values.visits)) {
+    renderVisitTables(values.visits, emptyText);
     return;
   }
-  dom.resultSummary.textContent = '\u591a\u6e90\u533b\u7597\u6570\u636e\u805a\u5408\u5206\u6790\u5b8c\u6210\uff0c\u5171 ' + records.length + ' \u9879\u6307\u6807';
-  dom.resultRows.innerHTML = records.map(function(b) {
-    var level = '-', suggestion = '';
-    try {
-      var meta = typeof b.dataJson === 'string' ? JSON.parse(b.dataJson) : (b.dataJson || {});
-      level = meta.level || '-';
-      suggestion = meta.suggestion || '';
-    } catch(e) {}
-    var lc = level === '\u9ad8' ? 'red' : level === '\u4e2d' ? 'orange' : 'green';
-    return '<tr><td>' + (b.source || '') + '</td><td>' + (b.dataCategory || '') + '</td><td>' + (b.value || '') + '</td><td><span class="tag ' + lc + '">' + level + '</span></td><td>' + suggestion + '</td></tr>';
+  const records = Array.isArray(values.records) ? values.records : (Object.keys(values).length ? [values] : []);
+  let schema = Array.isArray(item.columnSchema) ? item.columnSchema : [];
+  if (!schema.length && records.length) {
+    schema = Object.keys(records[0] || {}).filter(function(key) { return key !== 'records'; }).map(function(key) {
+      return { field: key, label: key };
+    });
+  }
+  if (!schema.length || !records.length) {
+    document.querySelector('#resultArea thead tr').innerHTML = '<th>结果</th>';
+    dom.resultRows.innerHTML = '<tr><td>' + escapeHtml(emptyText || '暂无明细') + '</td></tr>';
+    return;
+  }
+  document.querySelector('#resultArea thead tr').innerHTML = '<th>序号</th>' + schema.map(function(column) {
+    return '<th>' + escapeHtml(column.label || column.field || column.key || '-') + '</th>';
+  }).join('');
+  dom.resultRows.innerHTML = records.map(function(record, index) {
+    return '<tr><td>' + (index + 1) + '</td>' + schema.map(function(column) {
+      const key = column.field || column.key || column.name;
+      return '<td>' + escapeHtml(formatValue(record[key])) + '</td>';
+    }).join('') + '</tr>';
   }).join('');
 }
 
-function renderHistoryResult(payload) {
-  document.querySelector('#resultArea thead tr').innerHTML = '<th style="width:30%">\u9879\u76ee</th><th style="width:35%">\u5185\u5bb9</th><th style="width:35%">\u5907\u6ce8</th>';
-  const clinicVisits = Array.isArray(payload.clinicVisits) ? payload.clinicVisits : [];
-  const hospitalizations = Array.isArray(payload.hospitalizations) ? payload.hospitalizations : [];
-  const bigdataRecords = Array.isArray(payload.bigdataRecords) ? payload.bigdataRecords : [];
-  const total = clinicVisits.length + hospitalizations.length + bigdataRecords.length;
-  if (total === 0) {
-    dom.resultSummary.textContent = '\u672a\u67e5\u8be2\u5230\u8be5\u60a3\u8005\u7684\u5386\u53f2\u533b\u7597\u6570\u636e';
-    dom.resultRows.innerHTML = '<tr><td colspan="3">\u65e0\u5386\u53f2\u8bb0\u5f55</td></tr>';
+function submitRealtimeBatch() {
+  if (!_batchRows.length) { alert('请先读取 Excel 名单'); return; }
+  const validRows = _batchRows.filter(function(row) { return row.valid; });
+  if (!validRows.length) { alert('名单中没有可提交的查询记录'); return; }
+  const sel = dom.qType.options[dom.qType.selectedIndex];
+  const fee = sel ? Number(sel.dataset.fee || 0) : null;
+  if (!canSubmitByUsage(fee == null ? null : fee * validRows.length)) return;
+  dom.btnText.textContent = '批量查询中…';
+  dom.queryBtn.disabled = true;
+  const rows = validRows.map(function(row) {
+    return { rowNo: row.rowNo, idCard: row.idCard, startDate: row.startDate, endDate: row.endDate };
+  });
+  request('/company/embed/medical/batches', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ serviceMode: 'REALTIME', queryType: dom.qType.value, rows: rows })
+  }).then(function(j) {
+    const data = j.data || {};
+    const total = Number(data.totalCount || rows.length);
+    const success = Number(data.successCount || 0);
+    const failed = Number(data.failedCount || 0);
+    dom.resultStatus.textContent = failed ? '部分完成' : '查询完成';
+    dom.serviceStatus.textContent = failed ? '部分记录查询失败' : '服务正常';
+    dom.resultFee.textContent = fee == null ? '按后台接口价格计费' : '¥' + (fee * success).toFixed(2);
+    dom.resultTime.textContent = formatDateTime(new Date());
+    dom.resultSummary.textContent = '批量查询共 ' + total + ' 条，成功 ' + success + ' 条，失败 ' + failed + ' 条。请在实时查询历史中点击“查看”。';
+    dom.resultArea.classList.remove('active');
+    dom.emptyState.style.display = 'none';
+    return Promise.all([loadHistory(), loadUsage()]);
+  }).catch(renderError).finally(function() {
+    dom.btnText.textContent = '查询';
+    dom.queryBtn.disabled = false;
+    setMode();
+  });
+}
+
+function renderVisitTables(visits, emptyText) {
+  const wrap = document.querySelector('#resultArea .table-wrap');
+  if (!visits.length) {
+    wrap.innerHTML = '<table><tbody><tr><td>' + escapeHtml(emptyText || '暂无明细') + '</td></tr></tbody></table>';
     return;
   }
-  var summary = '\u67e5\u8be2\u5230\u8be5\u60a3\u8005\u7684\u5386\u53f2\u533b\u7597\u6570\u636e\uff1a';
-  if (clinicVisits.length) summary += '\u5c31\u8bca\u8bb0\u5f55 ' + clinicVisits.length + ' \u6761\u3001';
-  if (hospitalizations.length) summary += '\u4f4f\u9662\u4fe1\u606f ' + hospitalizations.length + ' \u6761\u3001';
-  if (bigdataRecords.length) summary += '\u5927\u6570\u636e ' + bigdataRecords.length + ' \u6761\u3001';
-  dom.resultSummary.textContent = summary.replace(/,\u3001$/, '');
-  var rows = [];
-  clinicVisits.forEach(function(v) { rows.push(['<span class="tag blue">\u5c31\u8bca\u8bb0\u5f55</span>', v.diseaseName || '-', (v.orgName || '') + ' ' + (v.visitTime || '')]); });
-  hospitalizations.forEach(function(h) { rows.push(['<span class="tag blue">\u4f4f\u9662\u4fe1\u606f</span>', h.orgName || '-', '\u4f4f\u9662 ' + (h.visitStartTime || '') + ' ~ ' + (h.visitEndTime || '')]); });
-  bigdataRecords.forEach(function(b) {
-    var s = '';
-    try { s = typeof b.dataJson === 'string' ? b.dataJson : JSON.stringify(b.dataJson || {}); } catch(e) {}
-    rows.push(['<span class="tag green">\u5927\u6570\u636e</span>', b.dataCategory || '\u901a\u7528', s.length > 60 ? s.slice(0, 60) + '...' : s || '-']);
+  const sortedVisits = visits.slice().sort(function(a, b) {
+    const typeA = String(a.visitType || '');
+    const typeB = String(b.visitType || '');
+    const groupA = typeA.indexOf('门诊') >= 0 ? 0 : (typeA.indexOf('住院') >= 0 ? 1 : 2);
+    const groupB = typeB.indexOf('门诊') >= 0 ? 0 : (typeB.indexOf('住院') >= 0 ? 1 : 2);
+    if (groupA !== groupB) return groupA - groupB;
+    const timeOf = function(visit) {
+      const basic = firstTableRow(visit.basicInfo);
+      const type = String(visit.visitType || '');
+      return (type.indexOf('住院') >= 0 ? (basic['入院日期'] || '') : (basic['就诊时间'] || ''));
+    };
+    return timeOf(a).localeCompare(timeOf(b));
   });
-  dom.resultRows.innerHTML = rows.map(function(r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td></tr>'; }).join('');
+  let lastCategory = '';
+  let outpatientNo = 0;
+  let inpatientNo = 0;
+  wrap.innerHTML = sortedVisits.map(function(visit, index) {
+    var visitType = String(visit.visitType || (visit.basicInfo && (visit.basicInfo['就诊类型'] || visit.basicInfo['ryrq'])) || '').trim();
+    var inpatient = visitType === '住院' || visitType.indexOf('住院') >= 0;
+    var category = inpatient ? '住院记录' : '门诊记录';
+    var categoryNo = inpatient ? ++inpatientNo : ++outpatientNo;
+    const tables = [];
+    var medicalRecord = visit.electronicMedicalRecord || (inpatient ? {
+      '姓名': visit.basicInfo && visit.basicInfo['姓名'] || '',
+      '身份证号码': visit.basicInfo && visit.basicInfo['身份证号码'] || '',
+      '入院时间': visit.basicInfo && visit.basicInfo['入院日期'] || '',
+      '出院时间': visit.basicInfo && visit.basicInfo['出院日期'] || ''
+    } : null);
+    var imaging = visit.medicalImaging || (inpatient ? {
+      '姓名': visit.basicInfo && visit.basicInfo['姓名'] || '',
+      '身份证号码': visit.basicInfo && visit.basicInfo['身份证号码'] || '',
+      '医院名称': visit.basicInfo && visit.basicInfo['医院名称'] || ''
+    } : null);
+    [['基本信息', visit.basicInfo], ['电子病历', medicalRecord], ['医学影像检查', imaging]].forEach(function(entry) {
+      const values = entry[1];
+      if (!values || typeof values !== 'object') return;
+      const rows = Array.isArray(values) ? values : [values];
+      const keySource = {};
+      rows.forEach(function(row) { Object.keys(row || {}).forEach(function(key) { keySource[key] = true; }); });
+      const keys = orderedVisitKeys(keySource, entry[0]);
+      const body = rows.map(function(row) { return '<tr>' + keys.map(function(key) { return '<td>' + escapeHtml(formatValue(row[key])) + '</td>'; }).join('') + '</tr>'; }).join('');
+      tables.push('<h3>第' + escapeHtml(String(categoryNo)) + '次' + escapeHtml(category) + ' - ' + escapeHtml(entry[0]) + '</h3><table><thead><tr>' + keys.map(function(key) { return '<th>' + escapeHtml(key) + '</th>'; }).join('') + '</tr></thead><tbody>' + body + '</tbody></table>');
+    });
+    var bodyId = 'visit-record-body-' + index;
+    var basic = firstTableRow(visit.basicInfo);
+    var visitStart = firstTableValue(visit.basicInfo, inpatient ? '入院日期' : '就诊时间');
+    var visitEnd = firstTableValue(visit.basicInfo, '出院日期');
+    var visitTime = inpatient ? (visitStart + (visitEnd ? '至' + visitEnd : '')) : visitStart;
+    var titleSuffix = visitType ? '（' + visitType + (visitTime ? ' ' + visitTime : '') + '）' : '';
+    var categoryTitle = category !== lastCategory ? '<h2 class="visit-category-title">' + category + '</h2>' : '';
+    lastCategory = category;
+    return categoryTitle + '<section class="visit-record"><div class="visit-record-header"><h3>第' + escapeHtml(String(categoryNo)) + '次' + category + escapeHtml(titleSuffix) + '</h3><button class="btn-small" type="button" data-visit-toggle="' + bodyId + '">展开</button></div><div class="visit-record-body" id="' + bodyId + '" hidden>' + tables.join('') + '</div></section>';
+  }).join('');
+}
+
+function orderedVisitKeys(values, tableName) {
+  const keys = Object.keys(values || {});
+  const orders = {
+    '基本信息': ['就诊id', '姓名', '身份证号码', '性别', '出生日期', '入院日期', '出院日期', '就诊时间', '就诊类型', '医院名称', '总费用', '原始主诊断编码', '原始主诊断名称'],
+    '电子病历': ['姓名', '身份证号码', '入院时间', '出院时间', '入院诊断', '出院诊断', '入院情况', '诊疗经过', '主诉', '现病史', '既往史'],
+    '医学影像检查': ['姓名', '身份证号码', '医院名称', '报告日期', '科室', '部位', '影像表现', '影像诊断']
+  };
+  const preferred = orders[tableName] || ['姓名', '身份证号码'];
+  return preferred.filter(function(key) { return keys.indexOf(key) >= 0; })
+    .concat(keys.filter(function(key) { return preferred.indexOf(key) < 0; }));
+}
+
+function toApiDateTime(value) {
+  return value ? value.replace('T', ' ') + (value.length === 16 ? ':00' : '') : value;
+}
+
+function renderCoverageTable(records) {
+  const columns = ['医保区划', '单位名称', '人员类型', '参保状态', '险种类型', '本次参保日期', '暂停参保日期', '首次参保年月'];
+  const rows = Array.isArray(records) ? records.filter(function(record) {
+    return record && columns.some(function(column) {
+      return record[column] != null && String(record[column]).trim() !== '';
+    });
+  }) : [];
+  if (!rows.length) {
+    dom.coverageResult.hidden = true;
+    dom.coverageHead.innerHTML = '';
+    dom.coverageRows.innerHTML = '';
+    return;
+  }
+  dom.coverageHead.innerHTML = '<tr><th>序号</th>' + columns.map(function(column) {
+    return '<th>' + escapeHtml(column) + '</th>';
+  }).join('') + '</tr>';
+  dom.coverageRows.innerHTML = rows.map(function(record, index) {
+    return '<tr><td>' + (index + 1) + '</td>' + columns.map(function(column) {
+      return '<td>' + escapeHtml(formatValue(record[column])) + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+  dom.coverageResult.hidden = false;
+}
+
+function renderDelayedBatchSubmitted(data) {
+  const items = Array.isArray(data.items) ? data.items : [];
+  showDelayedSubmissionHistory(items);
+}
+
+function renderDelayedSubmitted(item) {
+  showDelayedSubmissionHistory([item]);
+}
+
+function showDelayedSubmissionHistory(items) {
+  const defaultQueryType = selectedDelayedQueryType();
+  (items || []).slice().reverse().forEach(function(item) {
+    if (!item) return;
+    const normalized = Object.assign({}, item, { queryType: item.queryType || defaultQueryType });
+    const key = String(normalized.requestNo || normalized.id || '');
+    _delayedRows = _delayedRows.filter(function(row) {
+      return String(row.requestNo || row.id || '') !== key;
+    });
+    _delayedRows.unshift(normalized);
+  });
+  dom.resultStatus.textContent = '已提交';
+  dom.serviceStatus.textContent = '等待平台处理';
+  const delayedFee = priceOf(_delayedQueryType);
+  dom.resultFee.textContent = delayedFee == null ? '按后台接口价格计费' : '¥' + Number(delayedFee).toFixed(2);
+  dom.resultTime.textContent = new Date().toLocaleString('zh-CN', { hour12: false });
+  dom.emptyState.style.display = 'none';
+  returnToHistory();
+  renderDelayedList();
+  rebuildNotices();
+  renderNotices();
+}
+
+function renderRealtimeHistory() {
+  dom.realtimeRows.innerHTML = _realtimeRows.length ? _realtimeRows.map(function(row) {
+    return '<tr>' +
+      '<td>' + escapeHtml(row.requestNo || '-') + '</td>' +
+      '<td>' + escapeHtml(row.entryType || '-') + '</td>' +
+      '<td>' + escapeHtml(queryTypeText(row.queryType)) + '</td>' +
+      '<td>' + escapeHtml(row.name || '-') + '</td>' +
+      '<td>' + escapeHtml(maskIdCard(row.idCard)) + '</td>' +
+      '<td>' + escapeHtml(formatDateTime(row.queryTime)) + '</td>' +
+      '<td>' + tag(resultText(row.resultStatus), row.resultStatus === 'HIT' ? 'green' : 'orange') + '</td>' +
+      '<td>' + escapeHtml(row.fee == null ? '-' : '¥' + Number(row.fee).toFixed(2)) + '</td>' +
+      '<td class="operation-cell"><button class="btn-small" data-realtime-no="' + escapeHtml(row.requestNo) + '">查看</button></td>' +
+    '</tr>';
+  }).join('') : '<tr><td colspan="9">暂无记录</td></tr>';
+}
+
+function openRealtimeDetail(requestNo) {
+  const row = _realtimeRows.find(function(item) { return item.requestNo === requestNo; });
+  if (row) renderRealtimeResult(row);
+}
+
+function normalizeRealtimeHistoryRow(r) {
+  var resultData = r.data || {};
+  var firstVisit = Array.isArray(resultData.visits) && resultData.visits.length ? resultData.visits[0] : null;
+  var basicInfo = firstTableRow(firstVisit && firstVisit.basicInfo);
+  var resolvedName = r.name && r.name !== '未提供' ? r.name : (firstTableValue(firstVisit && firstVisit.basicInfo, '姓名') || r.patientName || '-');
+  return {
+    requestNo: r.requestNo || '-',
+    entryType: r.entryType === 'BATCH' ? 'Excel 批量' : '单人查询',
+    queryType: r.queryType,
+    name: resolvedName,
+    idCard: r.idCard,
+    queryTime: formatDateTime(r.submitTime || r.createTime || r.handledTime),
+    resultStatus: r.resultStatus || '-',
+    serviceStatus: r.serviceStatus || r.processStatus || '-',
+    fee: r.fee,
+    data: resultData,
+    columnSchema: r.columnSchema
+  };
+}
+
+function queryTypeText(value) {
+  if (value === 'medical_all' || value === 'MEDICAL_BIG_DATA' || value === 'BIG_DATA') return '大数据查询';
+  if (value === 'medical_insurance' || value === 'MEDICAL') return '医保查询';
+  if (value === 'delayed_precise' || value === 'precision_delayed') return '医保查询';
+  return value || '-';
+}
+
+function firstTableRow(values) {
+  if (Array.isArray(values)) return values.length && values[0] && typeof values[0] === 'object' ? values[0] : {};
+  return values && typeof values === 'object' ? values : {};
+}
+
+function firstTableValue(values, key) {
+  if (Array.isArray(values)) {
+    for (var i = 0; i < values.length; i++) if (values[i] && values[i][key]) return values[i][key];
+    return '';
+  }
+  return values && values[key] || '';
+}
+
+function loadBatchFile() {
+  const file = dom.batchFile.files && dom.batchFile.files[0];
+  if (!file) { dom.batchSummary.textContent = '请先选择 .xls 或 .xlsx 名单文件'; return; }
+  if (!/\.xlsx?$/i.test(file.name)) { dom.batchSummary.textContent = '文件格式不正确，请选择 .xls 或 .xlsx'; return; }
+  const form = new FormData();
+  form.append('file', file);
+  dom.batchSummary.textContent = '正在读取名单…';
+  request('/company/embed/medical/batches/import-preview?serviceMode=' + encodeURIComponent(_currentDataType === 'realtime' ? 'REALTIME' : 'DELAYED'), {
+    method: 'POST',
+    body: form
+  }).then(function(j) {
+    const preview = j.data || {};
+    _batchRows = Array.isArray(preview.rows) ? preview.rows : [];
+    renderBatchPreview(preview, file.name);
+  }).catch(function(err) {
+    _batchRows = [];
+    dom.batchSummary.textContent = err.message || '名单读取失败';
+    dom.batchPreview.hidden = true;
+  });
+}
+
+function renderBatchPreview(preview, fileName) {
+  const total = preview.totalCount || _batchRows.length;
+  const valid = preview.validCount == null ? _batchRows.filter(function(row) { return row.valid; }).length : preview.validCount;
+  const invalid = preview.invalidCount || 0;
+  dom.batchSummary.textContent = '已读取 ' + fileName + '，共 ' + total + ' 人，可提交 ' + valid + ' 人，问题 ' + invalid + ' 人。';
+  dom.batchPreview.hidden = !_batchRows.length;
+  const realtime = _currentDataType === 'realtime';
+  dom.batchPreviewHead.innerHTML = realtime
+    ? '<th>行号</th><th>身份证号</th><th>时间范围</th><th>状态</th>'
+    : '<th>行号</th><th>姓名</th><th>身份证号</th><th>状态</th>';
+  dom.batchPreviewRows.innerHTML = _batchRows.map(function(row) {
+    const errors = Array.isArray(row.errors) && row.errors.length ? row.errors.join('；') : '通过';
+    const input = function(field, value) {
+      const attrs = ' class="batch-edit' + (field === 'idCard' ? ' batch-id-edit' : '') + '" data-batch-index="' + _batchRows.indexOf(row) + '" data-batch-field="' + field + '"';
+      return field === 'idCard'
+        ? '<textarea rows="2"' + attrs + '>' + escapeHtml(value || '') + '</textarea>'
+        : '<input' + attrs + ' value="' + escapeHtml(value || '') + '">';
+    };
+    const second = realtime ? input('idCard', row.idCard) : input('name', row.name);
+    const third = realtime ? (input('startDate', row.startDate) + ' 至 ' + input('endDate', row.endDate)) : input('idCard', row.idCard);
+    return '<tr><td>' + escapeHtml(row.rowNo || '-') + '</td><td>' + second + '</td><td>' + third + '</td><td>' + (row.valid === false ? tag(errors, 'red') : tag(errors, 'green')) + '</td></tr>';
+  }).join('');
+}
+
+function handleBatchEdit(e) {
+  const field = e.target && e.target.getAttribute('data-batch-field');
+  const index = Number(e.target && e.target.getAttribute('data-batch-index'));
+  if (!field || !Number.isInteger(index) || !_batchRows[index]) return;
+  _batchRows[index][field] = e.target.value.trim();
+  const row = _batchRows[index];
+  const errors = [];
+  if (_currentDataType === 'realtime') {
+    if (!/^[0-9]{17}[0-9Xx]$/.test(row.idCard || '')) errors.push('身份证号必须为18位，末位可以是X');
+    if (!row.startDate || !row.endDate) errors.push('开始时间和结束时间不能为空');
+    else if (row.startDate > row.endDate) errors.push('开始时间不能晚于结束时间');
+  } else {
+    if (!row.name) errors.push('姓名不能为空');
+    if (!/^[0-9]{17}[0-9Xx]$/.test(row.idCard || '')) errors.push('身份证号必须为18位，末位可以是X');
+  }
+  row.errors = errors;
+  row.valid = errors.length === 0;
+  const status = e.target.closest('tr').lastElementChild;
+  if (status) status.innerHTML = row.valid ? tag('通过', 'green') : tag(errors.join('；'), 'red');
+}
+
+function delayedRowKey(row) {
+  return String(row && (row.requestNo || row.id) || '');
+}
+
+function isPendingRequestRow(row) {
+  const status = row.processStatus || row.queryStatus;
+  const uploaded = row.resultVisible === true || row.uploadStatus === 'UPLOADED';
+  return !uploaded && status !== 'CANCELLED';
+}
+
+function isCancellableRequest(row) {
+  const status = row.processStatus || row.queryStatus;
+  return status === 'PENDING' && row.uploadStatus !== 'UPLOADED';
+}
+
+function renderPendingRequests() {
+  const rows = _delayedRows.filter(isPendingRequestRow);
+  if (!rows.length) _batchCancelMode = false;
+  if (_currentDataType === 'precision' && _delayedRows.length) dom.emptyState.style.display = 'none';
+  const cancellableKeys = rows.filter(isCancellableRequest).map(delayedRowKey);
+  const validKeys = new Set(cancellableKeys);
+  _selectedPendingIds = new Set(Array.from(_selectedPendingIds).filter(function(key) { return validKeys.has(key); }));
+  dom.pendingRequestArea.classList.toggle('active', _currentDataType === 'precision' && !_activeDelayedDetailId && rows.length > 0);
+  dom.pendingRequestArea.classList.toggle('batch-select-mode', _batchCancelMode);
+  dom.pendingRequestRows.innerHTML = rows.map(function(row) {
+    const key = delayedRowKey(row);
+    const cancellable = isCancellableRequest(row);
+    const status = row.processStatus || row.queryStatus || 'PENDING';
+    return '<tr>' +
+      '<td class="pending-select"><input type="checkbox" data-pending-select="' + escapeHtml(key) + '" ' +
+        (cancellable ? '' : 'disabled ') + (_selectedPendingIds.has(key) ? 'checked' : '') + ' aria-label="选择该请求"></td>' +
+      '<td>' + escapeHtml(row.requestNo || '-') + '</td>' +
+      '<td>' + escapeHtml(row.name || row.patientName || '-') + '</td>' +
+      '<td>' + escapeHtml(maskIdCard(row.idCard)) + '</td>' +
+      '<td>' + escapeHtml(queryTypeText(row.queryType)) + '</td>' +
+      '<td>' + tag(statusText(status, 'query'), status === 'PENDING' ? 'orange' : 'blue') + '</td>' +
+      '<td class="operation-cell"><button class="btn-small danger" type="button" data-cancel-request="' + escapeHtml(key) + '" ' +
+        (cancellable ? '' : 'disabled') + '>' + (cancellable ? '取消' : '不可取消') + '</button></td>' +
+    '</tr>';
+  }).join('');
+  const allSelected = cancellableKeys.length > 0 && cancellableKeys.every(function(key) { return _selectedPendingIds.has(key); });
+  dom.selectAllPending.checked = allSelected;
+  dom.selectAllPending.disabled = cancellableKeys.length === 0;
+  dom.exitBatchCancelBtn.hidden = !_batchCancelMode;
+  dom.batchCancelPendingBtn.disabled = _batchCancelMode ? _selectedPendingIds.size === 0 : cancellableKeys.length === 0;
+  dom.batchCancelPendingBtn.textContent = _batchCancelMode
+    ? '确认取消' + (_selectedPendingIds.size ? '（' + _selectedPendingIds.size + '）' : '')
+    : '批量取消';
+}
+
+function handlePendingSelectionChange(event) {
+  if (!_batchCancelMode) return;
+  const key = event.target.getAttribute('data-pending-select');
+  if (!key) return;
+  if (event.target.checked) _selectedPendingIds.add(key);
+  else _selectedPendingIds.delete(key);
+  renderPendingRequests();
+}
+
+function toggleAllPendingSelection() {
+  if (!_batchCancelMode) return;
+  const cancellableKeys = _delayedRows.filter(isCancellableRequest).map(delayedRowKey);
+  if (dom.selectAllPending.checked) _selectedPendingIds = new Set(cancellableKeys);
+  else _selectedPendingIds.clear();
+  renderPendingRequests();
+}
+
+function handleBatchCancelButton() {
+  if (!_batchCancelMode) {
+    _batchCancelMode = true;
+    _selectedPendingIds.clear();
+    renderPendingRequests();
+    return;
+  }
+  cancelSelectedPendingRequests();
+}
+
+function exitBatchCancelMode() {
+  _batchCancelMode = false;
+  _selectedPendingIds.clear();
+  renderPendingRequests();
+}
+
+function cancelPendingRequest(requestNo) {
+  const row = _delayedRows.find(function(item) { return delayedRowKey(item) === String(requestNo); });
+  if (!row || !isCancellableRequest(row)) {
+    alert('该请求已开始处理或已经完成，不能取消');
+    return;
+  }
+  if (!confirm('确认取消“' + (row.patientName || row.name || '-') + '”的查询请求吗？')) return;
+  request('/company/embed/medical/delayed/requests/' + encodeURIComponent(row.requestNo || requestNo) + '/cancel', {
+    method: 'POST'
+  }).then(function() {
+    _selectedPendingIds.delete(delayedRowKey(row));
+    return loadHistory();
+  }).catch(renderError);
+}
+
+function cancelSelectedPendingRequests() {
+  const rows = _delayedRows.filter(function(row) {
+    return isCancellableRequest(row) && _selectedPendingIds.has(delayedRowKey(row));
+  });
+  if (!rows.length) {
+    alert('请先勾选需要取消的请求');
+    return;
+  }
+  if (!confirm('确认取消已勾选的 ' + rows.length + ' 条查询请求吗？')) return;
+  dom.batchCancelPendingBtn.disabled = true;
+  dom.batchCancelPendingBtn.textContent = '取消中…';
+  runWithConcurrency(rows, 5, function(row) {
+    return request('/company/embed/medical/delayed/requests/' + encodeURIComponent(row.requestNo) + '/cancel', {
+      method: 'POST'
+    }).then(function() { return { ok: true }; }).catch(function(error) { return { ok: false, error: error }; });
+  }).then(function(results) {
+    _batchCancelMode = false;
+    _selectedPendingIds.clear();
+    const failed = results.filter(function(result) { return !result.ok; });
+    return loadHistory().then(function() {
+      if (failed.length) alert('已取消 ' + (results.length - failed.length) + ' 条，另有 ' + failed.length + ' 条因已开始处理而无法取消');
+    });
+  }).catch(renderError).finally(function() {
+    renderPendingRequests();
+  });
+}
+
+function runWithConcurrency(items, limit, handler) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+  function worker() {
+    const index = nextIndex++;
+    if (index >= items.length) return Promise.resolve();
+    return Promise.resolve(handler(items[index])).then(function(result) {
+      results[index] = result;
+      return worker();
+    });
+  }
+  const workers = [];
+  for (let i = 0; i < Math.min(limit, items.length); i++) workers.push(worker());
+  return Promise.all(workers).then(function() { return results; });
+}
+
+function renderDelayedList() {
+  const historyRows = _delayedRows.filter(function(row) { return !isPendingRequestRow(row); });
+  if (_currentDataType === 'precision') dom.emptyState.style.display = _delayedRows.length ? 'none' : '';
+  dom.delayedRows.innerHTML = historyRows.length ? historyRows.map(function(row) {
+    const uploaded = row.resultVisible === true || row.uploadStatus === 'UPLOADED';
+    const name = row.name || row.patientName || '-';
+    const processStatus = row.processStatus || row.queryStatus || '-';
+    const cancelled = processStatus === 'CANCELLED';
+    const statusClass = cancelled ? 'red' : (processStatus === 'COMPLETED' || processStatus === 'QUERIED' ? 'green' : 'orange');
+    return '<tr>' +
+      '<td>' + escapeHtml(row.requestNo || '-') + '</td>' +
+      '<td>' + escapeHtml(name) + '</td>' +
+      '<td>' + escapeHtml(maskIdCard(row.idCard)) + '</td>' +
+      '<td>' + escapeHtml(queryTypeText(row.queryType)) + '</td>' +
+      '<td>' + escapeHtml(formatDateTime(row.submitTime)) + '</td>' +
+      '<td>' + tag(statusText(processStatus, 'query'), statusClass) + '</td>' +
+      '<td>' + (cancelled ? '-' : tag(uploaded ? '已上传' : '未上传', uploaded ? 'green' : 'blue')) + '</td>' +
+      '<td>' + escapeHtml(cancelled ? '-' : formatDateTime(row.handledTime || row.uploadedTime)) + '</td>' +
+      '<td>' + escapeHtml(cancelled ? '-' : (row.fee == null ? '按接口价格计费' : '¥' + Number(row.fee).toFixed(2))) + '</td>' +
+      '<td class="operation-cell"><button class="btn-small" data-delay-id="' + escapeHtml(row.requestNo || row.id) + '">' + (cancelled ? '查看详情' : (uploaded ? '查看结果' : '查看状态')) + '</button></td>' +
+    '</tr>';
+  }).join('') : '<tr><td colspan="10">暂无记录</td></tr>';
+}
+
+function openRequestDetail(id) {
+  request('/company/embed/medical/requests/' + id, { method: 'GET' })
+    .then(function(j) {
+      const row = j.data || {};
+      if (row.uploadStatus === 'UPLOADED') markViewed(row);
+      renderDelayedDetail(row);
+      renderNewResultNotice();
+    }).catch(renderError);
+}
+
+function renderDelayedDetail(row) {
+  const uploaded = row.resultVisible === true || row.uploadStatus === 'UPLOADED';
+  const processStatus = row.processStatus || row.queryStatus;
+  dom.resultStatus.textContent = row.resultStatus ? resultText(row.resultStatus) : statusText(processStatus, 'query');
+  dom.serviceStatus.textContent = uploaded ? '已上传' : statusText(processStatus, 'query');
+  dom.resultFee.textContent = row.fee == null ? '按接口价格计费' : '¥' + Number(row.fee).toFixed(2);
+  dom.resultTime.textContent = formatDateTime(row.handledTime || row.uploadedTime || row.submitTime) || formatDateTime(new Date());
+  dom.emptyState.style.display = 'none';
+  enterDetailContext(row);
+  dom.resultSummary.textContent = row.resultSummary || row.resultMessage || (uploaded ? '结果已上传。' : '平台正在处理该查询，请稍后查看。');
+  if (!uploaded) {
+    document.querySelector('#resultArea thead tr').innerHTML = '<th>字段</th><th>内容</th><th>说明</th>';
+    dom.resultRows.innerHTML = [
+      ['请求编号', row.requestNo || '-', '已进入后台处理队列'],
+      ['姓名', row.name || row.patientName || '-', '保险公司提交信息'],
+      ['身份证号', maskIdCard(row.idCard), '完整展示'],
+      ['查询状态', statusText(processStatus, 'query'), '未完成前不展示结果明细'],
+      ['结果上传', '未上传', '请等待平台上传完毕']
+    ].map(function(item) { return '<tr><td>' + escapeHtml(item[0]) + '</td><td>' + escapeHtml(item[1]) + '</td><td>' + escapeHtml(item[2]) + '</td></tr>'; }).join('');
+    renderCoverageTable([]);
+    return;
+  }
+  if (row.serviceMode !== 'REALTIME' && row.data && Array.isArray(row.data.visits)) {
+    document.querySelector('#resultArea thead tr').innerHTML = '<th>状态</th><th>说明</th>';
+    dom.resultRows.innerHTML = '<tr><td>' + tag('格式异常', 'red') + '</td><td>该延时查询记录返回了实时查询数据结构，请平台管理员重新上传延时查询结果。</td></tr>';
+    renderCoverageTable([]);
+    return;
+  }
+  renderRecordTable(row, '暂无明细，请以结果说明为准');
+  renderCoverageTable(row.insuranceCoverage);
+}
+
+function enterDetailContext(row) {
+  _activeDelayedDetailId = row.requestNo || row.id || null;
+  var detailData = row.data || {};
+  var detailVisit = Array.isArray(detailData.visits) && detailData.visits.length ? detailData.visits[0] : null;
+  var detailBasic = firstTableRow(detailVisit && detailVisit.basicInfo);
+  var detailName = row.name && row.name !== '未提供' ? row.name : (firstTableValue(detailVisit && detailVisit.basicInfo, '姓名') || row.patientName || '-');
+  dom.detailToolbar.hidden = false;
+  dom.detailPersonName.textContent = detailName;
+  dom.detailPersonIdCard.textContent = maskIdCard(row.idCard);
+  dom.detailQueryType.textContent = queryTypeText(row.queryType);
+  dom.resultTitle.textContent = queryTypeText(row.queryType) + (row.serviceMode === 'REALTIME' ? ' - 实时查询详情' : ' - 延时查询详情');
+  dom.realtimeHistoryArea.classList.remove('active');
+  dom.pendingRequestArea.classList.remove('active');
+  dom.delayedListArea.classList.remove('active');
+  dom.resultArea.classList.add('active');
+}
+
+function leaveDetailContext() {
+  _activeDelayedDetailId = null;
+  dom.detailToolbar.hidden = true;
+  renderCoverageTable([]);
+}
+
+function returnToHistory() {
+  leaveDetailContext();
+  dom.resultArea.classList.remove('active');
+  dom.resultTitle.textContent = '查询详情与历史记录';
+  setMode();
+}
+
+function renderError(err) {
+  _noticeSignals.lastErrorMessage = err.message || '接口请求失败';
+  _noticeSignals.lastErrorTime = new Date().toLocaleString('zh-CN', { hour12: false });
+  dom.resultStatus.textContent = '请求失败';
+  dom.serviceStatus.textContent = '服务异常';
+  dom.resultFee.textContent = '—';
+  dom.resultTime.textContent = formatDateTime(new Date());
+  dom.emptyState.style.display = 'none';
+  dom.resultArea.classList.add('active');
+  document.querySelector('#resultArea thead tr').innerHTML = '<th>状态</th><th>说明</th><th>建议</th>';
+  dom.resultSummary.textContent = '请求异常：' + err.message;
+  dom.resultRows.innerHTML = '<tr><td>' + tag('失败', 'red') + '</td><td>' + escapeHtml(err.message) + '</td><td>请检查网络连接或联系平台运营方</td></tr>';
+  rebuildNotices();
+  renderNotices();
+}
+
+function findNewUploadedRow() {
+  const viewed = viewedSet();
+  return _delayedRows.find(function(row) {
+    return row.uploadStatus === 'UPLOADED' && !viewed[row.requestNo || row.id];
+  });
+}
+
+function renderNewResultNotice() {
+  const row = findNewUploadedRow();
+  dom.newResultNotice.classList.toggle('active', !!row);
+  if (row) {
+    dom.newResultText.textContent = (row.patientName || '-') + ' ' + maskIdCard(row.idCard) + '，处理时间：' + formatDateTime(row.uploadedTime || row.handledTime);
+  }
+}
+
+function viewedSet() {
+  try { return JSON.parse(localStorage.getItem('delayedViewedRequests') || '{}'); } catch(e) { return {}; }
+}
+
+function markViewed(row) {
+  const viewed = viewedSet();
+  viewed[row.requestNo || row.id] = true;
+  localStorage.setItem('delayedViewedRequests', JSON.stringify(viewed));
+  rebuildNotices();
+  renderNotices();
+}
+
+function noticeReadMap() {
+  try { return JSON.parse(localStorage.getItem('companyQueryNoticeRead') || '{}'); } catch(e) { return {}; }
+}
+
+function saveNoticeReadMap(map) {
+  localStorage.setItem('companyQueryNoticeRead', JSON.stringify(map || {}));
+}
+
+function makeNotice(kind, title, desc, time, targetId) {
+  const id = kind + '-' + (targetId || title);
+  const readMap = noticeReadMap();
+  return {
+    id: String(id),
+    kind: kind,
+    title: title,
+    desc: desc,
+    time: time || '-',
+    targetId: targetId == null ? '' : String(targetId),
+    read: !!readMap[id]
+  };
+}
+
+function rebuildNotices() {
+  const items = [];
+  _delayedRows.forEach(function(row) {
+    if ((row.processStatus || row.queryStatus) === 'CANCELLED') return;
+    const targetId = row.id || row.requestNo;
+    if (row.uploadStatus === 'UPLOADED') {
+      items.push(makeNotice(
+        'result',
+        '精准延时结果已上传',
+        (row.patientName || '-') + ' ' + maskIdCard(row.idCard),
+        formatDateTime(row.uploadedTime || row.handledTime || row.submitTime),
+        targetId
+      ));
+    } else {
+      items.push(makeNotice(
+        'pending',
+        '精准延时处理中',
+        (row.patientName || '-') + ' ' + maskIdCard(row.idCard),
+        formatDateTime(row.submitTime),
+        targetId
+      ));
+    }
+  });
+
+  if (_quotaState && Number(_quotaState.usagePercent || 0) >= 80) {
+    items.push(makeNotice(
+      'quota',
+      '额度告警',
+      '当前月度额度使用已达 ' + Number(_quotaState.usagePercent).toFixed(0) + '%，剩余额度 ' + _quotaState.remaining,
+      _quotaState.billingMonth || '-',
+      ''
+    ));
+  }
+
+  if (_noticeSignals.lastErrorMessage) {
+    items.push(makeNotice(
+      'error',
+      '接口异常',
+      _noticeSignals.lastErrorMessage,
+      _noticeSignals.lastErrorTime || '-',
+      ''
+    ));
+  }
+
+  _noticeItems = items;
+}
+
+function renderNotices() {
+  const unreadCount = _noticeItems.filter(function(item) { return !item.read; }).length;
+  dom.noticeBadge.hidden = unreadCount === 0;
+  dom.noticeBadge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+  dom.markAllReadBtn.disabled = unreadCount === 0;
+  dom.noticeList.innerHTML = _noticeItems.length ? _noticeItems.map(function(item) {
+    return '<button class="notice-item ' + (item.read ? '' : 'unread') + '" type="button" data-notice-id="' + escapeHtml(item.id) + '">' +
+      '<span class="notice-kind ' + escapeHtml(item.kind) + '">' + escapeHtml(noticeKindText(item.kind)) + '</span>' +
+      '<div class="notice-title">' + escapeHtml(item.title) + '</div>' +
+      '<div class="notice-desc">' + escapeHtml(item.desc) + '</div>' +
+      '<div class="notice-time">' + escapeHtml(item.time) + '</div>' +
+    '</button>';
+  }).join('') : '<div class="notice-empty">暂无通知</div>';
+}
+
+function noticeKindText(kind) {
+  return { result: '已完成', pending: '处理中', quota: '额度', error: '异常' }[kind] || '消息';
+}
+
+function toggleNoticePanel(forceOpen) {
+  _noticeOpen = typeof forceOpen === 'boolean' ? forceOpen : !_noticeOpen;
+  dom.noticePanel.hidden = !_noticeOpen;
+  dom.noticeBtn.setAttribute('aria-expanded', _noticeOpen ? 'true' : 'false');
+}
+
+function markNoticeRead(id) {
+  const map = noticeReadMap();
+  map[id] = true;
+  saveNoticeReadMap(map);
+  rebuildNotices();
+  renderNotices();
+}
+
+function markAllNoticesRead() {
+  const map = noticeReadMap();
+  _noticeItems.forEach(function(item) { map[item.id] = true; });
+  saveNoticeReadMap(map);
+  rebuildNotices();
+  renderNotices();
+}
+
+function openNoticeTarget(id) {
+  const item = _noticeItems.find(function(notice) { return notice.id === id; });
+  if (!item) return;
+  markNoticeRead(item.id);
+  toggleNoticePanel(false);
+  if (item.targetId) openRequestDetail(item.targetId);
+}
+
+function statusText(status, type) {
+  const maps = {
+    query: { PENDING: '未查询', PROCESSING: '处理中', QUERIED: '已查询', COMPLETED: '已完成', FAILED: '失败', CANCELLED: '已取消' },
+    upload: { NOT_UPLOADED: '未上传', UPLOADED: '已上传' }
+  };
+  return (maps[type] && maps[type][status]) || status || '-';
+}
+
+function resultText(status) {
+  return { HIT: '查得', NO_RESULT: '未查得', PARTIAL: '有提示无明细', FAILED: '失败' }[status] || status || '-';
+}
+
+function tag(text, cls) {
+  return '<span class="tag ' + (cls || 'blue') + '">' + escapeHtml(text) + '</span>';
+}
+
+function maskIdCard(value) {
+  if (!value) return '-';
+  return String(value);
+}
+
+function formatDateTime(value) {
+  if (value == null || value === '') return '-';
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return '-';
+    return formatDateParts(value.getFullYear(), value.getMonth() + 1, value.getDate(), value.getHours(), value.getMinutes(), value.getSeconds());
+  }
+  const text = String(value).trim();
+  const match = text.match(/^(\d{4})[-\/]?(\d{1,2})[-\/]?(\d{1,2})(?:[ T](\d{1,2})(?::(\d{1,2}))?(?::(\d{1,2}))?)?/);
+  if (match) return formatDateParts(match[1], match[2], match[3], match[4] || 0, match[5] || 0, match[6] || 0);
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) return text;
+  return formatDateParts(parsed.getFullYear(), parsed.getMonth() + 1, parsed.getDate(), parsed.getHours(), parsed.getMinutes(), parsed.getSeconds());
+}
+
+function formatDateParts(year, month, day, hour, minute, second) {
+  return [year, month, day].map(function(value, index) {
+    return index === 0 ? String(value) : String(value).padStart(2, '0');
+  }).join('-') + ' ' + [hour, minute, second].map(function(value) {
+    return String(value).padStart(2, '0');
+  }).join(':');
+}
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatValue(value) {
+  if (value == null || value === '') return '-';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
+function formatRawJson(raw) {
+  if (!raw) return '{}';
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return Object.keys(parsed).map(function(key) { return key + '：' + parsed[key]; }).join('；');
+  } catch(e) {
+    return raw;
+  }
 }
 </script>
 
 </body></html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

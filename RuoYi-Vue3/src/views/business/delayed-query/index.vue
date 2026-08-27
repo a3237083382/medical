@@ -113,7 +113,7 @@
         </template>
       </el-table-column>
       <el-table-column label="结果状态" align="center" width="110">
-        <template #default="{ row }">{{ row.queryStatus === 'CANCELLED' ? '' : resultStatusText(row.resultStatus) }}</template>
+        <template #default="{ row }">{{ row.queryStatus === 'CANCELLED' ? '已取消查询' : resultStatusText(row.resultStatus) }}</template>
       </el-table-column>
       <el-table-column label="提交时间" align="center" prop="submitTime" width="170" />
       <el-table-column label="处理人" align="center" width="110">

@@ -9,5 +9,9 @@ public interface IMedicalQueryBatchService
 {
     MedicalQueryBatchPreview preview(MultipartFile file);
 
+    MedicalQueryBatchPreview previewRealtime(MultipartFile file);
+
     MedicalQueryBatchPreview validate(List<MedicalQueryBatchRow> rows);
+
+    MedicalQueryBatchPreview validateRealtime(List<MedicalQueryBatchRow> rows);
 }

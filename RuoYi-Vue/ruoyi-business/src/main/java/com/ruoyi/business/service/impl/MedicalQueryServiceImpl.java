@@ -84,8 +84,7 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         QueryPriceSnapshot price = resolveQueryPrice(request.getCompanyId(), request.getQueryType());
         BigDecimal reserveAmount = price.hitFee;
         BigDecimal balanceBefore = nvl(company.getBalance());
-        boolean monthlyBudgetEnabled = isMonthlyBudgetEnabled(company);
-        if (!monthlyBudgetEnabled && balanceBefore.compareTo(reserveAmount) < 0)
+        if (balanceBefore.compareTo(reserveAmount) < 0)
         {
             throw new MedicalQueryException("4001", "insufficient balance");
         }
@@ -93,24 +92,24 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         BizMedicalQueryRequest workflowRequest = buildWorkflowRequest(request, price, reserveAmount,
                 YearMonth.now().toString());
         executeInTransaction(() -> {
-            startRequest(company, workflowRequest, monthlyBudgetEnabled);
+            startRequest(company, workflowRequest);
             return null;
         });
 
         try
         {
             SourceResult sourceResult = querySource(request);
-            Map<String, Object> data = DesensitizeUtil.desensitize(sourceResult.data);
+            Map<String, Object> data = DesensitizeUtil.desensitize(organizeRealtimeResult(sourceResult.data));
             String resultStatus = isNoResult(data) ? "NO_RESULT" : "HIT";
             BigDecimal actualFee = "HIT".equals(resultStatus) ? price.hitFee : ZERO_FEE;
             Completion completion = executeInTransaction(() -> completeSuccess(request, workflowRequest,
-                    sourceResult.source, data, resultStatus, actualFee, monthlyBudgetEnabled));
+                    sourceResult.source, data, resultStatus, actualFee));
             return buildResult(workflowRequest, completion.log, resultStatus, actualFee, balanceBefore, data);
         }
         catch (RuntimeException e)
         {
             executeInTransaction(() -> {
-                completeFailure(request, workflowRequest, monthlyBudgetEnabled);
+                completeFailure(request, workflowRequest);
                 return null;
             });
             if (e instanceof MedicalQueryException)
@@ -141,26 +140,15 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         return nvl(price.getFee());
     }
 
-    private void startRequest(BizInsuranceCompany company, BizMedicalQueryRequest request, boolean monthlyBudgetEnabled)
+    private void startRequest(BizInsuranceCompany company, BizMedicalQueryRequest request)
     {
         requireUpdated(workflowRequestMapper.insertBizMedicalQueryRequest(request), "create realtime request");
-        if (monthlyBudgetEnabled)
-        {
-            BigDecimal monthlyBudget = nvl(company.getMonthlyBudget());
-            monthlyUsageMapper.ensureUsage(company.getId(), request.getBillingMonth(), monthlyBudget);
-            int reserved = monthlyUsageMapper.reserveBudget(company.getId(), request.getBillingMonth(), monthlyBudget,
-                    request.getReservedFee());
-            if (reserved <= 0)
-            {
-                throw new MedicalQueryException("4001", "本月服务额度已达上限");
-            }
-        }
+        requireUpdated(companyMapper.deductBalance(company.getId(), request.getReservedFee()), "reserve balance");
         requireUpdated(workflowRequestMapper.markProcessing(request.getId()), "start realtime request");
     }
 
     private Completion completeSuccess(MedicalQueryRequest request, BizMedicalQueryRequest workflowRequest,
-            String source, Map<String, Object> data, String resultStatus, BigDecimal actualFee,
-            boolean monthlyBudgetEnabled)
+            String source, Map<String, Object> data, String resultStatus, BigDecimal actualFee)
     {
         BizMedicalQueryResult storedResult = new BizMedicalQueryResult();
         storedResult.setRequestId(workflowRequest.getId());
@@ -173,25 +161,16 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         storedResult.setUploadedTime(new Date());
         requireUpdated(workflowResultMapper.insertBizMedicalQueryResult(storedResult), "save realtime result");
 
-        if (monthlyBudgetEnabled)
-        {
-            requireUpdated(monthlyUsageMapper.confirmBudget(request.getCompanyId(), workflowRequest.getBillingMonth(),
-                    workflowRequest.getReservedFee(), actualFee), "confirm realtime fee");
-        }
+        refundDifference(request.getCompanyId(), workflowRequest.getReservedFee(), actualFee);
         BizQueryLog log = insertQueryLog(request, workflowRequest, actualFee, resultStatus, "0", null);
         requireUpdated(workflowRequestMapper.finishRequest(workflowRequest.getId(), "COMPLETED", "UPLOADED",
                 resultStatus, actualFee, log.getId()), "complete realtime request");
         return new Completion(log);
     }
 
-    private void completeFailure(MedicalQueryRequest request, BizMedicalQueryRequest workflowRequest,
-            boolean monthlyBudgetEnabled)
+    private void completeFailure(MedicalQueryRequest request, BizMedicalQueryRequest workflowRequest)
     {
-        if (monthlyBudgetEnabled)
-        {
-            requireUpdated(monthlyUsageMapper.releaseBudget(request.getCompanyId(), workflowRequest.getBillingMonth(),
-                    workflowRequest.getReservedFee()), "release realtime reservation");
-        }
+        requireUpdated(companyMapper.addBalance(request.getCompanyId(), workflowRequest.getReservedFee()), "release balance");
         BizQueryLog log = insertQueryLog(request, workflowRequest, ZERO_FEE, "FAILED", "1", "实时数据源查询失败");
         requireUpdated(workflowRequestMapper.finishRequest(workflowRequest.getId(), "FAILED", "NOT_UPLOADED",
                 "FAILED", ZERO_FEE, log.getId()), "fail realtime request");
@@ -259,8 +238,14 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         workflow.setEntryType("SINGLE");
         workflow.setServiceMode("REALTIME");
         workflow.setQueryType(request.getQueryType());
-        workflow.setPatientName(value(request, "name"));
-        workflow.setIdCard(value(request, "idCard"));
+        String patientName = value(request, "name");
+        String idCard = value(request, "idCard");
+        if (isEmpty(idCard))
+        {
+            idCard = value(request, "sfzhm");
+        }
+        workflow.setPatientName(isEmpty(patientName) ? "未提供" : patientName);
+        workflow.setIdCard(idCard);
         workflow.setProcessStatus("PENDING");
         workflow.setUploadStatus("NOT_UPLOADED");
         workflow.setViewStatus("READ");
@@ -284,7 +269,7 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         result.setResultStatus(resultStatus);
         result.setServiceStatus("NORMAL");
         result.setFee(actualFee);
-        result.setBalanceAfter(balanceBefore);
+        result.setBalanceAfter(balanceBefore.subtract(nvl(actualFee)));
         result.setData(data);
         return result;
     }
@@ -304,6 +289,200 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         return schema;
     }
 
+    private void refundDifference(Long companyId, BigDecimal reserved, BigDecimal actual)
+    {
+        BigDecimal refund = nvl(reserved).subtract(nvl(actual));
+        if (refund.signum() > 0)
+        {
+            requireUpdated(companyMapper.addBalance(companyId, refund), "refund balance");
+        }
+    }
+
+    private Map<String, Object> organizeRealtimeResult(Map<String, Object> sourceData)
+    {
+        if (sourceData == null || !(sourceData.get("res") instanceof Iterable<?> records))
+        {
+            return sourceData == null ? new LinkedHashMap<>() : sourceData;
+        }
+        Map<String, List<Map<String, Object>>> groupedRecords = new LinkedHashMap<>();
+        int sourceIndex = 0;
+        for (Object item : records)
+        {
+            if (!(item instanceof Map<?, ?> raw))
+            {
+                continue;
+            }
+            Map<String, Object> record = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> entry : raw.entrySet())
+            {
+                if (entry.getKey() != null)
+                {
+                    record.put(String.valueOf(entry.getKey()), entry.getValue());
+                }
+            }
+            String key = visitKey(record, sourceIndex++);
+            groupedRecords.computeIfAbsent(key, ignored -> new ArrayList<>()).add(record);
+        }
+        List<List<Map<String, Object>>> orderedGroups = new ArrayList<>(groupedRecords.values());
+        orderedGroups.sort(java.util.Comparator.comparing(group -> visitSortTime(group.get(0))));
+        List<Map<String, Object>> visits = new ArrayList<>();
+        int visitNo = 1;
+        for (List<Map<String, Object>> group : orderedGroups)
+        {
+            Map<String, Object> record = group.get(0);
+            String visitType = inpatientType(record);
+            Map<String, Object> visit = new LinkedHashMap<>();
+            visit.put("visitNo", visitNo++);
+            visit.put("visitType", visitType);
+            String[] basicFields = "住院".equals(visitType)
+                    ? new String[] { "srno", "name", "sfzhm", "gender", "birth", "ryrq", "cyrq",
+                    "jzlx", "hospitalname", "totalamount", "diseasecode", "diseasename" }
+                    : new String[] { "srno", "name", "sfzhm", "gender", "birth", "jzsj", "jzlx",
+                    "hospitalname", "totalamount", "diseasecode", "diseasename" };
+            visit.put("basicInfo", tables(group, basicFields));
+            if ("住院".equals(visitType))
+            {
+                visit.put("electronicMedicalRecord", tables(group, new String[] { "name", "sfzhm", "ryrq", "cyrq",
+                        "ryzd", "cyzd", "ryqk", "zljg", "zs", "xbs", "jws" }));
+                visit.put("medicalImaging", tables(group, new String[] { "name", "sfzhm", "hospitalname", "bgrq",
+                        "ks", "bw", "yxbx", "yxzd" }));
+            }
+            visits.add(visit);
+        }
+        Map<String, Object> organized = new LinkedHashMap<>();
+        organized.put("visits", visits);
+        organized.put("totalVisits", visits.size());
+        return organized;
+    }
+
+    private String visitKey(Map<String, Object> record, int sourceIndex)
+    {
+        String idCard = text(record.get("sfzhm"));
+        String hospital = text(record.get("hospitalname"));
+        if (hospital.isEmpty()) hospital = text(record.get("hospitalName"));
+        String visitType = inpatientType(record);
+        String start = "住院".equals(visitType) ? normalizeVisitTime(record.get("ryrq")) : normalizeVisitTime(record.get("jzsj"));
+        String end = "住院".equals(visitType) ? normalizeVisitTime(record.get("cyrq")) : "";
+        if (idCard.isEmpty() || hospital.isEmpty() || visitType.isEmpty() || start.isEmpty()
+                || ("住院".equals(visitType) && end.isEmpty()))
+        {
+            return "UNMATCHED-" + sourceIndex;
+        }
+        return idCard + "\u0000" + hospital + "\u0000" + visitType + "\u0000" + start + "\u0000" + end;
+    }
+
+    private String normalizeVisitTime(Object value)
+    {
+        String time = text(value).replace('/', '-').replace('T', ' ');
+        time = time.replaceAll("\\s+", " ").trim();
+        if (!time.matches("\\d{4}-\\d{1,2}-\\d{1,2}( \\d{1,2}:\\d{1,2}(:\\d{1,2})?)?")) return time;
+        String[] parts = time.split(" ", 2);
+        String[] date = parts[0].split("-");
+        String normalized = String.format("%s-%02d-%02d", date[0], Integer.parseInt(date[1]), Integer.parseInt(date[2]));
+        if (parts.length == 1) return normalized + " 00:00:00";
+        String[] clock = parts[1].split(":");
+        return normalized + String.format(" %02d:%02d:%02d", Integer.parseInt(clock[0]), Integer.parseInt(clock[1]), clock.length > 2 ? Integer.parseInt(clock[2]) : 0);
+    }
+
+    private String visitSortTime(Map<String, Object> record)
+    {
+        String type = inpatientType(record);
+        return "住院".equals(type) ? normalizeVisitTime(record.get("ryrq")) : normalizeVisitTime(record.get("jzsj"));
+    }
+
+    private List<Map<String, Object>> tables(List<Map<String, Object>> records, String[] fields)
+    {
+        List<Map<String, Object>> values = new ArrayList<>();
+        for (Map<String, Object> record : records)
+        {
+            Map<String, Object> row = table(record, fields);
+            if (!values.contains(row)) values.add(row);
+        }
+        return values;
+    }
+
+    private Map<String, Object> table(Map<String, Object> record, String[] fields)
+    {
+        Map<String, Object> values = new LinkedHashMap<>();
+        for (String field : fields)
+        {
+            Object value = record.get(field);
+            if ("totalamount".equals(field) && value == null)
+            {
+                value = record.get("totadiseasecodelamount");
+            }
+            values.put(fieldLabel(field), value == null ? "" : value);
+        }
+        return values;
+    }
+
+    private boolean hasValue(Map<String, Object> record, String... fields)
+    {
+        for (String field : fields)
+        {
+            if (!text(record.get(field)).isEmpty())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String inpatientType(Map<String, Object> record)
+    {
+        String type = text(record.get("ryrq"));
+        if ("住院".equals(type) || "门诊".equals(type))
+        {
+            return type;
+        }
+        type = text(record.get("jzlx"));
+        if ("住院".equals(type) || "门诊".equals(type))
+        {
+            return type;
+        }
+        return type;
+    }
+
+    private String fieldLabel(String field)
+    {
+        return switch (field)
+        {
+            case "srno" -> "就诊id";
+            case "sfzhm" -> "身份证号码";
+            case "name" -> "姓名";
+            case "gender" -> "性别";
+            case "birth" -> "出生日期";
+            case "ryrq" -> "入院日期";
+            case "cyrq" -> "出院日期";
+            case "jzsj" -> "就诊时间";
+            case "jzlx" -> "就诊类型";
+            case "hospitalname" -> "医院名称";
+            case "totalamount" -> "总费用";
+            case "diseasecode" -> "原始主诊断编码";
+            case "diseasename" -> "原始主诊断名称";
+            case "recordtype" -> "记录类型";
+            case "ryzd" -> "入院诊断";
+            case "cyzd" -> "出院诊断";
+            case "ryqk" -> "入院情况";
+            case "zljg" -> "诊疗经过";
+            case "zs" -> "主诉";
+            case "xbs" -> "现病史";
+            case "jws" -> "既往史";
+            case "yy" -> "医嘱";
+            case "bgrq" -> "报告日期";
+            case "ks" -> "科室";
+            case "bw" -> "部位";
+            case "yxbx" -> "影像表现";
+            case "yxzd" -> "影像诊断";
+            default -> field;
+        };
+    }
+
+    private String text(Object value)
+    {
+        return value == null ? "" : String.valueOf(value).trim();
+    }
+
     private boolean isMonthlyBudgetEnabled(BizInsuranceCompany company)
     {
         return "0".equals(company.getBudgetEnabled()) && company.getMonthlyBudget() != null;
@@ -316,6 +495,14 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
             return true;
         }
         Object records = data.get("records");
+        if (records == null)
+        {
+            records = data.get("res");
+        }
+        if (records == null)
+        {
+            records = data.get("visits");
+        }
         return records instanceof Iterable<?> iterable && !iterable.iterator().hasNext();
     }
 
@@ -325,9 +512,25 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         {
             throw new MedicalQueryException("4000", "companyId is required");
         }
-        if (isEmpty(request.getQueryType()) || isEmpty(value(request, "name")) || isEmpty(value(request, "idCard")))
+        if (isEmpty(request.getQueryType()))
         {
-            throw new MedicalQueryException("4000", "queryType, name and idCard are required");
+            throw new MedicalQueryException("4000", "queryType is required");
+        }
+        boolean newContract = !isEmpty(value(request, "sfzhm"))
+                || !isEmpty(value(request, "startdate"))
+                || !isEmpty(value(request, "enddate"));
+        if (newContract)
+        {
+            if (isEmpty(value(request, "sfzhm")) || isEmpty(value(request, "startdate"))
+                    || isEmpty(value(request, "enddate")))
+            {
+                throw new MedicalQueryException("4000", "sfzhm, startdate and enddate are required");
+            }
+            return;
+        }
+        if (isEmpty(value(request, "name")) || isEmpty(value(request, "idCard")))
+        {
+            throw new MedicalQueryException("4000", "name and idCard are required");
         }
     }
 

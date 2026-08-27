@@ -174,8 +174,9 @@ public class CompanyEmbedMedicalQueryControllerTest
     {
         when(medicalQueryService.query(any())).thenThrow(new MedicalQueryException("5003", "source failed"));
         Map<String, Object> queryParams = new java.util.LinkedHashMap<>();
-        queryParams.put("name", "张三");
-        queryParams.put("idCard", "430102199001011234");
+        queryParams.put("sfzhm", "430102199001011234");
+        queryParams.put("startdate", "2020-01-01 00:00:00");
+        queryParams.put("enddate", "2026-01-01 00:00:00");
         Map<String, Object> body = new java.util.LinkedHashMap<>();
         body.put("queryType", "medical_all");
         body.put("queryParams", queryParams);

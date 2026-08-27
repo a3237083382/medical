@@ -10,6 +10,8 @@ public class MedicalQueryBatchRow
     private String originalIdCard;
     private String name;
     private String idCard;
+    private String startDate;
+    private String endDate;
     private boolean valid;
     private List<String> errors = new ArrayList<>();
 
@@ -62,6 +64,11 @@ public class MedicalQueryBatchRow
     {
         this.idCard = idCard;
     }
+
+    public String getStartDate() { return startDate; }
+    public void setStartDate(String startDate) { this.startDate = startDate; }
+    public String getEndDate() { return endDate; }
+    public void setEndDate(String endDate) { this.endDate = endDate; }
 
     public boolean isValid()
     {

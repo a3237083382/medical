@@ -58,7 +58,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           and patient_name = #{patientName}
           and id_card = #{idCard}
           and query_type = #{queryType}
-          and (query_status = 'PENDING' or upload_status = 'NOT_UPLOADED')
+          and query_status in ('PENDING', 'PROCESSING')
+          and upload_status = 'NOT_UPLOADED'
         order by submit_time desc
         limit 1
     </select>
