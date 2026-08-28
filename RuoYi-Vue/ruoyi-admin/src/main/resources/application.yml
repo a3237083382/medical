@@ -164,12 +164,27 @@ magic-api:
 medical:
   datasource:
     default-source: mock
-    fallback-enabled: true
-    routes: {}
+    fallback-enabled: false
+    routes:
+      medical_all: digital
     digital-industry:
-      enabled: false
-      query-url:
+      # 测试阶段配置，接入真实环境前请替换为数产提供的正式配置。
+      enabled: "${DIGITAL_INDUSTRY_ENABLED:true}"
+      query-url: "${DIGITAL_INDUSTRY_QUERY_URL:http://openapi-test.datafty.hunan-data.com/ecsb/gw}"
       timeout-millis: 5000
+      sdk-classpath: "${DIGITAL_INDUSTRY_SDK_CLASSPATH:C:/Users/mec/Desktop/java-client-demo825}"
+      environment: "${DIGITAL_INDUSTRY_ENVIRONMENT:test}"
+      partner-id: "${DIGITAL_INDUSTRY_PARTNER_ID:08JG300000}"
+      sys-id: "${DIGITAL_INDUSTRY_SYS_ID:08JG300004}"
+      app-sub-id: "${DIGITAL_INDUSTRY_APP_SUB_ID:08JG3000040001}"
+      app-token: "${DIGITAL_INDUSTRY_APP_TOKEN:01d23da203d74ae79de3aa33168f86d5}"
+      msg-secret: "${DIGITAL_INDUSTRY_MSG_SECRET:0b0e5c5b27654694aaca6944}"
+      sign-secret: "${DIGITAL_INDUSTRY_SIGN_SECRET:22e1cebdc66445e9b3ce693943e69536}"
+      data-service-id: "${DIGITAL_INDUSTRY_DATA_SERVICE_ID:ds2092069996838387712}"
+      access-key-id: "${DIGITAL_INDUSTRY_ACCESS_KEY_ID:2297a34f14f8687c}"
+      access-key-secret: "${DIGITAL_INDUSTRY_ACCESS_KEY_SECRET:0c6a831eb47291163118899c1fbdd68e}"
+      sm2-public-key: "${DIGITAL_INDUSTRY_SM2_PUBLIC_KEY:MFkwEwYHKoZIzj0CAQYIKoEcz1UBgi0DQgAEXeLG0wlPuqO+YtY5ECdMTw9ZlFJzhaLaU9Xqs/lvz0ILGSkrQJULu5zzdaPo0GBf19A0u2igkWPqEqqOvO9kUQ==}"
+      api-id: "${DIGITAL_INDUSTRY_API_ID:58b47a10fb32478a.5de6aecd87184e42.1605235db8fb4c1f.2092071974363545601:1787623860821}"
 
 # 保险公司独立嵌入页面跨域白名单。生产环境使用逗号分隔的实际部署来源覆盖此环境变量。
 embedded:

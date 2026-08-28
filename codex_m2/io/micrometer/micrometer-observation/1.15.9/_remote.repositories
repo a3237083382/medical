@@ -1,3 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Aug 18 21:40:24 CST 2026
+#Tue Aug 18 15:42:07 CST 2026
+micrometer-observation-1.15.9.jar>aliyunmaven=
+micrometer-observation-1.15.9.jar>public=
 micrometer-observation-1.15.9.pom>aliyunmaven=
+micrometer-observation-1.15.9.pom>public=

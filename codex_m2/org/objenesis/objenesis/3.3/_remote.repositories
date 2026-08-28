@@ -1,3 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Aug 18 21:42:06 CST 2026
+#Tue Aug 18 15:42:40 CST 2026
+objenesis-3.3.jar>aliyunmaven=
+objenesis-3.3.jar>public=
 objenesis-3.3.pom>aliyunmaven=
+objenesis-3.3.pom>public=

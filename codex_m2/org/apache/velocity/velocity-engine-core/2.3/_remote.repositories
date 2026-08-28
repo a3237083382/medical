@@ -1,3 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Aug 18 21:42:31 CST 2026
+#Tue Aug 18 15:42:48 CST 2026
+velocity-engine-core-2.3.jar>aliyunmaven=
+velocity-engine-core-2.3.jar>public=
 velocity-engine-core-2.3.pom>aliyunmaven=
+velocity-engine-core-2.3.pom>public=

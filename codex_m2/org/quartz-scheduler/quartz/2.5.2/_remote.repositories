@@ -1,3 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Aug 18 21:41:49 CST 2026
+#Tue Aug 18 15:42:39 CST 2026
+quartz-2.5.2.jar>aliyunmaven=
+quartz-2.5.2.jar>public=
 quartz-2.5.2.pom>aliyunmaven=
+quartz-2.5.2.pom>public=

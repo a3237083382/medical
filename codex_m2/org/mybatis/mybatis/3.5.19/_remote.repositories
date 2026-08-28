@@ -1,3 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Aug 18 21:40:53 CST 2026
+#Tue Aug 18 15:42:07 CST 2026
+mybatis-3.5.19.jar>aliyunmaven=
+mybatis-3.5.19.jar>public=
 mybatis-3.5.19.pom>aliyunmaven=
+mybatis-3.5.19.pom>public=

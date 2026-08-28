@@ -1,3 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Aug 18 21:41:23 CST 2026
+#Tue Aug 18 15:42:11 CST 2026
+plexus-xml-3.0.0.jar>aliyunmaven=
+plexus-xml-3.0.0.jar>public=
 plexus-xml-3.0.0.pom>aliyunmaven=
+plexus-xml-3.0.0.pom>public=

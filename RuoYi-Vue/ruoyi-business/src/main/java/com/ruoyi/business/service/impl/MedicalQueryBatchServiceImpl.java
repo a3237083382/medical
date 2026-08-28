@@ -29,6 +29,8 @@ public class MedicalQueryBatchServiceImpl implements IMedicalQueryBatchService
     private static final Pattern ID_CARD_PATTERN = Pattern.compile("^[0-9]{17}[0-9X]$");
     private static final Set<String> NAME_HEADERS = Set.of("姓名", "患者姓名", "被保险人姓名", "name", "patientname");
     private static final Set<String> ID_CARD_HEADERS = Set.of("身份证号", "身份证号码", "证件号码", "idcard", "identitycard");
+    private static final Set<String> START_HEADERS = Set.of("开始时间", "起始时间", "startdate", "starttime");
+    private static final Set<String> END_HEADERS = Set.of("结束时间", "终止时间", "enddate", "endtime");
 
     @Override
     public MedicalQueryBatchPreview preview(MultipartFile file)
@@ -53,6 +55,52 @@ public class MedicalQueryBatchServiceImpl implements IMedicalQueryBatchService
     }
 
     @Override
+    public MedicalQueryBatchPreview previewRealtime(MultipartFile file)
+    {
+        validateFile(file);
+        try (InputStream input = file.getInputStream(); Workbook workbook = WorkbookFactory.create(input))
+        {
+            if (workbook.getNumberOfSheets() == 0) throw invalidParam("Excel中没有工作表");
+            return readRealtimeSheet(workbook.getSheetAt(0));
+        }
+        catch (MedicalQueryException e) { throw e; }
+        catch (Exception e) { throw invalidParam("Excel文件无法解析"); }
+    }
+
+    private MedicalQueryBatchPreview readRealtimeSheet(Sheet sheet)
+    {
+        DataFormatter formatter = new DataFormatter(Locale.CHINA);
+        int headerIndex = findFirstNonEmptyRow(sheet, formatter);
+        if (headerIndex < 0) throw invalidParam("Excel名单不能为空");
+        Row header = sheet.getRow(headerIndex);
+        int idColumn = findHeaderColumn(header, formatter, ID_CARD_HEADERS);
+        int startColumn = findHeaderColumn(header, formatter, START_HEADERS);
+        int endColumn = findHeaderColumn(header, formatter, END_HEADERS);
+        if (idColumn < 0 || startColumn < 0 || endColumn < 0) throw invalidParam("实时查询Excel必须包含身份证号、开始时间和结束时间列");
+        List<MedicalQueryBatchRow> rows = new ArrayList<>();
+        for (int rowIndex = headerIndex + 1; rowIndex <= sheet.getLastRowNum(); rowIndex++)
+        {
+            Row excelRow = sheet.getRow(rowIndex);
+            String id = cellValue(excelRow, idColumn, formatter);
+            String start = cellValue(excelRow, startColumn, formatter);
+            String end = cellValue(excelRow, endColumn, formatter);
+            if (normalize(id).isEmpty() && normalize(start).isEmpty() && normalize(end).isEmpty()) continue;
+            MedicalQueryBatchRow row = new MedicalQueryBatchRow();
+            row.setRowNo(rows.size() + 1); row.setOriginalIdCard(id); row.setIdCard(normalize(id).toUpperCase(Locale.ROOT));
+            row.setStartDate(normalize(start)); row.setEndDate(normalize(end));
+            List<String> errors = new ArrayList<>();
+            if (!ID_CARD_PATTERN.matcher(row.getIdCard()).matches()) errors.add("身份证号必须为18位，末位可以是X");
+            if (row.getStartDate().isEmpty() || row.getEndDate().isEmpty()) errors.add("开始时间和结束时间不能为空");
+            try { if (!row.getStartDate().isEmpty() && !row.getEndDate().isEmpty() && row.getStartDate().compareTo(row.getEndDate()) > 0) errors.add("开始时间不能晚于结束时间"); } catch (Exception ignored) { }
+            row.setErrors(errors); row.setValid(errors.isEmpty()); rows.add(row);
+        }
+        if (rows.isEmpty()) throw invalidParam("Excel名单不能为空");
+        MedicalQueryBatchPreview result = new MedicalQueryBatchPreview(); result.setRows(rows); result.setTotalCount(rows.size());
+        result.setValidCount((int) rows.stream().filter(MedicalQueryBatchRow::isValid).count()); result.setInvalidCount(rows.size() - result.getValidCount());
+        return result;
+    }
+
+    @Override
     public MedicalQueryBatchPreview validate(List<MedicalQueryBatchRow> rows)
     {
         if (rows == null || rows.isEmpty())
@@ -74,12 +122,41 @@ public class MedicalQueryBatchServiceImpl implements IMedicalQueryBatchService
             row.setOriginalIdCard(source == null ? null : source.getOriginalIdCard());
             row.setName(normalize(source == null ? null : source.getName()));
             row.setIdCard(normalize(source == null ? null : source.getIdCard()).toUpperCase(Locale.ROOT));
+            row.setStartDate(normalize(source == null ? null : source.getStartDate()));
+            row.setEndDate(normalize(source == null ? null : source.getEndDate()));
             row.setErrors(validateRow(row));
             normalizedRows.add(row);
         }
 
         markDuplicates(normalizedRows);
         return summarize(normalizedRows);
+    }
+
+    @Override
+    public MedicalQueryBatchPreview validateRealtime(List<MedicalQueryBatchRow> rows)
+    {
+        if (rows == null || rows.isEmpty()) throw invalidParam("名单不能为空");
+        if (rows.size() > MAX_ROWS) throw new MedicalQueryException("4005", "名单最多支持500人");
+        List<MedicalQueryBatchRow> normalized = new ArrayList<>(rows.size());
+        Set<String> seen = new java.util.HashSet<>();
+        for (int index = 0; index < rows.size(); index++)
+        {
+            MedicalQueryBatchRow source = rows.get(index);
+            MedicalQueryBatchRow row = new MedicalQueryBatchRow();
+            row.setRowNo(source == null || source.getRowNo() == null ? index + 2 : source.getRowNo());
+            row.setOriginalIdCard(source == null ? null : source.getOriginalIdCard());
+            row.setIdCard(normalize(source == null ? null : source.getIdCard()).toUpperCase(Locale.ROOT));
+            row.setStartDate(normalize(source == null ? null : source.getStartDate()));
+            row.setEndDate(normalize(source == null ? null : source.getEndDate()));
+            List<String> errors = new ArrayList<>();
+            if (!ID_CARD_PATTERN.matcher(row.getIdCard()).matches()) errors.add("身份证号必须为18位，末位可以是X");
+            if (row.getStartDate().isEmpty() || row.getEndDate().isEmpty()) errors.add("开始时间和结束时间不能为空");
+            if (!row.getStartDate().isEmpty() && !row.getEndDate().isEmpty() && row.getStartDate().compareTo(row.getEndDate()) > 0) errors.add("开始时间不能晚于结束时间");
+            String key = row.getIdCard() + "\u0000" + row.getStartDate() + "\u0000" + row.getEndDate();
+            if (!row.getIdCard().isEmpty() && !row.getStartDate().isEmpty() && !row.getEndDate().isEmpty() && !seen.add(key)) errors.add("名单内身份证号和时间范围重复");
+            row.setErrors(errors); row.setValid(errors.isEmpty()); normalized.add(row);
+        }
+        return summarize(normalized);
     }
 
     private MedicalQueryBatchPreview readSheet(Sheet sheet)

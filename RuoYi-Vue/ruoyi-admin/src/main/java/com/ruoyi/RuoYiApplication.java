@@ -14,6 +14,8 @@ public class RuoYiApplication
 {
     public static void main(String[] args)
     {
+        // 数产 SDK 按 JVM 默认字符集解码响应，Windows 下固定使用 UTF-8。
+        System.setProperty("file.encoding", "UTF-8");
         // System.setProperty("spring.devtools.restart.enabled", "false");
         SpringApplication.run(RuoYiApplication.class, args);
         System.out.println("(♥◠‿◠)ﾉﾞ  若依启动成功   ლ(´ڡ`ლ)ﾞ  \n" +

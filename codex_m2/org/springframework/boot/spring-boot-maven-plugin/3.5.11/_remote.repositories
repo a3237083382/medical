@@ -1,3 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Aug 18 21:42:34 CST 2026
+#Tue Aug 18 15:42:49 CST 2026
+spring-boot-maven-plugin-3.5.11.jar>aliyunmaven=
+spring-boot-maven-plugin-3.5.11.jar>public=
 spring-boot-maven-plugin-3.5.11.pom>aliyunmaven=
+spring-boot-maven-plugin-3.5.11.pom>public=

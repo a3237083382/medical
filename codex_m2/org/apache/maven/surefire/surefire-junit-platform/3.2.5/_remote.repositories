@@ -1,3 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Aug 18 21:47:37 CST 2026
+#Tue Aug 18 15:42:46 CST 2026
+surefire-junit-platform-3.2.5.jar>aliyunmaven=
+surefire-junit-platform-3.2.5.jar>public=
 surefire-junit-platform-3.2.5.pom>aliyunmaven=
+surefire-junit-platform-3.2.5.pom>public=

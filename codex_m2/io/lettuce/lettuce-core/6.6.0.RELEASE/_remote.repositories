@@ -1,3 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Aug 18 21:41:05 CST 2026
+#Tue Aug 18 15:42:07 CST 2026
+lettuce-core-6.6.0.RELEASE.jar>aliyunmaven=
+lettuce-core-6.6.0.RELEASE.jar>public=
 lettuce-core-6.6.0.RELEASE.pom>aliyunmaven=
+lettuce-core-6.6.0.RELEASE.pom>public=

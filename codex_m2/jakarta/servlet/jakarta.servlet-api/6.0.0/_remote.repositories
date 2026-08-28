@@ -1,3 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Aug 18 21:41:14 CST 2026
+#Tue Aug 18 15:42:07 CST 2026
+jakarta.servlet-api-6.0.0.jar>aliyunmaven=
+jakarta.servlet-api-6.0.0.jar>public=
 jakarta.servlet-api-6.0.0.pom>aliyunmaven=
+jakarta.servlet-api-6.0.0.pom>public=

@@ -1,3 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Aug 18 21:41:39 CST 2026
+#Tue Aug 18 15:42:32 CST 2026
+tomcat-embed-core-10.1.52.jar>aliyunmaven=
+tomcat-embed-core-10.1.52.jar>public=
 tomcat-embed-core-10.1.52.pom>aliyunmaven=
+tomcat-embed-core-10.1.52.pom>public=

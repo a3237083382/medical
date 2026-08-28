@@ -155,7 +155,7 @@ public class CompanyEmbedMedicalQueryController
     }
 
     @PostMapping(value = "/batches/import-preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public AjaxResult importBatchPreview(@RequestParam("file") MultipartFile file, HttpServletRequest request)
+    public AjaxResult importBatchPreview(@RequestParam("file") MultipartFile file, @RequestParam(value = "serviceMode", required = false) String serviceMode, HttpServletRequest request)
     {
         if (CompanyEmbedRequestContext.getCompany(request) == null)
         {
@@ -163,7 +163,7 @@ public class CompanyEmbedMedicalQueryController
         }
         try
         {
-            return AjaxResult.success(medicalQueryBatchService.preview(file));
+            return AjaxResult.success("REALTIME".equalsIgnoreCase(serviceMode) ? medicalQueryBatchService.previewRealtime(file) : medicalQueryBatchService.preview(file));
         }
         catch (MedicalQueryException e)
         {
@@ -173,6 +173,12 @@ public class CompanyEmbedMedicalQueryController
         {
             return AjaxResult.error(400, e.getMessage());
         }
+    }
+
+    /** Keeps the direct controller call used by existing integrations and tests compatible. */
+    public AjaxResult importBatchPreview(MultipartFile file, HttpServletRequest request)
+    {
+        return importBatchPreview(file, null, request);
     }
 
     @PostMapping("/batches/validate")
@@ -254,7 +260,12 @@ public class CompanyEmbedMedicalQueryController
         {
             throw new IllegalArgumentException("查询类型不能为空");
         }
-        var preview = medicalQueryBatchService.validate(command.getRows());
+        var preview = medicalQueryBatchService.validateRealtime(command.getRows());
+        // Keep compatibility with integrations that only implement the original validator.
+        if (preview == null)
+        {
+            preview = medicalQueryBatchService.validate(command.getRows());
+        }
         if (preview.getInvalidCount() > 0)
         {
             throw new IllegalArgumentException("名单中存在无效或重复记录");
@@ -276,8 +287,11 @@ public class CompanyEmbedMedicalQueryController
                 queryRequest.setCompanyId(company.getId());
                 queryRequest.setQueryType(command.getQueryType());
                 Map<String, Object> params = new LinkedHashMap<>();
-                params.put("name", row.getName());
-                params.put("idCard", row.getIdCard());
+                if ("REALTIME".equalsIgnoreCase(command.getServiceMode()))
+                {
+                    params.put("sfzhm", row.getIdCard()); params.put("startdate", row.getStartDate()); params.put("enddate", row.getEndDate());
+                }
+                else { params.put("name", row.getName()); params.put("idCard", row.getIdCard()); }
                 queryRequest.setQueryParams(params);
                 queryRequest.setRequestIp(request.getRemoteAddr());
                 MedicalQueryResult result = medicalQueryService.query(queryRequest);
@@ -787,7 +801,7 @@ public class CompanyEmbedMedicalQueryController
 
         Map<String, Object> capabilities = new LinkedHashMap<>();
         capabilities.put("singleRealtime", realtimeEnabled);
-        capabilities.put("batchRealtime", false);
+        capabilities.put("batchRealtime", true);
         capabilities.put("singleDelayed", delayedEnabled);
         capabilities.put("batchDelayed", delayedEnabled);
         capabilities.put("singleExport", true);
@@ -832,10 +846,24 @@ public class CompanyEmbedMedicalQueryController
 
         String queryType = toString(body.get("queryType"));
         Map<String, Object> queryParams = toMap(body.get("queryParams"));
-        if (StringUtils.isEmpty(queryType) || StringUtils.isEmpty(toString(queryParams.get("name")))
-                || StringUtils.isEmpty(toString(queryParams.get("idCard"))))
+        boolean realtimeBigData = "medical_all".equalsIgnoreCase(queryType)
+                || "BIG_DATA".equalsIgnoreCase(queryType)
+                || "MEDICAL_BIG_DATA".equalsIgnoreCase(queryType);
+        boolean invalidParams = StringUtils.isEmpty(queryType);
+        if (realtimeBigData)
         {
-            return AjaxResult.error(400, "查询项目、姓名和身份证号不能为空")
+            invalidParams = invalidParams || StringUtils.isEmpty(toString(queryParams.get("sfzhm")))
+                    || StringUtils.isEmpty(toString(queryParams.get("startdate")))
+                    || StringUtils.isEmpty(toString(queryParams.get("enddate")));
+        }
+        else
+        {
+            invalidParams = invalidParams || StringUtils.isEmpty(toString(queryParams.get("name")))
+                    || StringUtils.isEmpty(toString(queryParams.get("idCard")));
+        }
+        if (invalidParams)
+        {
+            return AjaxResult.error(400, realtimeBigData ? "查询项目、身份证号、开始时间和结束时间不能为空" : "查询项目、姓名和身份证号不能为空")
                     .put("errorCode", "INVALID_PARAM");
         }
 
@@ -982,31 +1010,9 @@ public class CompanyEmbedMedicalQueryController
     private UsageSummary loadUsage(BizInsuranceCompany company)
     {
         String billingMonth = YearMonth.now().toString();
-        boolean budgetEnabled = "0".equals(company.getBudgetEnabled()) && company.getMonthlyBudget() != null;
-        BigDecimal budget = nvl(company.getMonthlyBudget());
-        BizMonthlyUsage currentUsage = monthlyUsageMapper.selectUsage(company.getId(), billingMonth);
-        BigDecimal usedAmount = currentUsage == null ? BigDecimal.ZERO : nvl(currentUsage.getUsedAmount());
-        BigDecimal reservedAmount = currentUsage == null ? BigDecimal.ZERO : nvl(currentUsage.getReservedAmount());
-        BigDecimal activeAmount = usedAmount.add(reservedAmount);
-        BigDecimal remaining = budget.subtract(activeAmount).max(BigDecimal.ZERO);
-
-        int usagePercent = 0;
-        String serviceStatus = "NORMAL";
-        if (budgetEnabled)
-        {
-            usagePercent = budget.signum() <= 0 ? 100
-                    : activeAmount.multiply(new BigDecimal("100")).divide(budget, 0, RoundingMode.DOWN).min(new BigDecimal("100")).intValue();
-            if ((currentUsage != null && !"0".equals(currentUsage.getStatus())) || activeAmount.compareTo(budget) >= 0)
-            {
-                serviceStatus = "LIMIT_REACHED";
-            }
-            else if (new BigDecimal(usagePercent).compareTo(NEAR_LIMIT_PERCENT) >= 0)
-            {
-                serviceStatus = "NEAR_LIMIT";
-            }
-        }
-        return new UsageSummary(billingMonth, budgetEnabled, budget, usedAmount, reservedAmount, remaining,
-                usagePercent, serviceStatus);
+        BigDecimal balance = nvl(company.getBalance());
+        return new UsageSummary(billingMonth, false, balance, BigDecimal.ZERO, BigDecimal.ZERO, balance,
+                0, "NORMAL");
     }
 
     private BigDecimal nvl(BigDecimal value)
@@ -1054,6 +1060,7 @@ public class CompanyEmbedMedicalQueryController
         response.put("name", request.getPatientName());
         response.put("idCard", request.getIdCard());
         response.put("queryType", request.getQueryType());
+        response.put("serviceMode", "DELAYED");
         response.put("submitTime", request.getSubmitTime());
         response.put("handledTime", request.getUploadedTime() == null
                 ? request.getHandledTime() : request.getUploadedTime());

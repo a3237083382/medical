@@ -1,0 +1,6 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Tue Aug 18 15:46:57 CST 2026
+maven-shade-plugin-3.6.0.jar>aliyunmaven=
+maven-shade-plugin-3.6.0.jar>public=
+maven-shade-plugin-3.6.0.pom>aliyunmaven=
+maven-shade-plugin-3.6.0.pom>public=

@@ -1,3 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Aug 18 21:41:38 CST 2026
+#Tue Aug 18 15:42:32 CST 2026
+jackson-datatype-jdk8-2.19.4.jar>aliyunmaven=
+jackson-datatype-jdk8-2.19.4.jar>public=
 jackson-datatype-jdk8-2.19.4.pom>aliyunmaven=
+jackson-datatype-jdk8-2.19.4.pom>public=

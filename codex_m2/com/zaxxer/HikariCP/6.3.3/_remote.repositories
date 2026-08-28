@@ -1,3 +1,6 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Aug 18 21:40:52 CST 2026
+#Tue Aug 18 15:42:07 CST 2026
+HikariCP-6.3.3.jar>aliyunmaven=
+HikariCP-6.3.3.jar>public=
 HikariCP-6.3.3.pom>aliyunmaven=
+HikariCP-6.3.3.pom>public=
