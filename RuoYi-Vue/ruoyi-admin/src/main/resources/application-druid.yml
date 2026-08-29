@@ -6,9 +6,9 @@ spring:
         druid:
             # 涓诲簱鏁版嵁婧?
             master:
-                url: jdbc:mysql://localhost:3306/ry_vue?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
-                username: root
-                password: root
+                url: jdbc:mysql://42.51.34.185:3306/ry_vue?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+                username: ry_vue
+                password: x4Gc4T46MEL5778z
                 #x0DEpcMltzf8gkWk
             # 浠庡簱鏁版嵁婧?
             slave:

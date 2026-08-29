@@ -35,4 +35,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by id asc
         limit 1
     </select>
+
+    <select id="selectAvailableByIdCard" resultMap="MockMedicalDataResult">
+        select id, query_type, patient_name, id_card, diagnosis, data_json, status, remark, create_time
+        from mock_medical_data
+        where query_type = #{queryType}
+          and id_card = #{idCard}
+          and status = '0'
+        order by id asc
+        limit 1
+    </select>
 </mapper>

@@ -97,6 +97,7 @@ const theme = computed(() => useSettingsStore().theme)
 const tagsIcon = computed(() => useSettingsStore().tagsIcon)
 const tagsViewPersist = computed(() => useSettingsStore().tagsViewPersist)
 const tagsViewStyle = computed(() => useSettingsStore().tagsViewStyle)
+const hiddenAdminTagPaths = new Set(['/index'])
 
 // 下拉菜单针对当前激活的 tag
 const selectedDropdownTag = computed(() => visitedViews.value.find(v => isActive(v)) || {})
@@ -176,12 +177,14 @@ function filterAffixTags(routes, basePath = '') {
   routes.forEach(route => {
     if (route.meta && route.meta.affix) {
       const tagPath = getNormalPath(basePath + '/' + route.path)
-      tags.push({
-        fullPath: tagPath,
-        path: tagPath,
-        name: route.name,
-        meta: { ...route.meta }
-      })
+      if (!hiddenAdminTagPaths.has(tagPath)) {
+        tags.push({
+          fullPath: tagPath,
+          path: tagPath,
+          name: route.name,
+          meta: { ...route.meta }
+        })
+      }
     }
     if (route.children) {
       const tempTags = filterAffixTags(route.children, route.path)
@@ -208,7 +211,7 @@ function initTags() {
 
 function addTags() {
   const { name } = route
-  if (name) {
+  if (name && !hiddenAdminTagPaths.has(route.path)) {
     useTagsViewStore().addView(route)
   }
 }

@@ -9,4 +9,7 @@ public interface MockMedicalDataMapper
 
     MockMedicalData selectAvailableByQuery(@Param("queryType") String queryType,
             @Param("patientName") String patientName, @Param("idCard") String idCard);
+
+    MockMedicalData selectAvailableByIdCard(@Param("queryType") String queryType,
+            @Param("idCard") String idCard);
 }

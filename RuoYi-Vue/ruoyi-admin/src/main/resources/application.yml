@@ -166,7 +166,7 @@ medical:
     default-source: mock
     fallback-enabled: false
     routes:
-      medical_all: digital
+      medical_all: mock
     digital-industry:
       # 测试阶段配置，接入真实环境前请替换为数产提供的正式配置。
       enabled: "${DIGITAL_INDUSTRY_ENABLED:true}"

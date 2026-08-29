@@ -73,7 +73,10 @@ public class MedicalQueryServiceImplTest
             request.setId(1L);
             return 1;
         });
+        when(companyMapper.deductBalance(any(), any())).thenReturn(1);
+        when(companyMapper.addBalance(any(), any())).thenReturn(1);
         when(workflowRequestMapper.markProcessing(1L)).thenReturn(1);
+        when(workflowRequestMapper.updatePatientName(any(), anyString())).thenReturn(1);
         when(workflowRequestMapper.finishRequest(any(), anyString(), anyString(), anyString(), any(), any())).thenReturn(1);
         when(workflowResultMapper.insertBizMedicalQueryResult(any())).thenReturn(1);
         when(queryLogMapper.insertBizQueryLog(any())).thenAnswer(invocation -> {
@@ -131,8 +134,7 @@ public class MedicalQueryServiceImplTest
         assertFalse(log.getQueryParams().contains("430102199001011234"));
         assertTrue(log.getQueryParams().contains("430***********1234"));
 
-        verify(monthlyUsageMapper).confirmBudget(1L, workflow.getBillingMonth(),
-                new BigDecimal("20.00"), new BigDecimal("20.00"));
+        verify(companyMapper).deductBalance(1L, new BigDecimal("20.00"));
         verify(workflowRequestMapper).finishRequest(1L, "COMPLETED", "UPLOADED", "HIT",
                 new BigDecimal("20.00"), 1L);
 
@@ -140,6 +142,24 @@ public class MedicalQueryServiceImplTest
         order.verify(workflowRequestMapper).markProcessing(1L);
         order.verify(dataSource).query(any());
         order.verify(workflowResultMapper).insertBizMedicalQueryResult(any());
+    }
+
+    @Test
+    public void hitQueryUsesSourcePatientNameWhenRequestOnlyContainsIdCard()
+    {
+        when(companyPriceMapper.selectCompanyPrice(1L, "medical_all"))
+                .thenReturn(companyPrice("20.00", "3.00", "0"));
+        MedicalQueryRequest request = request();
+        request.getQueryParams().remove("name");
+        request.getQueryParams().remove("idCard");
+        request.getQueryParams().put("sfzhm", "430102199001011234");
+        request.getQueryParams().put("startdate", "2020-01-01 00:00:00");
+        request.getQueryParams().put("enddate", "2026-01-01 00:00:00");
+
+        MedicalQueryResult result = service.query(request);
+
+        assertEquals("HIT", result.getResultStatus());
+        verify(workflowRequestMapper).updatePatientName(1L, "张三");
     }
 
     @Test
@@ -153,9 +173,7 @@ public class MedicalQueryServiceImplTest
 
         assertEquals("NO_RESULT", result.getResultStatus());
         assertEquals(new BigDecimal("0.00"), result.getFee());
-        verify(monthlyUsageMapper).confirmBudget(any(), anyString(),
-                org.mockito.ArgumentMatchers.eq(new BigDecimal("20.00")),
-                org.mockito.ArgumentMatchers.eq(new BigDecimal("0.00")));
+        verify(companyMapper).addBalance(1L, new BigDecimal("20.00"));
         verify(workflowRequestMapper).finishRequest(1L, "COMPLETED", "UPLOADED", "NO_RESULT",
                 new BigDecimal("0.00"), 1L);
     }
@@ -170,7 +188,7 @@ public class MedicalQueryServiceImplTest
         MedicalQueryException exception = assertThrows(MedicalQueryException.class, () -> service.query(request()));
 
         assertEquals("5003", exception.getCode());
-        verify(monthlyUsageMapper).releaseBudget(any(), anyString(), org.mockito.ArgumentMatchers.eq(new BigDecimal("20.00")));
+        verify(companyMapper).addBalance(1L, new BigDecimal("20.00"));
         verify(workflowResultMapper, never()).insertBizMedicalQueryResult(any());
         verify(workflowRequestMapper).finishRequest(1L, "FAILED", "NOT_UPLOADED", "FAILED",
                 new BigDecimal("0.00"), 1L);
@@ -187,11 +205,11 @@ public class MedicalQueryServiceImplTest
     {
         when(companyPriceMapper.selectCompanyPrice(1L, "medical_all"))
                 .thenReturn(companyPrice("20.00", "3.00", "0"));
-        when(monthlyUsageMapper.reserveBudget(any(), anyString(), any(), any())).thenReturn(0);
+        when(companyMapper.deductBalance(any(), any())).thenReturn(0);
 
-        MedicalQueryException exception = assertThrows(MedicalQueryException.class, () -> service.query(request()));
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> service.query(request()));
 
-        assertEquals("4001", exception.getCode());
+        assertEquals("Failed to reserve balance", exception.getMessage());
         verify(dataSource, never()).query(any());
         verify(queryLogMapper, never()).insertBizQueryLog(any());
         verify(workflowRequestMapper, never()).markProcessing(any());

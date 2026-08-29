@@ -99,11 +99,12 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         try
         {
             SourceResult sourceResult = querySource(request);
-            Map<String, Object> data = DesensitizeUtil.desensitize(organizeRealtimeResult(sourceResult.data));
+            Map<String, Object> organizedData = organizeRealtimeResult(sourceResult.data);
+            Map<String, Object> data = DesensitizeUtil.desensitizeDeep(organizedData);
             String resultStatus = isNoResult(data) ? "NO_RESULT" : "HIT";
             BigDecimal actualFee = "HIT".equals(resultStatus) ? price.hitFee : ZERO_FEE;
             Completion completion = executeInTransaction(() -> completeSuccess(request, workflowRequest,
-                    sourceResult.source, data, resultStatus, actualFee));
+                    sourceResult.source, data, resultStatus, actualFee, sourceResult.data));
             return buildResult(workflowRequest, completion.log, resultStatus, actualFee, balanceBefore, data);
         }
         catch (RuntimeException e)
@@ -148,7 +149,8 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
     }
 
     private Completion completeSuccess(MedicalQueryRequest request, BizMedicalQueryRequest workflowRequest,
-            String source, Map<String, Object> data, String resultStatus, BigDecimal actualFee)
+            String source, Map<String, Object> data, String resultStatus, BigDecimal actualFee,
+            Map<String, Object> sourceData)
     {
         BizMedicalQueryResult storedResult = new BizMedicalQueryResult();
         storedResult.setRequestId(workflowRequest.getId());
@@ -161,11 +163,65 @@ public class MedicalQueryServiceImpl implements IMedicalQueryService
         storedResult.setUploadedTime(new Date());
         requireUpdated(workflowResultMapper.insertBizMedicalQueryResult(storedResult), "save realtime result");
 
+        String requestPatientName = value(request, "name");
+        String sourcePatientName = sourcePatientName(sourceData);
+        if (isEmpty(requestPatientName) && !isEmpty(sourcePatientName))
+        {
+            workflowRequest.setPatientName(sourcePatientName);
+            requireUpdated(workflowRequestMapper.updatePatientName(workflowRequest.getId(), sourcePatientName),
+                    "update realtime patient name");
+        }
+
         refundDifference(request.getCompanyId(), workflowRequest.getReservedFee(), actualFee);
         BizQueryLog log = insertQueryLog(request, workflowRequest, actualFee, resultStatus, "0", null);
         requireUpdated(workflowRequestMapper.finishRequest(workflowRequest.getId(), "COMPLETED", "UPLOADED",
                 resultStatus, actualFee, log.getId()), "complete realtime request");
         return new Completion(log);
+    }
+
+    private String sourcePatientName(Map<String, Object> sourceData)
+    {
+        if (sourceData == null)
+        {
+            return "";
+        }
+        String name = text(sourceData.get("patientName"));
+        if (name.isEmpty())
+        {
+            name = text(sourceData.get("name"));
+        }
+        if (name.isEmpty())
+        {
+            name = text(sourceData.get("姓名"));
+        }
+        if (!name.isEmpty())
+        {
+            return name;
+        }
+        Object records = sourceData.get("res");
+        if (records instanceof Iterable<?> iterable)
+        {
+            for (Object item : iterable)
+            {
+                if (item instanceof Map<?, ?> record)
+                {
+                    name = text(record.get("patientName"));
+                    if (name.isEmpty())
+                    {
+                        name = text(record.get("name"));
+                    }
+                    if (name.isEmpty())
+                    {
+                        name = text(record.get("姓名"));
+                    }
+                    if (!name.isEmpty())
+                    {
+                        return name;
+                    }
+                }
+            }
+        }
+        return "";
     }
 
     private void completeFailure(MedicalQueryRequest request, BizMedicalQueryRequest workflowRequest)

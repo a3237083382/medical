@@ -8,6 +8,7 @@ import { isHttp } from '@/utils/validate'
 
 // 匹配views里面所有的.vue文件
 const modules = import.meta.glob('./../../views/**/*.vue')
+const hiddenAdminNavTitles = new Set(['首页', '系统管理', '系统监控', '系统工具', '若依官网'])
 
 const usePermissionStore = defineStore(
   'permission',
@@ -46,9 +47,9 @@ const usePermissionStore = defineStore(
             const asyncRoutes = filterDynamicRoutes(dynamicRoutes)
             asyncRoutes.forEach(route => { router.addRoute(route) })
             this.setRoutes(rewriteRoutes)
-            this.setSidebarRouters(constantRoutes.concat(sidebarRoutes))
-            this.setDefaultRoutes(sidebarRoutes)
-            this.setTopbarRoutes(defaultRoutes)
+            this.setSidebarRouters(filterAdminNavigation(constantRoutes.concat(sidebarRoutes)))
+            this.setDefaultRoutes(filterAdminNavigation(sidebarRoutes))
+            this.setTopbarRoutes(filterAdminNavigation(defaultRoutes))
             resolve(rewriteRoutes)
           }).catch(error => {
             reject(error)
@@ -100,6 +101,25 @@ function filterChildren(childrenMap, lastRouter = false) {
     }
   })
   return children
+}
+
+function filterAdminNavigation(routes) {
+  return routes
+    .filter(route => !shouldHideAdminNav(route))
+    .map(route => {
+      if (!route.children) {
+        return route
+      }
+      const children = filterAdminNavigation(route.children)
+      return children.length > 0 ? { ...route, children } : { ...route, children: undefined }
+    })
+    .filter(route => route.children !== undefined || route.meta || route.component)
+}
+
+function shouldHideAdminNav(route) {
+  return route.path === '/index'
+    || route.redirect === '/index'
+    || hiddenAdminNavTitles.has(route.meta?.title)
 }
 
 // 动态路由遍历，验证是否具备权限

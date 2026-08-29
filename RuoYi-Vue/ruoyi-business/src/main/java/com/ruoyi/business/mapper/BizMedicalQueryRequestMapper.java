@@ -35,6 +35,8 @@ public interface BizMedicalQueryRequestMapper
 
     int markProcessing(@Param("id") Long id);
 
+    int updatePatientName(@Param("id") Long id, @Param("patientName") String patientName);
+
     int finishRequest(@Param("id") Long id,
             @Param("processStatus") String processStatus,
             @Param("uploadStatus") String uploadStatus,

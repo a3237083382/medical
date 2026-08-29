@@ -20,7 +20,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
 import com.ruoyi.business.domain.BizCompanyQueryPrice;
 import com.ruoyi.business.domain.BizInsuranceCompany;
-import com.ruoyi.business.domain.BizMonthlyUsage;
 import com.ruoyi.business.domain.BizQueryPrice;
 import com.ruoyi.business.domain.BizDelayedQueryRequest;
 import com.ruoyi.business.domain.BizDelayedQueryResult;
@@ -124,22 +123,17 @@ public class CompanyEmbedMedicalQueryControllerTest
 
     @Test
     @SuppressWarnings("unchecked")
-    public void usageMarksNearLimitFromUsedAndReservedAmount()
+    public void usageReportsCompanyBalanceWhenBudgetControlIsDisabled()
     {
         BizInsuranceCompany company = company(true, "100.00");
-        BizMonthlyUsage usage = new BizMonthlyUsage();
-        usage.setUsedAmount(new BigDecimal("70.00"));
-        usage.setReservedAmount(new BigDecimal("15.00"));
-        usage.setStatus("0");
-        when(monthlyUsageMapper.selectUsage(1L, java.time.YearMonth.now().toString())).thenReturn(usage);
 
         AjaxResult result = controller.usage(request(company));
         Map<String, Object> data = (Map<String, Object>) result.get("data");
 
-        assertEquals(new BigDecimal("15.00"), data.get("remaining"));
-        assertEquals(85, data.get("usagePercent"));
-        assertEquals("NEAR_LIMIT", data.get("serviceStatus"));
-        assertTrue((Boolean) data.get("budgetEnabled"));
+        assertEquals(new BigDecimal("100.00"), data.get("remaining"));
+        assertEquals(0, data.get("usagePercent"));
+        assertEquals("NORMAL", data.get("serviceStatus"));
+        assertFalse((Boolean) data.get("budgetEnabled"));
     }
 
     @Test
@@ -165,9 +159,10 @@ public class CompanyEmbedMedicalQueryControllerTest
         AjaxResult result = controller.usage(request(company));
         Map<String, Object> data = (Map<String, Object>) result.get("data");
 
-        assertEquals(100, data.get("usagePercent"));
-        assertEquals("LIMIT_REACHED", data.get("serviceStatus"));
-        assertTrue((Boolean) data.get("budgetEnabled"));
+        assertEquals(new BigDecimal("0.00"), data.get("remaining"));
+        assertEquals(0, data.get("usagePercent"));
+        assertEquals("NORMAL", data.get("serviceStatus"));
+        assertFalse((Boolean) data.get("budgetEnabled"));
     }
 
     @Test
@@ -532,6 +527,7 @@ public class CompanyEmbedMedicalQueryControllerTest
         company.setAppKey("1234567890abcdef");
         company.setBudgetEnabled(budgetEnabled ? "0" : "1");
         company.setMonthlyBudget(new BigDecimal(budget));
+        company.setBalance(new BigDecimal(budget));
         return company;
     }
 

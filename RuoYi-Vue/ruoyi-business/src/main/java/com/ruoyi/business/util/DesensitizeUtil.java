@@ -1,6 +1,8 @@
 package com.ruoyi.business.util;
 
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public final class DesensitizeUtil
@@ -23,22 +25,49 @@ public final class DesensitizeUtil
         return result;
     }
 
+    public static Map<String, Object> desensitizeDeep(Map<String, Object> data)
+    {
+        return (Map<String, Object>) desensitizeValue(null, data);
+    }
+
     private static Object desensitizeValue(String field, Object value)
     {
+        if (value instanceof Map<?, ?> map)
+        {
+            Map<String, Object> result = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet())
+            {
+                if (entry.getKey() != null)
+                {
+                    String key = String.valueOf(entry.getKey());
+                    result.put(key, desensitizeValue(key, entry.getValue()));
+                }
+            }
+            return result;
+        }
+        if (value instanceof Iterable<?> iterable)
+        {
+            List<Object> result = new ArrayList<>();
+            for (Object item : iterable)
+            {
+                result.add(desensitizeValue(null, item));
+            }
+            return result;
+        }
         if (!(value instanceof String text) || text.isEmpty())
         {
             return value;
         }
         String key = field == null ? "" : field.toLowerCase();
-        if (key.contains("idcard") || key.contains("identity"))
+        if (key.contains("idcard") || key.contains("identity") || key.contains("身份证"))
         {
             return maskIdCard(text);
         }
-        if (key.contains("name"))
+        if (key.contains("name") || key.contains("姓名"))
         {
             return maskName(text);
         }
-        if (key.contains("diagnosis"))
+        if (key.contains("diagnosis") || key.contains("诊断"))
         {
             return maskDiagnosis(text);
         }

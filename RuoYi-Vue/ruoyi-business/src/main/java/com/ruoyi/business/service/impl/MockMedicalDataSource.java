@@ -28,12 +28,14 @@ public class MockMedicalDataSource implements MedicalDataSource
     public Map<String, Object> query(MedicalQueryRequest request)
     {
         Map<String, Object> params = request == null ? null : request.getQueryParams();
-        String patientName = valueOrDefault(params, "name", "");
-        String idCard = valueOrDefault(params, "idCard", "");
+        String patientName = firstValue(params, "name", "patientName");
+        String idCard = firstValue(params, "idCard", "sfzhm");
         MockMedicalData data;
         try
         {
-            data = mockMedicalDataMapper.selectAvailableByQuery(request.getQueryType(), patientName, idCard);
+            data = "medical_all".equalsIgnoreCase(request.getQueryType()) && !idCard.isEmpty()
+                    ? mockMedicalDataMapper.selectAvailableByIdCard(request.getQueryType(), idCard)
+                    : mockMedicalDataMapper.selectAvailableByQuery(request.getQueryType(), patientName, idCard);
         }
         catch (BadSqlGrammarException e)
         {
@@ -138,19 +140,29 @@ public class MockMedicalDataSource implements MedicalDataSource
     private Map<String, Object> baseResult(Map<String, Object> params)
     {
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("patientName", valueOrDefault(params, "name", "刘亮"));
-        result.put("idCard", valueOrDefault(params, "idCard", "432503198706012770"));
+        result.put("patientName", firstValue(params, "name", "patientName"));
+        result.put("idCard", firstValue(params, "idCard", "sfzhm"));
         return result;
     }
 
-    private String valueOrDefault(Map<String, Object> params, String key, String defaultValue)
+    private String firstValue(Map<String, Object> params, String... keys)
     {
-        if (params == null || params.get(key) == null)
+        if (params == null)
         {
-            return defaultValue;
+            return "";
         }
-        String value = String.valueOf(params.get(key)).trim();
-        return value.isEmpty() ? defaultValue : value;
+        for (String key : keys)
+        {
+            if (params.get(key) != null)
+            {
+                String value = String.valueOf(params.get(key)).trim();
+                if (!value.isEmpty())
+                {
+                    return value;
+                }
+            }
+        }
+        return "";
     }
 
     private Map<String, Object> record(String name, String value, String remark)

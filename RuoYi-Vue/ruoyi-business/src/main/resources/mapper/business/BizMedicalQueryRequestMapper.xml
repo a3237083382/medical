@@ -206,6 +206,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           and upload_status = 'NOT_UPLOADED'
     </update>
 
+    <update id="updatePatientName">
+        update biz_medical_query_request
+        set patient_name = #{patientName},
+            update_time = sysdate()
+        where id = #{id}
+          and service_mode = 'REALTIME'
+    </update>
+
     <update id="finishRequest">
         update biz_medical_query_request
         set process_status = #{processStatus},
