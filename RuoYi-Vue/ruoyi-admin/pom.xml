@@ -16,20 +16,6 @@
     </description>
 
     <dependencies>
-
-        <!-- 数产可信空间 SDK 及其运行依赖，供最终可执行 jar 打包 -->
-        <dependency><groupId>com.hnchasing.digital.openapi</groupId><artifactId>java-sdk</artifactId><version>1.0.5-SNAPSHOT</version><scope>system</scope><systemPath>${project.basedir}/../ruoyi-business/lib/openapi-sdk.jar</systemPath></dependency>
-        <dependency><groupId>com.crcloud.ecsb</groupId><artifactId>ecsb-api-sdk</artifactId><version>1.0.2</version><scope>system</scope><systemPath>${project.basedir}/../ruoyi-business/lib/ecsb-api-sdk-1.0.2.jar</systemPath></dependency>
-        <dependency><groupId>com.alibaba</groupId><artifactId>fastjson</artifactId><version>1.2.83</version><scope>system</scope><systemPath>${project.basedir}/../ruoyi-business/lib/fastjson-1.2.83.jar</systemPath></dependency>
-        <dependency><groupId>org.bouncycastle</groupId><artifactId>bcprov-jdk15to18</artifactId><version>1.69</version><scope>system</scope><systemPath>${project.basedir}/../ruoyi-business/lib/bcprov-jdk15to18-1.69.jar</systemPath></dependency>
-        <dependency><groupId>cn.hutool</groupId><artifactId>hutool-all</artifactId><version>5.8.10</version><scope>system</scope><systemPath>${project.basedir}/../ruoyi-business/lib/hutool-all-5.8.10.jar</systemPath></dependency>
-        <dependency><groupId>commons-lang</groupId><artifactId>commons-lang</artifactId><version>2.6</version><scope>system</scope><systemPath>${project.basedir}/../ruoyi-business/lib/commons-lang-2.6.jar</systemPath></dependency>
-        <dependency><groupId>com.google.guava</groupId><artifactId>guava</artifactId><version>32.0.0-jre</version><scope>system</scope><systemPath>${project.basedir}/../ruoyi-business/lib/guava-32.0.0-jre.jar</systemPath></dependency>
-        <dependency><groupId>org.apache.httpcomponents</groupId><artifactId>httpclient</artifactId><version>4.5.13</version><scope>system</scope><systemPath>${project.basedir}/../ruoyi-business/lib/httpclient-4.5.13.jar</systemPath></dependency>
-        <dependency><groupId>org.apache.httpcomponents</groupId><artifactId>httpcore</artifactId><version>4.4.14</version><scope>system</scope><systemPath>${project.basedir}/../ruoyi-business/lib/httpcore-4.4.14.jar</systemPath></dependency>
-        <dependency><groupId>commons-codec</groupId><artifactId>commons-codec</artifactId><version>1.14</version><scope>system</scope><systemPath>${project.basedir}/../ruoyi-business/lib/commons-codec-1.14.jar</systemPath></dependency>
-        <dependency><groupId>joda-time</groupId><artifactId>joda-time</artifactId><version>2.9.9</version><scope>system</scope><systemPath>${project.basedir}/../ruoyi-business/lib/joda-time-2.9.9.jar</systemPath></dependency>
-
         <!-- spring-boot-devtools (在IDEA中与多模块项目有兼容问题，改用mvn spring-boot:run启动) -->
         <!--
         <dependency>
